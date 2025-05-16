@@ -1,0 +1,125 @@
+/* Global FreeYap Styles */
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: #fafbfc;
+}
+.navbar {
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
+}
+.navbar-brand .fw-bold {
+  color: #ff4f7a !important;
+  letter-spacing: 1px;
+}
+.navbar-brand .text-pink {
+  color: #ffb6c1 !important;
+}
+.card, .about-card, .help-card {
+  border-radius: 22px;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+}
+.main-btn {
+  background: #ff4f7a;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  padding: 1.1rem 0;
+  box-shadow: 0 2px 8px 0 rgba(255,79,122,0.08);
+  transition: background 0.2s;
+}
+.main-btn:hover {
+  background: #ff2e5d;
+}
+.form-control {
+  border-radius: 12px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+}
+.badge {
+  border-radius: 16px;
+  font-size: 1rem;
+  padding: 0.5em 1em;
+}
+.badge.bg-secondary {
+  background: #f3f4f6 !important;
+  color: #333;
+}
+.badge.bg-light {
+  background: #fff !important;
+  border: 1px solid #e5e7eb;
+}
+.footer {
+  background: #f8f9fa;
+  font-size: 0.95rem;
+  color: #888;
+  border-top: 1px solid #eee;
+}
+.ad-box {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+  font-weight: 600;
+  color: #222;
+  font-size: 1.1rem;
+  padding: 1.5rem 0.5rem;
+  margin-top: 1.5rem;
+}
+.text-success {
+  color: #7be495 !important;
+  font-weight: 700;
+}
+.fw-bold.text-primary {
+  color: #ff4f7a !important;
+}
+.main-card {
+  max-width: 420px;
+  margin: 2.5rem auto;
+}
+
+/* About Page Styles */
+.about-card, .help-card {
+  background: #fff;
+  max-width: 700px;
+  margin: 2.5rem auto;
+  padding: 2.5rem 2rem;
+}
+
+.section-title {
+  color: #ff4f7a;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.about-list, .faq-list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 1.5rem;
+}
+
+.about-list li, .faq-list li {
+  margin-bottom: 1rem;
+  font-size: 1.08rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.about-list .icon, .faq-list .icon {
+  color: #ff4f7a;
+  font-size: 1.2rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.about-list .icon-green {
+  color: #7be495;
+  font-size: 1.2rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
