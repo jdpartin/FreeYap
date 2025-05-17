@@ -7,9 +7,81 @@
     <div class="col-md-8">
       <div class="voice-controls text-center mb-4">
         <p class="text-muted">Voice chat is active. Speak freely!</p>
-        <button class="btn btn-danger">End Call</button>
+        <button id="startButton" class="btn btn-primary">Start Looking</button>
+        <button id="endButton" class="btn btn-danger" disabled>End Call</button>
         <button class="btn btn-secondary">Mute</button>
       </div>
+      <div id="statusMessage" class="text-center mt-3 text-muted"></div>
     </div>
   </div>
 </div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/webrtcManager.js"></script>
+<script>
+  const webrtcManager = new WebRTCManager();
+  const startButton = document.getElementById('startButton');
+  const endButton = document.getElementById('endButton');
+  const statusMessage = document.getElementById('statusMessage');
+  const muteButton = document.querySelector('.btn-secondary');
+  let localStream;
+
+  // Capture microphone audio stream
+  async function startVoiceChat() {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      webrtcManager.addLocalStream(localStream);
+      console.log('Microphone access granted.');
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      statusMessage.textContent = 'Error accessing microphone. Please check your settings.';
+    }
+  }
+
+  // Handle mute/unmute functionality
+  muteButton.addEventListener('click', () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      audioTrack.enabled = !audioTrack.enabled;
+      muteButton.textContent = audioTrack.enabled ? 'Mute' : 'Unmute';
+    }
+  });
+
+  // Listen for WebRTC track event to play remote audio
+  webrtcManager.onTrack = (event) => {
+    const remoteAudio = new Audio();
+    remoteAudio.srcObject = event.streams[0];
+    remoteAudio.play();
+    console.log('Playing remote audio stream.');
+  };
+
+  startButton.addEventListener('click', async () => {
+    await startVoiceChat();
+    webrtcManager.joinQueue();
+    startButton.disabled = true;
+    statusMessage.textContent = 'Looking for a chat partner...';
+  });
+
+  endButton.addEventListener('click', () => {
+    webrtcManager.endCall();
+    startButton.disabled = false;
+    endButton.disabled = true;
+    statusMessage.textContent = '';
+  });
+
+  // Listen for Socket.IO events
+  webrtcManager.socket.on('waiting', (e) => {
+    statusMessage.textContent = 'Waiting for someone to join...';
+  });
+
+  webrtcManager.socket.on('chat-ready', (e) => {
+    endButton.disabled = false;
+    statusMessage.textContent = 'Connected! Voice chat session started.';
+  });
+
+  webrtcManager.socket.on('peer-disconnected', (e) => {
+    statusMessage.textContent = 'Your chat partner disconnected.';
+    startButton.disabled = false;
+    endButton.disabled = true;
+  });
+</script>

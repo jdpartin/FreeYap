@@ -5,13 +5,116 @@
   </div>
   <div class="row justify-content-center">
     <div class="col-md-8">
-      <div class="chat-box border rounded p-3 mb-4" style="height: 300px; overflow-y: auto;">
+      <div class="chat-box border rounded p-3 mb-4" style="height: 300px; overflow-y: auto;" id="chatBox">
         <p class="text-muted">No messages yet. Start the conversation!</p>
       </div>
       <div class="input-group">
-        <input type="text" class="form-control" placeholder="Type your message here...">
-        <button class="btn btn-primary">Send</button>
+        <input type="text" class="form-control" placeholder="Type your message here..." id="messageInput">
+        <button class="btn btn-primary" id="sendButton">Send</button>
+      </div>
+      <div id="statusMessage" class="text-center mt-3 text-muted"></div>
+      <div class="d-flex justify-content-center gap-3 mt-3">
+        <button id="startButton" class="btn btn-primary">Start Looking</button>
+        <button id="endButton" class="btn btn-danger" disabled>End Chat</button>
       </div>
     </div>
   </div>
 </div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/webrtcManager.js"></script>
+<script>
+  const webrtcManager = new WebRTCManager();
+  const startButton = document.getElementById('startButton');
+  const endButton = document.getElementById('endButton');
+  const statusMessage = document.getElementById('statusMessage');
+  const chatBox = document.getElementById('chatBox');
+  const messageInput = document.getElementById('messageInput');
+  const sendButton = document.getElementById('sendButton');
+
+  // Disable send button initially
+  sendButton.disabled = true;
+
+  startButton.addEventListener('click', () => {
+    webrtcManager.joinQueue();
+    startButton.disabled = true;
+    statusMessage.textContent = 'Looking for a chat partner...';
+  });
+
+  endButton.addEventListener('click', () => {
+    webrtcManager.endCall();
+    startButton.disabled = false;
+    endButton.disabled = true;
+    statusMessage.textContent = '';
+    chatBox.innerHTML = '<p class="text-muted">No messages yet. Start the conversation!</p>'; // Clear chat box
+    sendButton.disabled = true;
+  });
+
+  sendButton.addEventListener('click', () => {
+    const message = messageInput.value;
+    if (message.trim() !== '') {
+      webrtcManager.sendTextMessage(message);
+      appendMessage('You', message);
+      messageInput.value = ''; // Clear input after sending
+    }
+  });
+
+  // Allow sending message on Enter key press
+  messageInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent default form submission
+      sendButton.click(); // Trigger send button click
+    }
+  });
+
+  // Function to append messages to the chat box
+  function appendMessage(sender, message) {
+    const messageElement = document.createElement('p');
+    messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+    chatBox.appendChild(messageElement);
+    // Scroll to the bottom of the chat box
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // Listen for Socket.IO events
+  webrtcManager.socket.on('waiting', (e) => {
+    statusMessage.textContent = 'Waiting for someone to join...';
+  });
+
+  webrtcManager.socket.on('chat-ready', (e) => {
+    endButton.disabled = false;
+    statusMessage.textContent = 'Connected! Text chat session started.';
+  });
+
+  webrtcManager.socket.on('peer-disconnected', (e) => {
+    statusMessage.textContent = 'Your chat partner disconnected.';
+    startButton.disabled = false;
+    endButton.disabled = true;
+    sendButton.disabled = true; // Disable send button on disconnect
+  });
+
+  // Listen for Data Channel events from WebRTCManager
+  document.addEventListener('datachannelopen', () => {
+    console.log('Text Data Channel is open');
+    sendButton.disabled = false; // Enable send button when data channel is open
+    statusMessage.textContent = 'Data channel open. You can start typing.';
+  });
+
+  document.addEventListener('textmessage', (event) => {
+    console.log('Received text message event');
+    appendMessage('Partner', event.detail);
+  });
+
+  document.addEventListener('datachannelclose', () => {
+    console.log('Text Data Channel is closed');
+    sendButton.disabled = true; // Disable send button when data channel is closed
+    statusMessage.textContent = 'Data channel closed.';
+  });
+
+   document.addEventListener('datachannelerror', (event) => {
+    console.error('Text Data Channel error:', event.detail);
+    statusMessage.textContent = 'Data channel error.';
+    sendButton.disabled = true; // Disable send button on error
+  });
+
+</script>
