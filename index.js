@@ -3,6 +3,9 @@ const path = require('path');
 const expressLayouts = require('express-ejs-layouts');
 const http = require('http');
 const { Server } = require("socket.io");
+const bodyParser = require('body-parser');
+const sessionsApi = require('./api/sessions');
+const matchmakingApi = require('./api/matchmaking');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,6 +22,13 @@ app.set('layout', 'layout');
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware
+app.use(bodyParser.json());
+
+// API routes
+app.use('/api/sessions', sessionsApi);
+app.use('/api/matchmaking', matchmakingApi);
 
 // Queue to store users waiting for a chat
 const waitingUsers = new Set();

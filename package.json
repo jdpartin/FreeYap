@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@qdrant/js-client-rest": "^1.14.0",
+    "@supabase/supabase-js": "^2.49.4",
     "ejs": "^3.1.9",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
