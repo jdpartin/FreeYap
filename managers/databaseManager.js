@@ -47,16 +47,26 @@ class DatabaseManager
     {
         try
         {
-            const { data, error } = await this.supabase.from(collectionName).insert({ vector, metadata });
-            if (error)
+            // Use Qdrant client for inserting vectors
+            const response = await this.vectorDbClient.upsert(collectionName, {
+                points: [
+                    {
+                        vector,
+                        payload: metadata
+                    }
+                ]
+            });
+
+            if (!response || response.status !== 'ok')
             {
-                throw new Error(`Error inserting vector into ${collectionName}: ${error.message}`);
+                throw new Error(`Error inserting vector into ${collectionName}: ${response.status}`);
             }
-            return data;
+
+            return response;
         }
         catch (err)
         {
-            console.error(err);
+            console.error(`Error inserting vector into ${collectionName}:`, err);
             throw err;
         }
     }
@@ -65,26 +75,23 @@ class DatabaseManager
     {
         try
         {
-            await this.#connectToVectorDatabase();
-            const { data, error } = await this.supabase.rpc('search_vectors', {
-                collection: collectionName,
-                query_vector: queryVector,
-                top_k: topK
+            // Use Qdrant client for vector search
+            const response = await this.vectorDbClient.search(collectionName, {
+                vector: queryVector,
+                limit: topK
             });
-            if (error)
+
+            if (!response || !response.result)
             {
-                throw new Error(`Error searching vectors in ${collectionName}: ${error.message}`);
+                throw new Error(`Error searching vectors in ${collectionName}: No results returned.`);
             }
-            return data;
+
+            return response.result;
         }
         catch (err)
         {
-            console.error(err);
+            console.error(`Error searching vectors in ${collectionName}:`, err);
             throw err;
-        }
-        finally
-        {
-            await this.#closeVectorConnection();
         }
     }
 
@@ -92,16 +99,21 @@ class DatabaseManager
     {
         try
         {
-            const { data, error } = await this.supabase.from(collectionName).delete().eq('id', vectorId);
-            if (error)
+            // Use Qdrant client for deleting vectors
+            const response = await this.vectorDbClient.delete(collectionName, {
+                points: [vectorId]
+            });
+
+            if (!response || response.status !== 'ok')
             {
-                throw new Error(`Error deleting vector from ${collectionName}: ${error.message}`);
+                throw new Error(`Error deleting vector from ${collectionName}: ${response.status}`);
             }
-            return data;
+
+            return response;
         }
         catch (err)
         {
-            console.error(err);
+            console.error(`Error deleting vector from ${collectionName}:`, err);
             throw err;
         }
     }
