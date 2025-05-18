@@ -6,49 +6,70 @@ const vectorDb = require('../managers/qdrantManager'); // Assuming qdrantManager
 
 const basePath = '/semantic_polarization_api';
 
-// match
-// An endpoint where they provide
-// A queue id (optional) - if not provided it will compare all known words
-// A single topic
-// Matching criteria - Semantic similarity, and polarization thresholds
-router.post(`${basePath}/match`, async (req, res) =>
+//We are going to set this up to be just like a vector database in function
+// but we will use a relational database to store the vectors and an AI generated polarity score
+
+// SELECT
+router.post(`${basePath}/select`, async (req, res) =>
 {
+    // the user may provide
+        // a collection id
+        // a single topic
+        // semantic and polarized thresholds.
+
     // Validate the request
-    const { queueId, topic, criteria } = req.body;
+    const { collectionId, topic, semanticThreshold, polarizedThreshold } = req.body;
 
-    if (!topic || !criteria)
+    if (!queueId || !topic)
     {
-        return res.status(400).json({ error: 'Invalid request. topic and criteria are required.' });
+        return res.status(400).json({ error: 'Invalid request. queueId and topic are required.' });
     }
 
-    if (queueId) // Compare against queue only
+    // ensure the word is in the semantic database
+    // Query the semantic database for similar topics
+
+    // A couple notes:
+        // The collection just holds topics
+        // we have a separate database that holds topicEmbeddings
+        // The collections table holds a list of topics and has a collection id field that allows us to group them
+
+    
+
+    if (!result || result.length === 0)
     {
-
+        // For each similar topic
+        // check if we have already mapped the polarity score otherwise trigger the AI to calculate it
+        // go ahead and return just the semantic similarity score with polarity score as null
+        // check if the semantic and polarity scores are above the thresholds and remove them from the result set if needed
     }
-    else // Compare against all known words
+    else
     {
-
+        return res.status(200).json({
+            errorExists: false,
+            errorMessage: null,
+            queueId: queueId,
+            topic: topic,
+            result: result
+        });
     }
-});
 
-// bulk_match
-// An endpoint where they provide
-// A queue id (optional) - if not provided it will compare all known words
-// A list of topics
-// Matching criteria - Semantic similarity, and polarization thresholds
-router.post(`${basePath}/bulk_match`, async (req, res) =>
+}
+
+// INSERT
+router.post(`${basePath}/insert`, async (req, res) =>
 {
-    // Validate the request
-    const { queueId, topics, criteria } = req.body;
-
-    if (!topics || !Array.isArray(topics) || !criteria)
-    {
-        return res.status(400).json({ error: 'Invalid request. queueId, topics and criteria are required.' });
-    }
-});
+    // The user provides a collection id and a topic
 
 
-// compare
+}
+
+// DELETE
+router.post(`${basePath}/delete`, async (req, res) =>
+{
+    // The user provides a collection id and a topic
+}
+
+// COMPARE
 // The user provides two topics to compare
 router.post(`${basePath}/compare`, async (req, res) =>
 {
@@ -61,79 +82,43 @@ router.post(`${basePath}/compare`, async (req, res) =>
     }
 });
 
-// compare_bulk
-// The user provides a list of topics to compare
-router.post(`${basePath}/compare_bulk`, async (req, res) =>
+// CREATE COLLECTION - Not needed because they can provide their own UUID
+
+
+//#region Private Methods
+
+
+async function triggerSemanticPolarizationCalculation(topic1, topic2)
 {
-    // Validate the request
-    // We need a queue id UUID and it should also contain topics to compare
-    const { queueId, topics } = req.body;
-    if (!queueId || !topics || !Array.isArray(topics))
-    {
-        return res.status(400).json({ error: 'Invalid request. queueId and topics are required.' });
-    }
-});
+    // get the embedding for each topic and save it to the database
+    // ensure each topic is in the semantic database
+    // calculate the cosine similarity
+    // save an entry in the relational database with topic1, topic2, cosine similarity, and the polarity score as null
+    // trigger the AI to calculate the polarity score
+}
 
-// enqueue
-// The user provides a queue id it can be existing or new
-// The user provides a list of topics to enqueue
-router.post(`${basePath}/enqueue`, async (req, res) =>
+async function getTextEmbeddingFromAPI(text)
 {
-    // Validate the request
-    const { queueId, topics } = req.body;
-    if (!queueId || !topics || !Array.isArray(topics))
-    {
-        return res.status(400).json({ error: 'Invalid request. queueId and topics are required.' });
-    }
+    // Call the API to get the embedding
+    // make sure to save it
+}
 
-    try
-    {
-        // Insert terms into the relational database
-        await db.executeStoredProcedure('enqueueTerms', { queueId, topics });
-
-        // Insert terms into the vector database
-        for (const topic of topics)
-        {
-            await db.insertVector(queueId, topic); // Use the database manager's insertVector function
-        }
-
-        res.status(200).json({ success: true, message: 'Topics successfully enqueued.' });
-    }
-    catch (error)
-    {
-        res.status(500).json({ success: false, message: 'Failed to enqueue topics.', error: error.message });
-    }
-});
-
-// dequeue
-// The user provides a queue id it can be existing or new
-// The user provides a list of topics to dequeue
-router.post(`${basePath}/dequeue`, async (req, res) =>
+function calculateCosineSimilarity(vector1, vector2)
 {
-    // Validate the request
-    const { queueId, topics } = req.body;
-    if (!queueId || !topics || !Array.isArray(topics))
+    const dotProduct = vector1.reduce((sum, val, index) => sum + val * vector2[index], 0);
+    const magnitude1 = Math.sqrt(vector1.reduce((sum, val) => sum + val * val, 0));
+    const magnitude2 = Math.sqrt(vector2.reduce((sum, val) => sum + val * val, 0));
+
+    if (magnitude1 === 0 || magnitude2 === 0)
     {
-        return res.status(400).json({ error: 'Invalid request. queueId and topics are required.' });
+        return 0; // Avoid division by zero
     }
 
-    try
-    {
-        // Remove terms from the relational database
-        await db.executeStoredProcedure('dequeueTerms', { queueId, topics });
+    return dotProduct / (magnitude1 * magnitude2);
+}
 
-        // Remove terms from the vector database
-        for (const topic of topics)
-        {
-            await db.removeVector(queueId, topic); // Use the database manager's removeVector function
-        }
 
-        res.status(200).json({ success: true, message: 'Topics successfully dequeued.' });
-    }
-    catch (error)
-    {
-        res.status(500).json({ success: false, message: 'Failed to dequeue topics.', error: error.message });
-    }
-});
+//#endregion
+
 
 module.exports = router;
