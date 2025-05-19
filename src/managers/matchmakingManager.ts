@@ -30,7 +30,7 @@ class MatchmakingManager
 
     static async PerformDelayedMatchmaking(sessionId: string, terms: string[]): Promise<void>
     {
-        const queueInfoPromise = db.executeStoredProcedure('GetAndDeleteQueueEntry', { sessionId }) as Promise<UserQueueInfo[]>;
+        const queueInfoPromise = db.executeStoredProcedure('get_and_delete_queue_entry', { sessionId }) as Promise<UserQueueInfo[]>;
 
         const matchmakingResult = await this.#delayedMatchmaking(sessionId, terms);
 
@@ -42,7 +42,7 @@ class MatchmakingManager
             {
                 const queuedUser = queueInfo[0];
 
-                db.executeStoredProcedure('addBackToQueue', {
+                db.executeStoredProcedure('add_back_to_queue', {
                     sessionId: queuedUser.sessionId,
                     terms: queuedUser.terms,
                     insertedAt: queuedUser.insertedAt
@@ -72,7 +72,7 @@ class MatchmakingManager
         }
         else
         {
-            const delayedUsers = (await db.executeStoredProcedure('GetOldestDelayedTermUser', { sessionId })) as UserQueueInfo[];
+            const delayedUsers = (await db.executeStoredProcedure('get_oldest_delayed_term_user', {})) as UserQueueInfo[];
 
             if (delayedUsers && delayedUsers.length > 0)
             {
@@ -88,9 +88,9 @@ class MatchmakingManager
     {
         const matchingTerms = await this.#getMatchingTerms(terms);
 
-        if (matchingTerms.length > 0)
+        if (matchingTerms && matchingTerms.length > 0)
         {
-            return (await db.executeStoredProcedure('GetQueuedUserWithMostMatches', {
+            return (await db.executeStoredProcedure('get_queued_user_with_most_matches', {
                 matchedTopics: matchingTerms
             })) as UserQueueInfo[];
         }
@@ -100,7 +100,7 @@ class MatchmakingManager
 
     static async #getMatchingTerms(terms: string[]): Promise<string[]>
     {
-        if (terms.length > 0)
+        if (terms && terms.length > 0)
         {
             const threshold = 0.9;
 
@@ -138,7 +138,7 @@ class MatchmakingManager
 
     static async #addToQueue(sessionId: string, terms: string[]): Promise<void>
     {
-        if (terms.length > 0)
+        if (terms && terms.length > 0)
         {
             const embeddings = await Promise.all(terms.map(term => this.#getEmbedding(term)));
             const vectorDataArray = terms.map((term, index) => ({
@@ -149,14 +149,17 @@ class MatchmakingManager
             db.vectorBatchInsert('topics_collection', vectorDataArray);
         }
 
-        db.executeStoredProcedure('AddUserToQueue', { sessionId, terms });
+        db.executeStoredProcedure('add_to_queue', {
+            sessionId: sessionId as unknown as 'UUID',
+            topics: JSON.stringify(terms) as unknown as 'JSONB'
+        });
     }
 
     static async #delayedMatchmaking(sessionId: string, terms: string[]): Promise<boolean>
     {
-        if (terms.length > 0)
+        if (terms && terms.length > 0)
         {
-            const randomTopicUser = (await db.executeStoredProcedure('GetOldestRandomTopicUser', {})) as UserQueueInfo[];
+            const randomTopicUser = (await db.executeStoredProcedure('get_oldest_random_topic_user', {})) as UserQueueInfo[];
 
             if (randomTopicUser && randomTopicUser.length > 0)
             {
@@ -166,7 +169,7 @@ class MatchmakingManager
                 return true;
             }
 
-            const mismatchedTopicUser = (await db.executeStoredProcedure('GetOldestTopicUser', {})) as UserQueueInfo[];
+            const mismatchedTopicUser = (await db.executeStoredProcedure('get_oldest_topic_user', {})) as UserQueueInfo[];
 
             if (mismatchedTopicUser && mismatchedTopicUser.length > 0)
             {
@@ -178,7 +181,7 @@ class MatchmakingManager
         }
         else
         {
-            const delayedTopicUser = (await db.executeStoredProcedure('GetOldestDelayedTermUser', { sessionId })) as UserQueueInfo[];
+            const delayedTopicUser = (await db.executeStoredProcedure('get_oldest_delayed_term_user', {})) as UserQueueInfo[];
 
             if (delayedTopicUser && delayedTopicUser.length > 0)
             {
@@ -188,7 +191,7 @@ class MatchmakingManager
                 return true;
             }
 
-            const randomTopicUser = (await db.executeStoredProcedure('GetOldestRandomTopicUser', {})) as UserQueueInfo[];
+            const randomTopicUser = (await db.executeStoredProcedure('get_oldest_random_topic_user', {})) as UserQueueInfo[];
 
             if (randomTopicUser && randomTopicUser.length > 0)
             {
@@ -204,12 +207,12 @@ class MatchmakingManager
 
     static async #removeFromQueue(sessionId: string): Promise<void>
     {
-        db.executeStoredProcedure('RemoveFromQueue', { sessionId });
+        db.executeStoredProcedure('remove_from_queue', { sessionId });
     }
 
     static async #getEmbedding(term: string): Promise<number[]>
     {
-        const existingEmbedding = (await db.executeStoredProcedure('GetTextEmbedding', { term })) as EmbeddingResponse;
+        const existingEmbedding = (await db.executeStoredProcedure('get_text_embedding', { term })) as EmbeddingResponse;
 
         if (existingEmbedding && existingEmbedding.embedding)
         {
@@ -233,7 +236,7 @@ class MatchmakingManager
 
         const embedding = response.data[0].embedding;
 
-        db.executeStoredProcedure('SaveTextEmbedding', { term, embedding });
+        db.executeStoredProcedure('save_text_embedding', { term, embedding });
 
         return embedding;
     }

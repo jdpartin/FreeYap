@@ -1,5 +1,5 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 class DatabaseManager
 {
@@ -21,15 +21,19 @@ class DatabaseManager
             connectionString: process.env.RENDER_DATABASE_URL,
             user: process.env.RENDER_DATABASE_USER,
             password: process.env.RENDER_DATABASE_PASSWORD,
-            database: process.env.RENDER_DATABASE_NAME
+            database: process.env.RENDER_DATABASE_NAME,
+            ssl: {
+                rejectUnauthorized: false
+            }
         });
     }
 
     public async executeStoredProcedure(functionName: string, params: object): Promise<any>
     {
-        // New implementation using runQuery
-        const query = `CALL ${functionName}(${Object.values(params).map(() => '?').join(', ')})`;
-        return this.runQuery(query);
+        const placeholders = Object.keys(params).map((_, index) => `$${index + 1}`).join(', ');
+        const query = `CALL public.${functionName}(${placeholders})`;
+        const values = Object.values(params);
+        return this.runQuery(query, values);
     }
 
     public async insertVector(collectionName: string, vector: number[], metadata: Record<string, unknown>): Promise<any>
@@ -142,27 +146,17 @@ class DatabaseManager
         }
     }
 
-    public async runQuery(query: string): Promise<any>
+    public async runQuery(query: string, params: any[] = []): Promise<any>
     {
         try
         {
-            await this.connectToRelationalDatabase();
-
-            const { data, error } = await this.supabase.rpc('public.run_query', { query });
-            if (error)
-            {
-                throw new Error(`Error executing query: ${error.message}`);
-            }
-            return data;
+            const result = await this.pool.query(query, params);
+            return result.rows;
         }
         catch (err)
         {
             console.error('Error running query:', err);
             throw err;
-        }
-        finally
-        {
-            await this.closeRelationalConnection();
         }
     }
 

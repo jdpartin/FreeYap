@@ -1,3 +1,8 @@
+-- Purpose: Adds a user to the matchmaking queue.
+-- Parameters:
+--   session_id (UUID): The session ID of the user.
+--   topics (JSONB): A JSONB array of topics associated with the session.
+
 CREATE OR REPLACE PROCEDURE public.add_to_queue(
     session_id UUID,
     topics JSONB
@@ -9,17 +14,13 @@ BEGIN
 
         INSERT INTO matchmaking_queue 
         (
-            session_id, 
-            has_topics, 
-            last_heartbeat, 
-            inserted_at
+            session_id,
+            has_topics
         )
         VALUES 
         (
             session_id, 
-            TRUE, 
-            NOW(), 
-            NOW()
+            TRUE
         );
 
         -- Insert each topic into queue_topics
@@ -37,16 +38,12 @@ BEGIN
         INSERT INTO matchmaking_queue 
         (
             session_id, 
-            has_topics, 
-            last_heartbeat, 
-            inserted_at
+            has_topics
         )
         VALUES 
         (
             session_id, 
-            FALSE, 
-            NOW(), 
-            NOW()
+            FALSE
         );
 
     END IF;
