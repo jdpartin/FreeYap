@@ -22,7 +22,7 @@ This project is called FreeYap. It is a Node.js-based social media platform for 
 4. **Avoid Assumptions**: Do not assume the name or behavior of a function, endpoint, or feature. Verify its existence and behavior before use. If it cannot be located, clearly state this and suggest next steps.
 
 ### Code Style:
-1. Use **Allman style** for code formatting.
+1. Use **Allman style** for code formatting. If you encounter code that is not in Allman style, update it to conform to this style.
 2. Follow the existing project structure and naming conventions.
 3. Use **CommonJS modules** (`require`/`module.exports`) for Node.js.
 

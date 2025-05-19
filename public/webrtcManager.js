@@ -362,7 +362,7 @@ class WebRTCManager {
             return;
         }
 
-        const response = await fetch(`/api/matchmaking/joinQueue`, {
+        const response = await fetch(`/api/matchmaking/join-queue`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId: this.webrtcId }) // Pass webrtcId as sessionId

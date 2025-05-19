@@ -17,14 +17,14 @@ const webRTCServerManager = new WebRTCServerManager(server);
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, '../views'));
 
 // Enable EJS Layouts
 app.use(expressLayouts);
 app.set('layout', 'layout');
 
 // Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Middleware
 app.use(bodyParser.json());

@@ -1,18 +1,14 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { QdrantClient } from '@qdrant/js-client-rest';
+const { Pool } = require('pg');
 
 class DatabaseManager
 {
-    private supabase: SupabaseClient;
     private vectorDbClient: QdrantClient;
+    private pool: Pool;
 
     constructor()
     {
         require('dotenv').config();
-
-        const supabaseUrl = process.env.SUPABASE_URL || '';
-        const supabaseKey = process.env.SUPABASE_KEY || '';
-        this.supabase = createClient(supabaseUrl, supabaseKey);
 
         const qdrantConfig = {
             url: process.env.QDRANT_URL || '',
@@ -20,30 +16,20 @@ class DatabaseManager
         };
         this.vectorDbClient = new QdrantClient(qdrantConfig);
         console.log('Vector database initialized successfully.');
+
+        this.pool = new Pool({
+            connectionString: process.env.RENDER_DATABASE_URL,
+            user: process.env.RENDER_DATABASE_USER,
+            password: process.env.RENDER_DATABASE_PASSWORD,
+            database: process.env.RENDER_DATABASE_NAME
+        });
     }
 
     public async executeStoredProcedure(functionName: string, params: object): Promise<any>
     {
-        try
-        {
-            await this.connectToRelationalDatabase();
-
-            const { data, error } = await this.supabase.rpc(functionName, params);
-            if (error)
-            {
-                throw new Error(`Error executing database function ${functionName}: ${error.message}`);
-            }
-            return data;
-        }
-        catch (err)
-        {
-            console.error(err);
-            throw err;
-        }
-        finally
-        {
-            await this.closeRelationalConnection();
-        }
+        // New implementation using runQuery
+        const query = `CALL ${functionName}(${Object.values(params).map(() => '?').join(', ')})`;
+        return this.runQuery(query);
     }
 
     public async insertVector(collectionName: string, vector: number[], metadata: Record<string, unknown>): Promise<any>
@@ -153,6 +139,30 @@ class DatabaseManager
         {
             console.error(`Error performing batch search in ${collectionName}:`, err);
             throw err;
+        }
+    }
+
+    public async runQuery(query: string): Promise<any>
+    {
+        try
+        {
+            await this.connectToRelationalDatabase();
+
+            const { data, error } = await this.supabase.rpc('public.run_query', { query });
+            if (error)
+            {
+                throw new Error(`Error executing query: ${error.message}`);
+            }
+            return data;
+        }
+        catch (err)
+        {
+            console.error('Error running query:', err);
+            throw err;
+        }
+        finally
+        {
+            await this.closeRelationalConnection();
         }
     }
 

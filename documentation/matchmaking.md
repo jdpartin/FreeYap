@@ -56,3 +56,14 @@ The matchmaking system is designed to pair users based on the semantic similarit
 - Implement additional filters based on user preferences.
 - Optimize vector database queries for large-scale searches.
 - Add retry mechanisms for database operations to improve fault tolerance.
+
+## Technologies:
+- **Render (PostgreSQL)**: For relational database management.
+- **Node.js**: Backend runtime environment.
+- **Express**: Web application framework.
+- **EJS**: Template engine for rendering views.
+- **Bootstrap**: Frontend styling framework.
+- **WebRTC**: Enables video/audio chat functionality.
+- **TypeScript**: Ensures type safety in the codebase.
+- **JavaScript**: Used for client-side scripting (being phased out on the server side).
+- **Qdrant**: Vector database provider for advanced matching and search capabilities.

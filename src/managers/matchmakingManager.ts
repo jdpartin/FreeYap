@@ -60,7 +60,7 @@ class MatchmakingManager
 
     static async #initialMatchmaking(sessionId: string, terms: string[]): Promise<void>
     {
-        if (terms.length > 0)
+        if (terms && terms.length > 0)
         {
             const bestMatch = await this.getBestTopicMatch(sessionId, terms);
 
