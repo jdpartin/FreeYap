@@ -1,3 +1,6 @@
+// This class should be instantiated in the `index.ts` file and passed as an instance to other modules that require it.
+// Avoid using this class as a static class to ensure proper state management and avoid multiple instances.
+
 import { Server, Socket } from 'socket.io';
 
 // This is SERVER-SIDE code for managing WebRTC connections
