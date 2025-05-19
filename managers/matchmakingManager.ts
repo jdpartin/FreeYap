@@ -1,5 +1,6 @@
-import db from './databaseManager';
-import webRTCServerManager from './webrtcServerManager';
+import DatabaseManager from './databaseManager';
+import WebRTCServerManager from './webrtcServerManager';
+import { webRTCServerManager } from '../index'; // Import the initialized instance
 
 // Ensure WebRTCServerManager is initialized elsewhere in the application
 import VectorData from '../models/vectorData';
@@ -121,8 +122,8 @@ class MatchmakingManager
     {
         const roomId = `${sessionId}-${matchedSessionId}`;
 
-        (webRTCServerManager.io as Server).to(sessionId).emit('match-found', { roomId });
-        (webRTCServerManager.io as Server).to(matchedSessionId).emit('match-found', { roomId });
+        webRTCServerManager.io.to(sessionId).emit('match-found', { roomId });
+        webRTCServerManager.io.to(matchedSessionId).emit('match-found', { roomId });
 
         console.log(`Triggered connection for users ${sessionId} and ${matchedSessionId} in room ${roomId}`);
     }
@@ -131,8 +132,8 @@ class MatchmakingManager
     {
         const roomId = `${user1Id}-${user2Id}`;
 
-        (webRTCServerManager.io as Server).to(user1Id).emit('match-found', { roomId });
-        (webRTCServerManager.io as Server).to(user2Id).emit('match-found', { roomId });
+        webRTCServerManager.io.to(user1Id).emit('match-found', { roomId });
+        webRTCServerManager.io.to(user2Id).emit('match-found', { roomId });
 
         console.log(`Triggered connection for users ${user1Id} and ${user2Id} in room ${roomId}`);
     }
@@ -239,5 +240,7 @@ class MatchmakingManager
         return embedding;
     }
 }
+
+const db = new DatabaseManager();
 
 export default MatchmakingManager;

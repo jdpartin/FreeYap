@@ -1,6 +1,6 @@
-const db = require('./databaseManager');
-const webRTCServerManager = require('./webrtcServerManager');
-const VectorData = require('../models/vectorData');
+const db = require('../databaseManager');
+const webRTCServerManager = require('../webrtcServerManager');
+const VectorData = require('../../models/vectorData');
 
 
 // Matchmaking preference
