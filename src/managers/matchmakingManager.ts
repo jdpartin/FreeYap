@@ -1,8 +1,6 @@
-import DatabaseManager from './databaseManager';
-import WebRTCServerManager from './webrtcServerManager';
-import { webRTCServerManager } from '../index'; // Import the initialized instance
-
-// Ensure WebRTCServerManager is initialized elsewhere in the application
+import DatabaseManager from '../managers/databaseManager';
+import WebRTCServerManager from '../managers/webrtcServerManager';
+import { webRTCServerManager } from '../index';
 import VectorData from '../models/vectorData';
 import { Server } from 'socket.io';
 

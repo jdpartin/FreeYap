@@ -1,5 +1,4 @@
-import { Server } from 'socket.io';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 // This is SERVER-SIDE code for managing WebRTC connections
 // It should never be referenced in the client-side code
