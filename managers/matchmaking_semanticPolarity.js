@@ -1,6 +1,6 @@
-const db = require('../managers/databaseManager');
+const db = require('./databaseManager');
 
-class Matchmaking
+class Matchmaking_SemanticPolarity
 {
     //#region Properties
 

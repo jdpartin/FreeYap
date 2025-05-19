@@ -20,12 +20,51 @@ class DatabaseManager
 
     //#region Public Methods
 
-    async executeStoredProcedure(procedureName, params)
+    /**
+     * Executes a database function in the relational database.
+     * @param {string} functionName - The name of the database function to execute.
+     * @param {object} params - The parameters to pass to the database function.
+     * @returns {Promise<object>} - The result of the database function execution.
+     */
+    async executeStoredProcedure(functionName, params)
     {
         try
         {
             await this.#connectToRelationalDatabase();
-            const { data, error } = await this.supabase.rpc(procedureName, params);
+
+            // Ensure parameters are passed as a single object with correct keys
+            const { data, error } = await this.supabase.rpc(functionName, params);
+            if (error)
+            {
+                throw new Error(`Error executing database function ${functionName}: ${error.message}`);
+            }
+            return data;
+        }
+        catch (err)
+        {
+            console.error(err);
+            throw err;
+        }
+        finally
+        {
+            await this.#closeRelationalConnection();
+        }
+    }
+
+    /**
+     * Executes a stored procedure in the relational database.
+     * @param {string} procedureName - The name of the stored procedure to execute.
+     * @param {object} params - The parameters to pass to the stored procedure.
+     * @returns {Promise<object>} - The result of the stored procedure execution.
+     */
+    async executeStoredProcedure_NOTWORKING(procedureName, params)
+    {
+        try
+        {
+            await this.#connectToRelationalDatabase();
+
+            // Use Supabase's postgres.rpc method to call the stored procedure
+            const { data, error } = await this.supabase.postgres.rpc(procedureName, params);
             if (error)
             {
                 throw new Error(`Error executing stored procedure ${procedureName}: ${error.message}`);
@@ -43,6 +82,13 @@ class DatabaseManager
         }
     }
 
+    /**
+     * Inserts a single vector into the vector database.
+     * @param {string} collectionName - The name of the collection in the vector database.
+     * @param {Array<number>} vector - The numerical representation of the data.
+     * @param {object} metadata - Additional information associated with the vector.
+     * @returns {Promise<object>} - The response from the vector database.
+     */
     async insertVector(collectionName, vector, metadata)
     {
         try
@@ -71,6 +117,43 @@ class DatabaseManager
         }
     }
 
+    /**
+     * Inserts multiple vectors into the vector database in a batch.
+     * @param {string} collectionName - The name of the collection in the vector database.
+     * @param {Array<{vector: Array<number>, metadata: object}>} vectors - An array of objects containing vectors and their associated metadata.
+     * @returns {Promise<object>} - The response from the vector database.
+     */
+    async vectorBatchInsert(collectionName, vectors)
+    {
+        try
+        {
+            // Prepare points for batch insertion
+            const points = vectors.map(({ vector, metadata }) => ({ vector, payload: metadata }));
+
+            // Use Qdrant client for batch inserting vectors
+            const response = await this.vectorDbClient.upsert(collectionName, { points });
+
+            if (!response || response.status !== 'ok')
+            {
+                throw new Error(`Error batch inserting vectors into ${collectionName}: ${response.status}`);
+            }
+
+            return response;
+        }
+        catch (err)
+        {
+            console.error(`Error batch inserting vectors into ${collectionName}:`, err);
+            throw err;
+        }
+    }
+
+    /**
+     * Searches for similar vectors in the vector database.
+     * @param {string} collectionName - The name of the collection in the vector database.
+     * @param {Array<number>} queryVector - The vector to search for similar items.
+     * @param {number} topK - The number of top similar results to return.
+     * @returns {Promise<Array<object>>} - The search results from the vector database.
+     */
     async searchVector(collectionName, queryVector, topK)
     {
         try
@@ -95,6 +178,48 @@ class DatabaseManager
         }
     }
 
+    /**
+     * Performs a batch search for multiple terms in the vector database.
+     * @param {Array<string>} terms - The terms to search for matches.
+     * @param {number} topK - The number of top results to return for each term.
+     * @returns {Promise<Array<{term: string, matches: Array<object>}>>} - The search results for each term.
+     */
+    async searchVectorBatch(terms, topK = 10)
+    {
+        const collectionName = 'your_collection_name'; // Centralized collection name
+
+        try
+        {
+            const points = terms.map(term => ({ term }));
+
+            const response = await this.vectorDbClient.search(collectionName, {
+                vectors: points,
+                limit: topK
+            });
+
+            if (!response || !response.result)
+            {
+                throw new Error(`Error performing batch search in ${collectionName}: No results returned.`);
+            }
+
+            return response.result.map((res, index) => ({
+                term: terms[index],
+                matches: res
+            }));
+        }
+        catch (err)
+        {
+            console.error(`Error performing batch search in ${collectionName}:`, err);
+            throw err;
+        }
+    }
+
+    /**
+     * Deletes a vector from the vector database.
+     * @param {string} collectionName - The name of the collection in the vector database.
+     * @param {string} vectorId - The unique identifier of the vector to delete.
+     * @returns {Promise<object>} - The response from the vector database.
+     */
     async deleteVector(collectionName, vectorId)
     {
         try

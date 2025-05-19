@@ -1,20 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const Matchmaking = require('../managers/matchmaking');
+const Matchmaking = require('../managers/matchmakingManager');
 
-// Endpoint to join the matchmaking queue
+
 router.post('/joinQueue', async (req, res) =>
 {
-    const { sessionId, webrtcId } = req.body;
-
     try
     {
-        await Matchmaking.JoinQueue(sessionId, webrtcId);
-        res.status(200).json({ success: true, message: 'Successfully joined the queue.' });
+        const { sessionId } = req.body;
+
+        if (!sessionId)
+        {
+            return res.status(400).json({ 
+                success: false,
+                error: 'sessionId is required.' 
+            });
+        }
+
+        // Directly use sessionId as WebRTC ID since they are the same
+        await Matchmaking.JoinQueue(sessionId, sessionId);
+
+        res.status(200).json({ 
+            success: true
+        });
     }
     catch (error)
     {
-        res.status(500).json({ success: false, message: 'Failed to join the queue.', error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
     }
 });
 

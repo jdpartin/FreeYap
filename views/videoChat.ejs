@@ -27,6 +27,8 @@
   const startButton = document.getElementById('startButton');
   const endButton = document.getElementById('endButton');
   const statusMessage = document.getElementById('statusMessage');
+  const localVideo = document.getElementById('localVideo');
+  const remoteVideo = document.getElementById('remoteVideo');
 
   startButton.addEventListener('click', () => {
     webrtcManager.joinQueue();
@@ -40,6 +42,20 @@
     endButton.disabled = true;
     statusMessage.textContent = '';
   });
+
+  webrtcManager.onTrack = (event) => {
+    remoteVideo.srcObject = event.streams[0];
+  };
+
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    .then((stream) => {
+      localVideo.srcObject = stream;
+      webrtcManager.addLocalStream(stream);
+    })
+    .catch((error) => {
+      console.error('Error accessing media devices:', error);
+      statusMessage.textContent = 'Error accessing camera or microphone.';
+    });
 
   // Listen for Socket.IO events
   webrtcManager.socket.on('waiting', (e) => {

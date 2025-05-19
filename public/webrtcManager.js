@@ -1,11 +1,17 @@
+// This is CLIENT-SIDE code for managing WebRTC connections
+// It should never be referenced in the server-side code.
+// Server-side code should never reference this file.
 class WebRTCManager {
   constructor() {
     this.peerConnection = null;
     this.localStream = null;
     this.remoteStream = null;
-    this.dataChannel = null; // Add data channel property
+    this.dataChannel = null;
     this.room = null;
-    this.socket = io(); // Connect to Socket.IO server
+    this.apiBaseUrl = '/api/webrtc';
+    this.socket = io();
+    this.webrtcId = this.getOrGenerateWebRTCId();
+    console.log(`Generated or retrieved WebRTC ID: ${this.webrtcId}`);
 
     this.iceConfig = {
       iceServers: [
@@ -17,7 +23,7 @@ class WebRTCManager {
     this.socket.on('chat-ready', async ({ room, isCaller }) => {
       console.log('Chat ready, room:', room, 'isCaller:', isCaller);
       this.room = room;
-      this.socket.emit('join-room', room);
+      await this.joinRoom(room);
       await this.startCall(isCaller);
     });
 
@@ -44,11 +50,107 @@ class WebRTCManager {
       console.log('Received ICE candidate');
       await this.handleIceCandidate(candidate);
     });
+
+    this.socket.on('match-found', ({ roomId }) => {
+      console.log('Match found, joining room:', roomId);
+      this.room = roomId;
+      this.joinRoom(roomId);
+    });
+
+    this.socket.on('join-room', async (roomId) => {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/join-room`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ socketId: this.socket.id, roomId })
+        });
+        const result = await response.json();
+        console.log('Joined room via API:', result);
+      } catch (error) {
+        console.error('Error joining room via API:', error);
+      }
+    });
+
+    this.socket.on('signal', async ({ roomId, signalData }) => {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/signal`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ socketId: this.socket.id, roomId, signalData })
+        });
+        const result = await response.json();
+        console.log('Signal sent via API:', result);
+      } catch (error) {
+        console.error('Error sending signal via API:', error);
+      }
+    });
   }
 
-  joinQueue() {
-    console.log('Joining queue');
-    this.socket.emit('join-queue');
+  getOrGenerateWebRTCId() {
+    const cookieName = 'webrtcId';
+    const existingId = this.getCookie(cookieName);
+    if (existingId) {
+      return existingId;
+    }
+    const newId = crypto.randomUUID();
+    this.setCookie(cookieName, newId, 365); // Save for 1 year
+    return newId;
+  }
+
+  getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  setCookie(name, value, days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = `expires=${date.toUTCString()}`;
+    document.cookie = `${name}=${value}; ${expires}; path=/`;
+  }
+
+  async joinRoom(roomId) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/join-room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socketId: this.socket.id, roomId })
+      });
+      const result = await response.json();
+      console.log('Joined room:', result);
+    } catch (error) {
+      console.error('Error joining room:', error);
+    }
+  }
+
+  async sendSignal(roomId, signalData) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/signal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socketId: this.socket.id, roomId, signalData })
+      });
+      const result = await response.json();
+      console.log('Signal sent:', result);
+    } catch (error) {
+      console.error('Error sending signal:', error);
+    }
+  }
+
+  async disconnect() {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socketId: this.socket.id })
+      });
+      const result = await response.json();
+      console.log('Disconnected:', result);
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+    }
   }
 
   async startCall(isCaller) {
@@ -229,6 +331,54 @@ class WebRTCManager {
     }
     this.room = null;
   }
+
+  registerSession(sessionId, webrtcId)
+  {
+      console.log(`Registering session: ${sessionId} with WebRTC ID: ${webrtcId}`);
+      this.socket.emit('register-session', { sessionId, webrtcId });
+  }
+
+  unregisterSession(sessionId)
+  {
+      console.log(`Unregistering session: ${sessionId}`);
+      this.socket.emit('unregister-session', { sessionId });
+  }
+
+  addLocalStream(stream) {
+    console.log('Adding local stream');
+    this.localStream = stream;
+    if (this.peerConnection) {
+        stream.getTracks().forEach(track => {
+            this.peerConnection.addTrack(track, stream);
+        });
+    }
+  }
+
+  async joinQueue() {
+    console.log('Joining queue via API');
+    try {
+        if (!this.webrtcId) {
+            console.error('Error: WebRTC ID is not defined.');
+            return;
+        }
+
+        const response = await fetch(`/api/matchmaking/joinQueue`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: this.webrtcId }) // Pass webrtcId as sessionId
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('Queue joined successfully:', result);
+        } else {
+            console.error('Error joining queue:', result.error);
+            // Optionally, you can emit an event or notify the user here
+        }
+    } catch (error) {
+        console.error('Error joining queue via API:', error);
+    }
+}
 }
 
 // You would instantiate this class and set up the signaling channel elsewhere in your client-side code.

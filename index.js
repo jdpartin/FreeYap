@@ -4,8 +4,8 @@ const expressLayouts = require('express-ejs-layouts');
 const http = require('http');
 const { Server } = require("socket.io");
 const bodyParser = require('body-parser');
-const sessionsApi = require('./api/sessions');
 const matchmakingApi = require('./api/matchmaking');
+const webrtcApi = require('./api/webrtc');
 
 const app = express();
 const server = http.createServer(app);
@@ -27,32 +27,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 
 // API routes
-app.use('/api/sessions', sessionsApi);
 app.use('/api/matchmaking', matchmakingApi);
-
-// Queue to store users waiting for a chat
-const waitingUsers = new Set();
+app.use('/api/webrtc', webrtcApi);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
-
-  socket.on('join-queue', () => {
-    console.log('User joined queue:', socket.id);
-    // If someone else is waiting, pair them up
-    const waitingUser = Array.from(waitingUsers)[0];
-    if (waitingUser) {
-      waitingUsers.delete(waitingUser);
-      // Create a unique room for these two users
-      const room = `${waitingUser}-${socket.id}`;
-      io.to(waitingUser).emit('chat-ready', { room, isCaller: true });
-      socket.emit('chat-ready', { room, isCaller: false });
-    } else {
-      // No one waiting, add this user to waiting list
-      waitingUsers.add(socket.id);
-      socket.emit('waiting');
-    }
-  });
 
   socket.on('join-room', (room) => {
     socket.join(room);
@@ -73,7 +53,6 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    waitingUsers.delete(socket.id);
     // Notify any rooms this user was in
     socket.rooms.forEach(room => {
       if (room !== socket.id) {  // Socket.IO automatically puts socket in room of its own ID
@@ -118,4 +97,12 @@ app.get('/text-chat', (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`FreeYap server running at http://localhost:${PORT}`);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Unhandled Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });

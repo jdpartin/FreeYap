@@ -26,37 +26,7 @@
   const muteButton = document.querySelector('.btn-secondary');
   let localStream;
 
-  // Capture microphone audio stream
-  async function startVoiceChat() {
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      webrtcManager.addLocalStream(localStream);
-      console.log('Microphone access granted.');
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      statusMessage.textContent = 'Error accessing microphone. Please check your settings.';
-    }
-  }
-
-  // Handle mute/unmute functionality
-  muteButton.addEventListener('click', () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
-      muteButton.textContent = audioTrack.enabled ? 'Mute' : 'Unmute';
-    }
-  });
-
-  // Listen for WebRTC track event to play remote audio
-  webrtcManager.onTrack = (event) => {
-    const remoteAudio = new Audio();
-    remoteAudio.srcObject = event.streams[0];
-    remoteAudio.play();
-    console.log('Playing remote audio stream.');
-  };
-
-  startButton.addEventListener('click', async () => {
-    await startVoiceChat();
+  startButton.addEventListener('click', () => {
     webrtcManager.joinQueue();
     startButton.disabled = true;
     statusMessage.textContent = 'Looking for a chat partner...';
@@ -68,6 +38,30 @@
     endButton.disabled = true;
     statusMessage.textContent = '';
   });
+
+  muteButton.addEventListener('click', () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      audioTrack.enabled = !audioTrack.enabled;
+      muteButton.textContent = audioTrack.enabled ? 'Mute' : 'Unmute';
+    }
+  });
+
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => {
+      localStream = stream;
+      webrtcManager.addLocalStream(stream);
+    })
+    .catch((error) => {
+      console.error('Error accessing microphone:', error);
+      statusMessage.textContent = 'Error accessing microphone. Please check your settings.';
+    });
+
+  webrtcManager.onTrack = (event) => {
+    const audio = new Audio();
+    audio.srcObject = event.streams[0];
+    audio.play();
+  };
 
   // Listen for Socket.IO events
   webrtcManager.socket.on('waiting', (e) => {
