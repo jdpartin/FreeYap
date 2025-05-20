@@ -67,3 +67,13 @@ The matchmaking system is designed to pair users based on the semantic similarit
 - **TypeScript**: Ensures type safety in the codebase.
 - **JavaScript**: Used for client-side scripting (being phased out on the server side).
 - **Qdrant**: Vector database provider for advanced matching and search capabilities.
+
+## Note on Documentation Updates
+
+Whenever changes are made to the matchmaking logic, stored procedures, or related API endpoints, ensure that this documentation is updated to reflect the changes. This includes:
+
+1. **Stored Procedures**: Document any modifications to existing stored procedures or the addition of new ones.
+2. **API Endpoints**: Add details about new endpoints or changes to existing ones.
+3. **Matchmaking Logic**: Update the flow and logic descriptions to match the current implementation.
+
+For example, the `/perform-delayed-matchmaking` endpoint was recently added to trigger delayed matchmaking logic 10 seconds after a user joins the queue.

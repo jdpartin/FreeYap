@@ -11,9 +11,9 @@ import { Server } from 'socket.io';
 
 interface UserQueueInfo
 {
-    sessionId: string;
-    terms: string[];
-    insertedAt: string;
+    session_id: string;
+    topics: string[];
+    inserted_at: string;
 }
 
 interface EmbeddingResponse
@@ -23,16 +23,16 @@ interface EmbeddingResponse
 
 class MatchmakingManager
 {
-    static async JoinQueue(sessionId: string, terms: string[]): Promise<void>
+    static async JoinQueue(sessionId: string, topics: string[]): Promise<void>
     {
-        await this.#initialMatchmaking(sessionId, terms);
+        await this.#initialMatchmaking(sessionId, topics);
     }
 
-    static async PerformDelayedMatchmaking(sessionId: string, terms: string[]): Promise<void>
+    static async PerformDelayedMatchmaking(sessionId: string, topics: string[]): Promise<void>
     {
-        const queueInfoPromise = db.executeStoredProcedure('get_and_delete_queue_entry', { sessionId }) as Promise<UserQueueInfo[]>;
+        const queueInfoPromise = db.executeFunction('get_and_delete_queue_entry', { sessionId: sessionId as unknown as 'UUID' }) as Promise<UserQueueInfo[]>;
 
-        const matchmakingResult = await this.#delayedMatchmaking(sessionId, terms);
+        const matchmakingResult = await this.#delayedMatchmaking(sessionId, topics);
 
         if (!matchmakingResult)
         {
@@ -42,10 +42,17 @@ class MatchmakingManager
             {
                 const queuedUser = queueInfo[0];
 
+                // Map snake_case to camelCase
+                const mappedUser = {
+                    sessionId: queuedUser.session_id,
+                    topics: queuedUser.topics,
+                    insertedAt: queuedUser.inserted_at
+                };
+
                 db.executeStoredProcedure('add_back_to_queue', {
-                    sessionId: queuedUser.sessionId,
-                    terms: queuedUser.terms,
-                    insertedAt: queuedUser.insertedAt
+                    sessionId: mappedUser.sessionId,
+                    topics: JSON.stringify(mappedUser.topics), // Convert topics to JSONB array
+                    insertedAt: mappedUser.insertedAt
                 });
             }
         }
@@ -58,59 +65,74 @@ class MatchmakingManager
 
     //#region Private Methods
 
-    static async #initialMatchmaking(sessionId: string, terms: string[]): Promise<void>
+    static mapToCamelCase(userQueueInfo: UserQueueInfo): { sessionId: string; topics: string[]; insertedAt: string }
     {
-        if (terms && terms.length > 0)
+        return {
+            sessionId: userQueueInfo.session_id,
+            topics: userQueueInfo.topics,
+            insertedAt: userQueueInfo.inserted_at
+        };
+    }
+
+    static async #initialMatchmaking(sessionId: string, topics: string[]): Promise<void>
+    {
+        if (topics && topics.length > 0)
         {
-            const bestMatch = await this.getBestTopicMatch(sessionId, terms);
+            const bestMatch = await this.getBestTopicMatch(sessionId, topics);
 
             if (bestMatch && bestMatch.length > 0)
             {
-                await this.#triggerConnection(sessionId, bestMatch[0].sessionId);
+                const mappedMatch = this.mapToCamelCase(bestMatch[0]);
+                await this.#triggerConnection(sessionId, mappedMatch.sessionId);
                 return;
             }
         }
         else
         {
-            const delayedUsers = (await db.executeStoredProcedure('get_oldest_delayed_term_user', {})) as UserQueueInfo[];
+            const result = (await db.executeFunction('get_oldest_delayed_term_user', {})) as { get_oldest_delayed_term_user: UserQueueInfo[] | null }[];
 
-            if (delayedUsers && delayedUsers.length > 0)
+            if (result && result.length > 0 && result[0].get_oldest_delayed_term_user)
             {
-                await this.#triggerConnection(sessionId, delayedUsers[0].sessionId);
-                return;
+                const delayedUsers = result[0].get_oldest_delayed_term_user;
+                if (delayedUsers.length > 0)
+                {
+                    const mappedUser = this.mapToCamelCase(delayedUsers[0]);
+                    await this.#triggerConnection(sessionId, mappedUser.sessionId);
+                    return;
+                }
             }
         }
 
-        await this.#addToQueue(sessionId, terms);
+        await this.#addToQueue(sessionId, topics);
     }
 
-    static async getBestTopicMatch(sessionId: string, terms: string[]): Promise<UserQueueInfo[]>
+    static async getBestTopicMatch(sessionId: string, topics: string[]): Promise<UserQueueInfo[]>
     {
-        const matchingTerms = await this.#getMatchingTerms(terms);
+        const matchingTopics = await this.#getMatchingTopics(topics);
 
-        if (matchingTerms && matchingTerms.length > 0)
+        if (matchingTopics && matchingTopics.length > 0)
         {
-            return (await db.executeStoredProcedure('get_queued_user_with_most_matches', {
-                matchedTopics: matchingTerms
+            return (await db.executeFunction('get_queued_user_with_most_matches', {
+                matchedTopics: matchingTopics
             })) as UserQueueInfo[];
         }
 
         return [];
     }
 
-    static async #getMatchingTerms(terms: string[]): Promise<string[]>
+    static async #getMatchingTopics(topics: string[]): Promise<string[]>
     {
-        if (terms && terms.length > 0)
+        if (topics && topics.length > 0)
         {
             const threshold = 0.9;
 
-            const results = await db.searchVectorBatch(terms, 1000);
+            const results = await db.searchVectorBatch(topics, 1000);
 
-            const matchedTerms = results.flatMap((result: any) =>
-                result.matches.filter((match: any) => match.score >= threshold).map((match: any) => match.term)
+            const matchedTopics = results.flatMap((result: any) =>
+                result.matches.filter((match: any) => match.score >= threshold).map((match: any) => match.topic)
             );
 
-            return [...new Set(matchedTerms)]; // Remove duplicates
+            return [...new Set(matchedTopics)]; // Remove duplicates
         }
 
         return [];
@@ -136,14 +158,14 @@ class MatchmakingManager
         console.log(`Triggered connection for users ${user1Id} and ${user2Id} in room ${roomId}`);
     }
 
-    static async #addToQueue(sessionId: string, terms: string[]): Promise<void>
+    static async #addToQueue(sessionId: string, topics: string[]): Promise<void>
     {
-        if (terms && terms.length > 0)
+        if (topics && topics.length > 0)
         {
-            const embeddings = await Promise.all(terms.map(term => this.#getEmbedding(term)));
-            const vectorDataArray = terms.map((term, index) => ({
+            const embeddings = await Promise.all(topics.map(topic => this.#getEmbedding(topic)));
+            const vectorDataArray = topics.map((topic, index) => ({
                 vector: embeddings[index],
-                metadata: { sessionId, term }
+                metadata: { sessionId, topic }
             }));
 
             db.vectorBatchInsert('topics_collection', vectorDataArray);
@@ -151,54 +173,53 @@ class MatchmakingManager
 
         db.executeStoredProcedure('add_to_queue', {
             sessionId: sessionId as unknown as 'UUID',
-            topics: JSON.stringify(terms) as unknown as 'JSONB'
+            topics: JSON.stringify(topics) as unknown as 'JSONB' // Convert topics to JSONB array
         });
     }
 
-    static async #delayedMatchmaking(sessionId: string, terms: string[]): Promise<boolean>
+    static async #delayedMatchmaking(sessionId: string, topics: string[]): Promise<boolean>
     {
-        if (terms && terms.length > 0)
+        if (topics && topics.length > 0)
         {
-            const randomTopicUser = (await db.executeStoredProcedure('get_oldest_random_topic_user', {})) as UserQueueInfo[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {})) as { get_oldest_random_topic_user: UserQueueInfo[] | null }[];
 
-            if (randomTopicUser && randomTopicUser.length > 0)
+            if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
-                const randomTopicUserId = randomTopicUser[0].sessionId;
-
-                await this.#triggerConnection(sessionId, randomTopicUserId);
-                return true;
+                const randomTopicUser = randomTopicResult[0].get_oldest_random_topic_user;
+                if (randomTopicUser.length > 0)
+                {
+                    const mappedUser = this.mapToCamelCase(randomTopicUser[0]);
+                    await this.#triggerConnection(sessionId, mappedUser.sessionId);
+                    return true;
+                }
             }
 
-            const mismatchedTopicUser = (await db.executeStoredProcedure('get_oldest_topic_user', {})) as UserQueueInfo[];
+            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', {})) as { get_oldest_topic_user: UserQueueInfo[] | null }[];
 
-            if (mismatchedTopicUser && mismatchedTopicUser.length > 0)
+            if (mismatchedTopicResult && mismatchedTopicResult.length > 0 && mismatchedTopicResult[0].get_oldest_topic_user)
             {
-                const mismatchedTopicUserId = mismatchedTopicUser[0].sessionId;
-
-                await this.#triggerConnection(sessionId, mismatchedTopicUserId);
-                return true;
+                const mismatchedTopicUser = mismatchedTopicResult[0].get_oldest_topic_user;
+                if (mismatchedTopicUser.length > 0)
+                {
+                    const mappedUser = this.mapToCamelCase(mismatchedTopicUser[0]);
+                    await this.#triggerConnection(sessionId, mappedUser.sessionId);
+                    return true;
+                }
             }
         }
         else
         {
-            const delayedTopicUser = (await db.executeStoredProcedure('get_oldest_delayed_term_user', {})) as UserQueueInfo[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {})) as { get_oldest_random_topic_user: UserQueueInfo[] | null }[];
 
-            if (delayedTopicUser && delayedTopicUser.length > 0)
+            if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
-                const delayedTopicUserId = delayedTopicUser[0].sessionId;
-
-                await this.#triggerConnection(sessionId, delayedTopicUserId);
-                return true;
-            }
-
-            const randomTopicUser = (await db.executeStoredProcedure('get_oldest_random_topic_user', {})) as UserQueueInfo[];
-
-            if (randomTopicUser && randomTopicUser.length > 0)
-            {
-                const randomTopicUserId = randomTopicUser[0].sessionId;
-
-                await this.#triggerConnection(sessionId, randomTopicUserId);
-                return true;
+                const randomTopicUser = randomTopicResult[0].get_oldest_random_topic_user;
+                if (randomTopicUser.length > 0)
+                {
+                    const mappedUser = this.mapToCamelCase(randomTopicUser[0]);
+                    await this.#triggerConnection(sessionId, mappedUser.sessionId);
+                    return true;
+                }
             }
         }
 

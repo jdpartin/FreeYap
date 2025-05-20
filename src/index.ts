@@ -31,45 +31,7 @@ app.use(bodyParser.json());
 
 // API routes
 app.use('/api/matchmaking', matchmakingApi);
-app.use('/api/webrtc', webrtcApi);
-
-// Replace existing Socket.IO connection handling with WebRTCServerManager
-webRTCServerManager.io.on('connection', (socket) =>
-{
-    console.log('User connected:', socket.id);
-
-    socket.on('join-room', (room) =>
-    {
-        socket.join(room);
-    });
-
-    socket.on('offer', (data) =>
-    {
-        socket.to(data.room).emit('offer', { sdp: data.sdp });
-    });
-
-    socket.on('answer', (data) =>
-    {
-        socket.to(data.room).emit('answer', { sdp: data.sdp });
-    });
-
-    socket.on('ice-candidate', (data) =>
-    {
-        socket.to(data.room).emit('ice-candidate', { candidate: data.candidate });
-    });
-
-    socket.on('disconnect', () =>
-    {
-        console.log('User disconnected:', socket.id);
-        socket.rooms.forEach(room =>
-        {
-            if (room !== socket.id)
-            {
-                socket.to(room).emit('peer-disconnected');
-            }
-        });
-    });
-});
+app.use('/api/webrtc', webrtcApi(webRTCServerManager));
 
 // Routes
 app.get('/', (req: Request, res: Response) => {

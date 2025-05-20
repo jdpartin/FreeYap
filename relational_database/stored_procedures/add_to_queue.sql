@@ -4,48 +4,47 @@
 --   topics (JSONB): A JSONB array of topics associated with the session.
 
 CREATE OR REPLACE PROCEDURE public.add_to_queue(
-    session_id UUID,
+    sessionId UUID,
     topics JSONB
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
+
+    DELETE FROM matchmaking_queue
+    WHERE session_id = sessionId;
+
     IF topics IS NOT NULL AND jsonb_array_length(topics) > 0 THEN
 
         INSERT INTO matchmaking_queue 
         (
             session_id,
+            inserted_at,
             has_topics
         )
-        VALUES 
+        VALUES
         (
-            session_id, 
+            sessionId,
+            NOW(),
             TRUE
         );
 
-        -- Insert each topic into queue_topics
-        INSERT INTO queue_topics
-        (
-            session_id, 
-            topic
-        )
-        SELECT 
-            session_id, 
-            jsonb_array_elements_text(topics);
-
     ELSE
-    
+
         INSERT INTO matchmaking_queue 
         (
-            session_id, 
+            session_id,
+            inserted_at,
             has_topics
         )
-        VALUES 
+        VALUES
         (
-            session_id, 
+            sessionId,
+            NOW(),
             FALSE
         );
 
     END IF;
+    
 END;
 $$;

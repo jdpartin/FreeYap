@@ -30,8 +30,36 @@
   const localVideo = document.getElementById('localVideo');
   const remoteVideo = document.getElementById('remoteVideo');
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const topics = JSON.parse(urlParams.get('topics') || '[]');
+
   startButton.addEventListener('click', () => {
+    console.log('Start button clicked, joining queue with topics:', topics);
     webrtcManager.joinQueue();
+    let matched = false;
+
+    webrtcManager.socket.on('chat-ready', () => {
+      console.log('Chat ready event received, user matched.');
+      matched = true;
+    });
+
+    setTimeout(() => {
+      if (!matched) {
+        console.log('No match found within 10 seconds, performing delayed matchmaking.');
+        fetch('/api/matchmaking/perform-delayed-matchmaking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: webrtcManager.webrtcId, topics: topics })
+        }).then(response => {
+          if (!response.ok) {
+            console.error('Failed to perform delayed matchmaking');
+          } else {
+            console.log('Delayed matchmaking request sent successfully.');
+          }
+        }).catch(error => console.error('Error:', error));
+      }
+    }, 10000); // 10 seconds delay
+
     startButton.disabled = true;
     statusMessage.textContent = 'Looking for a chat partner...';
   });

@@ -114,26 +114,26 @@ class DatabaseManager
     }
 
     // Refactor searchVectorBatch to handle individual searches
-    public async searchVectorBatch(terms: string[], topK = 10): Promise<{ term: string; matches: any[] }[]>
+    public async searchVectorBatch(topics: string[], topK = 10): Promise<{ topic: string; matches: any[] }[]>
     {
         const collectionName = 'your_collection_name';
 
         try
         {
             const results = await Promise.all(
-                terms.map(async (term) =>
+                topics.map(async (topic) =>
                 {
                     const response = await this.vectorDbClient.search(collectionName, {
-                        vector: [0], // Placeholder vector for the term
+                        vector: [0], // Placeholder vector for the topic
                         limit: topK
                     });
 
                     if (!response || !Array.isArray(response))
                     {
-                        throw new Error(`Error searching vector for term ${term} in ${collectionName}: No results returned.`);
+                        throw new Error(`Error searching vector for topic ${topic} in ${collectionName}: No results returned.`);
                     }
 
-                    return { term, matches: response };
+                    return { topic, matches: response };
                 })
             );
 
@@ -183,6 +183,14 @@ class DatabaseManager
         {
             console.error('Error closing relational database connection:', err);
         }
+    }
+
+    public async executeFunction(functionName: string, params: object): Promise<any>
+    {
+        const placeholders = Object.keys(params).map((_, index) => `$${index + 1}`).join(', ');
+        const query = `SELECT * FROM public.${functionName}(${placeholders})`;
+        const values = Object.values(params);
+        return this.runQuery(query, values);
     }
 }
 

@@ -37,6 +37,26 @@
 
   startButton.addEventListener('click', () => {
     webrtcManager.joinQueue();
+    let matched = false;
+
+    webrtcManager.socket.on('chat-ready', () => {
+      matched = true;
+    });
+
+    setTimeout(() => {
+      if (!matched) {
+        fetch('/api/matchmaking/perform-delayed-matchmaking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: webrtcManager.webrtcId, topics: [] })
+        }).then(response => {
+          if (!response.ok) {
+            console.error('Failed to perform delayed matchmaking');
+          }
+        }).catch(error => console.error('Error:', error));
+      }
+    }, 10000); // 10 seconds delay
+
     startButton.disabled = true;
     statusMessage.textContent = 'Looking for a chat partner...';
   });

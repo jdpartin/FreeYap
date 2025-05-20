@@ -7,9 +7,9 @@ router.post('/join-queue', async (req: Request, res: Response) =>
 {
     try
     {
-        const { sessionId, terms } = req.body;
-        await MatchmakingManager.JoinQueue(sessionId, terms);
-        res.status(200).send('User added to queue');
+        const { sessionId, topics } = req.body;
+        await MatchmakingManager.JoinQueue(sessionId, topics);
+        res.status(200).json({ message: 'User added to queue' });
     }
     catch (error)
     {
@@ -30,6 +30,21 @@ router.post('/leave-queue', async (req: Request, res: Response) =>
     {
         console.error('Error in /leave-queue:', error);
         res.status(500).send('Failed to remove user from queue');
+    }
+});
+
+router.post('/perform-delayed-matchmaking', async (req: Request, res: Response) =>
+{
+    try
+    {
+        const { sessionId, topics } = req.body;
+        await MatchmakingManager.PerformDelayedMatchmaking(sessionId, topics);
+        res.status(200).send('Delayed matchmaking performed');
+    }
+    catch (error)
+    {
+        console.error('Error in /perform-delayed-matchmaking:', error);
+        res.status(500).send('Failed to perform delayed matchmaking');
     }
 });
 
