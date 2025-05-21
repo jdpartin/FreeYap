@@ -1,0 +1,444 @@
+<style>
+    .video-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .video {
+        width: 400px;
+        height: 300px;
+        background-color: #333;
+        border: 1px solid #666;
+        border-radius: 8px;
+    }
+    .video-controls {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+    .control-label {
+        font-weight: bold;
+        margin-right: 10px;
+        display: inline-block;
+        width: 120px;
+    }
+    .control-value {
+        font-size: 12px;
+        margin-left: 10px;
+        color: #666;
+    }
+    #startCall {
+        margin: 20px 0;
+        padding: 10px 20px;
+    }
+    .status {
+        text-align: center;
+        margin-top: 10px;
+        padding: 5px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    .instructions {
+        margin: 20px auto;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-width: 800px;
+    }
+    .instructions pre {
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+    .log-panel {
+        margin: 20px auto;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    .log-entry {
+        margin: 5px 0;
+        font-family: monospace;
+        font-size: 12px;
+    }
+    .log-entry.info {
+        color: #666;
+    }
+    .log-entry.success {
+        color: #28a745;
+    }
+    .log-entry.error {
+        color: #dc3545;
+    }
+    .chat-container {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .chat-header {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+    }
+    .chat-messages {
+        height: 250px;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: white;
+    }
+    .chat-input-container {
+        display: flex;
+        border-top: 1px solid #ddd;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+    .chat-input {
+        flex-grow: 1;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px;
+        margin-right: 10px;
+    }
+    .message {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 80%;
+        word-break: break-word;
+    }
+    .message.sent {
+        background-color: #dcf8c6;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+    .message.received {
+        background-color: #f1f0f0;
+        align-self: flex-start;
+    }
+    .file-message {
+        display: flex;
+        align-items: center;
+        background-color: #e3f2fd;
+        padding: 8px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .file-icon {
+        margin-right: 10px;
+        font-size: 24px;
+    }
+    .file-info {
+        flex-grow: 1;
+    }
+    .file-actions {
+        margin-left: 10px;
+    }
+    .media-controls {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .control-group {
+        margin: 10px;
+        flex-basis: 45%;
+    }
+    .slider-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .feature-buttons {
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+</style>
+
+<div class="container">
+    <h1 class="text-center">WebRTC Demo</h1>
+    
+    <div class="instructions">
+        <h4>How to use this demo:</h4>
+        <ol>
+            <li>Open this page in two different browser windows or tabs</li>
+            <li>Click "Start Call" in both windows to establish a peer-to-peer connection</li>
+            <li>You should see the video from each window appear in the other window's "Remote Video" section</li>
+            <li>Use the controls below the videos to adjust quality, send messages, or capture media</li>
+        </ol>
+        <div class="alert alert-info">
+            <strong>Note:</strong> The signaling server is automatically integrated with the main application.
+            You don't need to run a separate server!
+        </div>
+        <div class="alert alert-secondary mt-3">
+            <strong>Technical Note:</strong> The large number of signaling messages you see in the logs is normal for WebRTC.
+            This is called "ICE candidate trickle" - the browser generates multiple connection candidates and sends them
+            one by one to find the best path between peers. Each candidate creates a separate signaling message.
+        </div>
+    </div>
+    
+    <div class="text-center">
+        <button id="startCall" class="btn btn-primary">Start Call</button>
+        <button id="toggleLog" class="btn btn-secondary ml-2">Show Connection Log</button>
+        <div id="connectionStatus" class="status alert alert-warning">Connecting to signaling server...</div>
+    </div>
+    
+    <div class="video-container">
+        <div>
+            <h4 class="text-center">Local Video</h4>
+            <video id="localVideo" autoplay muted class="video"></video>
+            <!-- Hidden canvases for AI processing -->
+            <canvas id="aiProcessingCanvas" style="display:none;"></canvas>
+            <canvas id="backgroundOutputCanvas" style="display:none;"></canvas>
+            
+            <div class="video-controls">
+                <div class="d-flex align-items-center mb-2">
+                    <button id="toggleMute" class="btn btn-sm btn-outline-secondary mr-2">
+                        <i class="fa fa-microphone"></i> Mute
+                    </button>
+                    <button id="toggleVideo" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-video"></i> Disable Video
+                    </button>
+                </div>
+                
+                <div class="media-controls">
+                    <div class="control-group">
+                        <div class="slider-container">
+                            <span class="control-label">Resolution:</span>
+                            <select id="resolutionSelect" class="form-control form-control-sm">
+                                <option value="320x240">320x240</option>
+                                <option value="640x480" selected>640x480</option>
+                                <option value="1280x720">1280x720 (HD)</option>
+                                <option value="1920x1080">1920x1080 (FHD)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <span class="control-label">Frame Rate:</span>
+                            <input type="range" id="frameRateSlider" min="5" max="60" value="30" class="form-range">
+                            <span id="frameRateValue" class="control-value">30 fps</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="slider-container">
+                            <span class="control-label">Video Bitrate:</span>
+                            <input type="range" id="videoBitrateSlider" min="100" max="8000" step="100" value="1000" class="form-range">
+                            <span id="videoBitrateValue" class="control-value">1000 kbps</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <span class="control-label">Audio Quality:</span>
+                            <input type="range" id="audioQualitySlider" min="8" max="128" step="8" value="64" class="form-range">
+                            <span id="audioQualityValue" class="control-value">64 kbps</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-buttons">
+                    <button id="takeScreenshot" class="btn btn-sm btn-info">
+                        <i class="fa fa-camera"></i> Screenshot
+                    </button>
+                    <button id="startRecording" class="btn btn-sm btn-danger">
+                        <i class="fa fa-record-vinyl"></i> Start Recording
+                    </button>
+                    <button id="switchCamera" class="btn btn-sm btn-secondary">
+                        <i class="fa fa-sync"></i> Switch Camera
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <h4 class="text-center">Remote Video</h4>
+            <video id="remoteVideo" autoplay class="video"></video>
+              <div class="video-controls">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="mr-3">
+                        <label for="remoteAudioVolume" class="control-label">Remote Volume:</label>
+                        <input type="range" id="remoteAudioVolume" min="0" max="1" step="0.1" value="1" class="form-range">
+                    </div>
+                    <button id="fullscreenRemote" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-expand"></i> Fullscreen
+                    </button>
+                </div>
+                
+                <div class="d-flex align-items-center">
+                    <div class="mr-2">
+                        <span class="badge badge-info">Connection Quality: </span>
+                        <span id="connectionQuality">Excellent</span>
+                    </div>
+                    <div>
+                        <span class="badge badge-secondary">Stats: </span>
+                        <span id="connectionStats">Latency: 45ms, Packet Loss: 0%</span>
+                    </div>
+                </div>
+                  <!-- AI Features -->
+                <div class="ai-features mt-3 border-top pt-2">
+                    <h6><i class="fas fa-brain"></i> AI Features</h6>
+                    
+                    <!-- Age Estimation -->
+                    <div class="ai-feature-section mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button id="toggleAgeEstimation" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-user-clock"></i> Start Age Estimation
+                                </button>
+                            </div>
+                            <div id="ageEstimationResult" class="ml-3">
+                                <span class="badge badge-secondary">Estimated Age: </span>
+                                <span id="estimatedAgeValue">Not available</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Moderation -->
+                    <div class="ai-feature-section mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button id="toggleContentModeration" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-shield-alt"></i> Enable Content Moderation
+                                </button>
+                            </div>
+                            <div id="contentModerationResult" class="ml-3">
+                                <span class="badge badge-secondary">Content Status: </span>
+                                <span id="contentModerationValue">Not monitoring</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Emotion Detection -->
+                    <div class="ai-feature-section mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button id="toggleEmotionDetection" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-smile"></i> Start Emotion Detection
+                                </button>
+                            </div>
+                            <div id="emotionDetectionResult" class="ml-3">
+                                <span class="badge badge-secondary">Emotion: </span>
+                                <span id="emotionDetectionValue">Not detecting</span>
+                            </div>
+                        </div>
+                    </div>
+                      <!-- Virtual Background -->
+                    <div class="ai-feature-section mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button id="toggleVirtualBackground" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-image"></i> Enable Virtual Background
+                                </button>
+                                <select id="backgroundEffectSelect" class="form-control form-control-sm d-inline-block ml-2" style="width: auto;">
+                                    <option value="blur">Blur Background</option>
+                                    <option value="image">Default Image</option>
+                                    <option value="custom">Custom Image</option>
+                                    <option value="none">None</option>
+                                </select>
+                                <div id="customBackgroundOptions" style="margin-top: 8px; display: none;">
+                                    <input type="file" id="customBackgroundImage" class="form-control-file" accept="image/*" style="display: inline-block; width: auto;">
+                                    <small class="text-muted d-block mt-1">Recommended: landscape orientation, 16:9 ratio</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-image-preview mt-2" style="display: none;">
+                            <img id="backgroundPreview" src="" alt="Background Preview" style="max-height: 100px; max-width: 100%; border-radius: 4px;">
+                        </div>
+                    </div>
+                    
+                    <!-- Common AI Settings -->
+                    <div class="slider-container mt-2">
+                        <span class="control-label">Confidence Threshold:</span>
+                        <input type="range" id="confidenceThresholdSlider" min="0.1" max="0.9" step="0.1" value="0.7" class="form-range">
+                        <span id="confidenceThresholdValue" class="control-value">0.7</span>
+                    </div>
+                    <div id="aiModelStatus" class="mt-1 small text-muted">
+                        <i class="fas fa-info-circle"></i> AI models will be loaded when you start AI features
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="logPanel" class="log-panel" style="display:none;">
+        <h5>Connection Log:</h5>
+        <div id="logEntries"></div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            Text Chat & File Sharing
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            <div class="message received">
+                Welcome to the WebRTC demo! You can send text messages and files through the data channel.
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Type a message...">
+            <button id="sendMessage" class="btn btn-primary">Send</button>
+            <label for="fileInput" class="btn btn-outline-secondary ml-2">
+                <i class="fa fa-paperclip"></i>
+            </label>
+            <input type="file" id="fileInput" style="display: none">
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<!-- Include TensorFlow.js for advanced AI features (before face-api.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.7.4/dist/tf.min.js"></script>
+
+<!-- Configure TensorFlow.js to prevent cropSize errors -->
+<script>
+    // Wait for TensorFlow.js to load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.tf && window.tf.ENV) {
+            // Apply settings that help prevent cropSize errors
+            try {
+                tf.ENV.set('WEBGL_FORCE_F16_TEXTURES', false);
+                tf.ENV.set('WEBGL_PACK', false);
+                tf.ENV.set('WEBGL_CPU_FORWARD', true);
+                console.log('[Setup] Applied TensorFlow.js configuration to prevent cropSize errors');
+            } catch (e) {
+                console.warn('[Setup] Could not configure TensorFlow.js:', e);
+            }
+        } else {
+            console.warn('[Setup] TensorFlow.js not available for configuration');
+        }
+    });
+</script>
+
+<!-- Include face-api.js for AI features -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<!-- Include Body-Pix for virtual backgrounds -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.5/dist/body-pix.min.js"></script>
+
+<!-- Include WebRTC modules in the correct order -->
+<script src="/webrtcUI.js"></script>
+<script src="/webrtcMedia.js"></script>
+<script src="/webrtcConnection.js"></script>
+<script src="/webrtcDataChannel.js"></script>
+<script src="/webrtcSignaling.js"></script>
+<script src="/webrtcAI.js"></script>
+<script src="/webrtcAIUI.js"></script>
+<script src="/webrtcDemo.js"></script>
+
+<!-- Module loader to initialize everything properly -->
+<script src="/webrtcLoader.js"></script>

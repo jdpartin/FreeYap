@@ -1,68 +1,76 @@
 # Copilot Custom Instructions
 
-This project is called FreeYap. It is a Node.js-based social media platform for anonymous chat. Users can connect with others based on shared interests and preferences while maintaining their anonymity. The platform uses a tagging system to categorize users and facilitate matching, ensuring a safe and enjoyable experience for all participants. The project prioritizes scalability, efficiency, user privacy, and security. Similar platforms include Omegle, Chatroulette, and Tinychat.
+This project is called FreeYap, a Node.js-based anonymous chat platform. Users connect based on shared interests while maintaining anonymity. It uses PostgreSQL, Express, EJS, Bootstrap, WebRTC, TypeScript, and Qdrant. Prioritizes scalability, efficiency, privacy, and security.
 
 ## Technologies:
-- **PostgreSQL (Render)**: For relational database management.
-- **Node.js**: Backend runtime environment.
-- **Express**: Web application framework.
-- **EJS**: Template engine for rendering views.
-- **Bootstrap**: Frontend styling framework.
-- **WebRTC**: Enables video/audio chat functionality.
-- **TypeScript**: Ensures type safety in the codebase.
-- **JavaScript**: Used for client-side scripting (being phased out on the server side).
-- **Qdrant**: Vector database provider for advanced matching and search capabilities.
+- **PostgreSQL (Render)**: Relational database.
+- **Node.js**: Backend runtime.
+- **Express**: Web framework.
+- **EJS**: Template engine.
+- **Bootstrap**: Frontend styling.
+- **WebRTC**: Video/audio chat.
+- **TypeScript**: Type safety.
+- **JavaScript**: Client-side scripting (phasing out server-side).
+- **Qdrant**: Vector database for matching/search.
 
-## Development Guidelines:
+## Guidelines:
 
-### General Principles:
-1. **Focus on Specific Changes**: Implement changes specific to the task or feature requested without altering unrelated parts of the code.
-2. **Avoid Reintroducing Removed Features**: Do not reintroduce old or partially removed features unless explicitly instructed. Ensure changes align with current requirements.
-3. **Verify Before Changing**: Always check the existing code before making changes to ensure your knowledge is up-to-date. Confirm the existence of external functions or endpoints before using them.
-4. **Avoid Assumptions**: Do not assume the name or behavior of a function, endpoint, or feature. Verify its existence and behavior before use. If it cannot be located, clearly state this and suggest next steps.
+### General:
+1. Implement specific changes only.
+2. Avoid reintroducing removed features.
+3. Verify code before changes.
+4. Avoid assumptions; verify functions/endpoints.
+5. Always read the entire file before making changes.
+6. Check for other instances of issues when they could exist in multiple places.
+
+### Planning:
+1. Analyze tasks and plan steps.
+2. Communicate plans before execution.
+3. Implement systematically and validate changes.
 
 ### Code Style:
-1. Use **Allman style** for code formatting. If you encounter code that is not in Allman style, update it to conform to this style.
-2. Follow the existing project structure and naming conventions.
-3. Use **CommonJS modules** (`require`/`module.exports`) for Node.js.
+1. Use Allman style.
+2. Follow project structure/naming.
+3. Use CommonJS modules.
 
-### Validation and Error Handling:
-1. Validate all user input in API endpoints.
-2. Implement robust error handling for all new features.
-3. When encountering an error, check the `past_errors.md` file in the `documentation/` folder to see if it has been encountered and resolved before.
+### Validation & Error Handling:
+1. Validate API inputs.
+2. Implement robust error handling.
+3. Reference `past_errors.md` for known issues.
 
 ### Documentation:
-1. Add comments or documentation for new functions or significant changes to improve maintainability.
-2. Update relevant documentation files (e.g., `documentation/`) when making changes that affect the system's behavior. **Always ensure the documentation folder is referenced and updated when changes are made.**
-3. Ensure that naming conventions for parameters and database objects are clearly documented.
-4. Add notes about any errors encountered in the past to the `past_errors.md` file in the `documentation/` folder.
-
-### Naming Conventions:
-1. **Tables and Columns**: Use `snake_case` for all table and column names in the database.
-2. **Parameters**: Use `camelCase` for all parameters in stored procedures.
+1. Comment/document new functions.
+2. Update documentation for changes.
+3. Use `snake_case` for DB objects and `camelCase` for parameters.
 
 ### Testing:
-1. Ensure changes are testable and include test cases or instructions for testing where applicable.
-2. Use mock data or test environments to validate changes without affecting production data.
+1. Ensure testability with mock data.
+2. Avoid affecting production data.
 
-### Performance and Scalability:
-1. Optimize for performance and scalability where relevant.
-2. Ensure compatibility with the project's technology stack.
+### Performance:
+1. Optimize for scalability.
+2. Ensure compatibility with the stack.
 
 ### Collaboration:
-1. Be mindful of concurrent changes by the user. Always check the latest state of the code before implementing new features.
-2. Communicate clearly about dependencies or potential conflicts with other parts of the system.
+1. Check for concurrent changes.
+2. Communicate dependencies/conflicts.
 
-### Technology-Specific Notes:
-1. **WebRTC**: Ensure proper signaling and media handling for video/audio chat.
-2. **Vector Database (Qdrant)**: Use efficient queries and indexing for vector-based operations.
-3. **PostgreSQL**: Follow best practices for relational database design and query optimization.
+### Technology Notes:
+1. **WebRTC**: Proper signaling/media handling.
+2. **Qdrant**: Efficient queries/indexing.
+3. **PostgreSQL**: Best practices for design/queries.
+
+### Environment & Platform Notes:
+1. **PowerShell**: Use semicolon (`;`) for command separation instead of ampersand-ampersand (`&&`) which works in bash/cmd but not in PowerShell.
+   Example: Use `cd directory; node script.js` instead of `cd directory && node script.js`.
+2. **Windows Paths**: When writing paths for filesystem operations, use double backslashes (`\\`) or single forward slashes (`/`).
+3. **Terminal Commands**: Ensure terminal commands are compatible with PowerShell syntax when generating scripts.
 
 ### Workflow:
-1. Avoid removing comments unless they are no longer relevant.
-2. Follow up with other needed changes as a result of any modification.
-3. Validate the correctness of changes by running the application or relevant tests.
+1. Avoid removing relevant comments.
+2. Follow up on related changes.
+3. Validate correctness by testing.
 
 ### Communication:
-1. If requirements or context are unclear, ask for clarification.
-2. Provide detailed explanations for significant changes or decisions made during development.
+1. Clarify unclear requirements.
+2. Explain significant changes.

@@ -51,24 +51,15 @@ class WebRTCManager {
       await this.handleIceCandidate(candidate);
     });
 
-    this.socket.on('match-found', ({ roomId }) => {
+    // Consolidate connection initiation logic
+    this.socket.on('match-found', async ({ roomId }) => {
       console.log('Match found, joining room:', roomId);
-      this.room = roomId;
-      this.joinRoom(roomId);
+      await this.initiateConnection(roomId);
     });
 
     this.socket.on('join-room', async (roomId) => {
-      try {
-        const response = await fetch(`${this.apiBaseUrl}/join-room`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ socketId: this.socket.id, roomId })
-        });
-        const result = await response.json();
-        console.log('Joined room via API:', result);
-      } catch (error) {
-        console.error('Error joining room via API:', error);
-      }
+      console.log('Joining room via event:', roomId);
+      await this.initiateConnection(roomId);
     });
 
     this.socket.on('signal', async ({ roomId, signalData }) => {
@@ -379,6 +370,22 @@ class WebRTCManager {
         console.error('Error joining queue via API:', error);
     }
 }
+
+  // New method to handle connection initiation
+  async initiateConnection(roomId) {
+    try {
+        const response = await fetch(`${this.apiBaseUrl}/join-room`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ socketId: this.socket.id, roomId })
+        });
+        const result = await response.json();
+        console.log('Joined room via API:', result);
+        this.room = roomId;
+      } catch (error) {
+        console.error('Error initiating connection:', error);
+      }
+  }
 }
 
 // You would instantiate this class and set up the signaling channel elsewhere in your client-side code.

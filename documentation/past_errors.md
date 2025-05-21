@@ -36,3 +36,41 @@ Add new entries below this line.
 **Issue:** Inconsistent naming of `topics` in the codebase.
 - **Details:** Some parts of the code referred to `topics` as `terms`, causing confusion and mismatches with the database schema.
 - **Resolution:** Standardized naming across the codebase to use `topics` consistently.
+
+### May 20, 2025
+
+**Issue:** MIME type error when serving JavaScript files.
+- **Details:** The browser refused to execute the script due to an incorrect MIME type (`text/html`) being served for JavaScript files.
+- **Cause:** The script tag in the EJS file pointed to an incorrect path (`/public/webrtcDemo.js`), causing the server to serve an HTML error page instead of the JavaScript file.
+- **Resolution:** Updated the script tag to point to the correct path (`/webrtcDemo.js`), ensuring the file is served with the correct MIME type.
+- **Date:** May 20, 2025
+
+**Issue:** Duplicate WebSocket variable declaration causing SyntaxError.
+- **Details:** Error "Uncaught SyntaxError: Identifier 'signalingSocket' has already been declared" occurred when loading the WebRTC demo.
+- **Cause:** The `signalingSocket` variable was being declared both in the external JavaScript file (`webrtcDemo.js`) and in an inline script in the EJS template.
+- **Resolution:** Removed the redundant WebSocket initialization from the EJS file and consolidated all WebSocket handling in the external JavaScript file.
+- **Date:** May 20, 2025
+
+**Issue:** WebRTC signaling server connection failures.
+- **Details:** WebSocket connection to the signaling server would fail without clear error messages, causing WebRTC demo to appear broken.
+- **Cause:** The signaling server was not running when attempting to use the WebRTC demo, and the UI did not provide clear instructions or error feedback.
+- **Resolution:** Updated the WebRTC demo UI to provide clear instructions for starting the signaling server and added better error handling with informative status messages.
+- **Date:** May 20, 2025
+
+**Issue:** External WebRTC signaling server requirement made demo difficult to use.
+- **Details:** Users needed to run a separate signaling server process (`node signalingServer.js`) to use the WebRTC demo, which wasn't possible when the main application was already running.
+- **Cause:** The WebSocket signaling server was implemented as a separate process instead of being integrated with the main application.
+- **Resolution:** Integrated the WebSocket signaling server directly into the main Express application, allowing both to run simultaneously on the same HTTP server. Updated the client code to connect to the WebSocket server on the same host.
+- **Date:** May 20, 2025
+
+**Issue:** WebSocket binary data handling error in WebRTC demo.
+- **Details:** Error occurred when receiving WebSocket messages: "SyntaxError: Unexpected token 'o', "[object Blob]" is not valid JSON", preventing proper WebRTC signaling.
+- **Cause:** The WebSocket was receiving binary data (Blob objects) but the code was attempting to parse it directly as JSON without properly converting it.
+- **Resolution:** Updated the client-side code to properly handle different message formats (Blob vs text) and use a FileReader to convert binary data to text before parsing. Also ensured the server preserves the original message format when relaying messages between peers.
+- **Date:** May 20, 2025
+
+**Issue:** Confusion about multiple WebRTC signaling messages.
+- **Details:** The WebRTC connection process generates many signaling messages when establishing a connection, which can appear as a potential issue in the logs.
+- **Cause:** WebRTC uses a process called "ICE candidate trickle" where multiple connection options are generated and sent individually to find the optimal path between peers.
+- **Resolution:** Enhanced logging to provide clearer information about the signaling process and added UI explanations to clarify that this behavior is normal and expected.
+- **Date:** May 20, 2025

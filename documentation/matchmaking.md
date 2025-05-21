@@ -68,6 +68,23 @@ The matchmaking system is designed to pair users based on the semantic similarit
 - **JavaScript**: Used for client-side scripting (being phased out on the server side).
 - **Qdrant**: Vector database provider for advanced matching and search capabilities.
 
+## Matchmaking API Updates
+
+#### `/match-found` Endpoint
+- **Description**: Notifies the WebRTC API about a successful match.
+- **Method**: POST
+- **Request Body**:
+  - `roomId` (string): The ID of the room where the match will occur.
+  - `socketId` (string): The socket ID of the user being matched.
+- **Response**:
+  - `200 OK`: Match notification sent successfully.
+  - `400 Bad Request`: Missing or invalid `roomId` or `socketId`.
+  - `500 Internal Server Error`: Failed to notify the WebRTC API.
+
+#### Integration with WebRTC API
+- The `/match-found` endpoint makes an HTTP POST request to the WebRTC API's `/join-room` endpoint to notify it about the match.
+- This ensures separation of concerns between matchmaking and WebRTC signaling.
+
 ## Note on Documentation Updates
 
 Whenever changes are made to the matchmaking logic, stored procedures, or related API endpoints, ensure that this documentation is updated to reflect the changes. This includes:

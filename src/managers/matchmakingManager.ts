@@ -1,8 +1,6 @@
 import DatabaseManager from '../managers/databaseManager';
-import WebRTCServerManager from '../managers/webrtcServerManager';
 import { webRTCServerManager } from '../index';
-import VectorData from '../models/vectorData';
-import { Server } from 'socket.io';
+import axios from 'axios';
 
 // Matchmaking preference
 // Users with topics (Topic Users): Matched Topic Users > Random Topic Users > Mismatched Topic Users (Only when delayed)
@@ -89,17 +87,13 @@ class MatchmakingManager
         }
         else
         {
-            const result = (await db.executeFunction('get_oldest_delayed_term_user', {})) as { get_oldest_delayed_term_user: UserQueueInfo[] | null }[];
+            const result = (await db.executeFunction('get_oldest_delayed_term_user', {})) as { get_oldest_delayed_term_user: string | null }[];
+            const delayedMatchSessionId = result[0].get_oldest_delayed_term_user;
 
-            if (result && result.length > 0 && result[0].get_oldest_delayed_term_user)
+            if (delayedMatchSessionId)
             {
-                const delayedUsers = result[0].get_oldest_delayed_term_user;
-                if (delayedUsers.length > 0)
-                {
-                    const mappedUser = this.mapToCamelCase(delayedUsers[0]);
-                    await this.#triggerConnection(sessionId, mappedUser.sessionId);
-                    return;
-                }
+                await this.#triggerConnection(sessionId, delayedMatchSessionId);
+                return;
             }
         }
 
@@ -142,20 +136,30 @@ class MatchmakingManager
     {
         const roomId = `${sessionId}-${matchedSessionId}`;
 
-        webRTCServerManager.io.to(sessionId).emit('match-found', { roomId });
-        webRTCServerManager.io.to(matchedSessionId).emit('match-found', { roomId });
-
-        console.log(`Triggered connection for users ${sessionId} and ${matchedSessionId} in room ${roomId}`);
+        try {
+            await axios.post(`http://localhost:${process.env.PORT || 3000}/api/webrtc/join-room`, {
+                roomId,
+                sessionIds: [sessionId, matchedSessionId]
+            });
+            console.log(`Triggered connection for users ${sessionId} and ${matchedSessionId} in room ${roomId}`);
+        } catch (error) {
+            console.error('Error triggering connection:', error);
+        }
     }
 
     static async triggerConnection(user1Id: string, user2Id: string): Promise<void>
     {
         const roomId = `${user1Id}-${user2Id}`;
 
-        webRTCServerManager.io.to(user1Id).emit('match-found', { roomId });
-        webRTCServerManager.io.to(user2Id).emit('match-found', { roomId });
-
-        console.log(`Triggered connection for users ${user1Id} and ${user2Id} in room ${roomId}`);
+        try {
+            await axios.post(`http://localhost:${process.env.PORT || 3000}/api/webrtc/join-room`, {
+                roomId,
+                sessionIds: [user1Id, user2Id]
+            });
+            console.log(`Triggered connection for users ${user1Id} and ${user2Id} in room ${roomId}`);
+        } catch (error) {
+            console.error('Error triggering connection:', error);
+        }
     }
 
     static async #addToQueue(sessionId: string, topics: string[]): Promise<void>
