@@ -110,6 +110,6 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "include": ["**/*.ts"], // Include only TypeScript files for compilation
+  "include": ["**/*.ts", "src/api/webrtcOLD.ts.old", "src/managers/webrtcServerManager.ts.old", "src/api/webrtc.ts.old"], // Include only TypeScript files for compilation
   "exclude": ["node_modules"] // Exclude dependencies
 }

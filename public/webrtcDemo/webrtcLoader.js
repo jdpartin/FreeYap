@@ -96,14 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     await createPeerConnection(
                         // Data channel handler
                         handleIncomingDataChannel,
-                        
-                        // Remote track handler
+                          // Remote track handler
                         (event) => {
                             const remoteStream = event.streams[0];
-                            const remoteVideo = document.getElementById('remoteVideo');
-                            if (remoteVideo) {
-                                remoteVideo.srcObject = remoteStream;
+                            // Use the new canvas rendering function
+                            if (window.setupRemoteStream) {
+                                window.setupRemoteStream(remoteStream);
                                 updateStatus('Receiving remote media stream');
+                            } else {
+                                // Fallback to direct video element if function not available
+                                const remoteVideo = document.getElementById('remoteVideo');
+                                if (remoteVideo) {
+                                    remoteVideo.srcObject = remoteStream;
+                                    updateStatus('Receiving remote media stream');
+                                }
                             }
                         },
                         

@@ -68,13 +68,13 @@ function initializeUI() {
     
     // Initialize media control buttons
     initializeMediaControlButtons();
-    
-    // Initialize remote audio volume control
+      // Initialize remote audio volume control
     const remoteAudioVolume = document.getElementById('remoteAudioVolume');
     if (remoteAudioVolume) {
         remoteAudioVolume.addEventListener('input', function() {
             const remoteVideo = document.getElementById('remoteVideo');
             if (remoteVideo) {
+                // Even though the video element is hidden, it's still the audio source
                 remoteVideo.volume = this.value;
             }
         });
@@ -116,14 +116,23 @@ function initializeMediaControlButtons() {
             }
         });
     }
-    
-    // Screenshot button
+      // Screenshot button
     const takeScreenshotButton = document.getElementById('takeScreenshot');
     if (takeScreenshotButton) {
         takeScreenshotButton.addEventListener('click', function() {
             if (window.takeScreenshot) {
-                const remoteVideo = document.getElementById('remoteVideo');
-                const screenshotDataUrl = window.takeScreenshot(remoteVideo);
+                // Use the canvas instead of the video element for screenshots
+                const remoteCanvas = document.getElementById('remoteVideoCanvas');
+                let screenshotDataUrl;
+                
+                if (remoteCanvas) {
+                    // Take screenshot directly from the canvas
+                    screenshotDataUrl = remoteCanvas.toDataURL('image/png');
+                } else {
+                    // Fall back to the original method if canvas is not available
+                    const remoteVideo = document.getElementById('remoteVideo');
+                    screenshotDataUrl = window.takeScreenshot(remoteVideo);
+                }
                 
                 if (screenshotDataUrl) {
                     // Create download link
@@ -147,14 +156,39 @@ function initializeMediaControlButtons() {
                     this.classList.replace('btn-warning', 'btn-danger');
                     this.dataset.recording = 'false';
                 }
-            } else {
-                // Start recording
+            } else {                // Start recording
+                // Use remote canvas instead of video element for recording
                 const remoteVideo = document.getElementById('remoteVideo');
-                if (window.startRecording && remoteVideo && remoteVideo.srcObject && 
-                    window.startRecording(remoteVideo.srcObject)) {
-                    this.innerHTML = '<i class="fa fa-stop"></i> Stop Recording';
-                    this.classList.replace('btn-danger', 'btn-warning');
-                    this.dataset.recording = 'true';
+                const remoteCanvas = document.getElementById('remoteVideoCanvas');
+                
+                // Prefer to use the canvas for recording if it's active
+                if (window.startRecording && remoteVideo && remoteVideo.srcObject) {
+                    let sourceToRecord = remoteVideo.srcObject;
+                    
+                    // If we have an active canvas rendering, create a stream from it
+                    if (remoteCanvas && remoteCanvasRenderingContext) {
+                        try {
+                            const canvasStream = remoteCanvas.captureStream(30); // 30fps
+                            
+                            // If the original stream has audio tracks, add them to our canvas stream
+                            if (remoteVideo.srcObject.getAudioTracks().length > 0) {
+                                remoteVideo.srcObject.getAudioTracks().forEach(track => {
+                                    canvasStream.addTrack(track);
+                                });
+                            }
+                            
+                            sourceToRecord = canvasStream;
+                        } catch (e) {
+                            console.error('[UI] Error creating canvas stream for recording:', e);
+                            // Fall back to video element stream
+                        }
+                    }
+                    
+                    if (window.startRecording(sourceToRecord)) {
+                        this.innerHTML = '<i class="fa fa-stop"></i> Stop Recording';
+                        this.classList.replace('btn-danger', 'btn-warning');
+                        this.dataset.recording = 'true';
+                    }
                 }
             }
         });
@@ -169,21 +203,21 @@ function initializeMediaControlButtons() {
             }
         });
     }
-    
-    // Fullscreen button
+      // Fullscreen button
     const fullscreenButton = document.getElementById('fullscreenRemote');
     if (fullscreenButton) {
         fullscreenButton.addEventListener('click', function() {
-            const remoteVideo = document.getElementById('remoteVideo');
-            if (!remoteVideo) return;
+            // Use canvas instead of video element for fullscreen
+            const remoteVideoCanvas = document.getElementById('remoteVideoCanvas');
+            if (!remoteVideoCanvas) return;
             
             if (!document.fullscreenElement) {
-                if (remoteVideo.requestFullscreen) {
-                    remoteVideo.requestFullscreen();
-                } else if (remoteVideo.webkitRequestFullscreen) {
-                    remoteVideo.webkitRequestFullscreen();
-                } else if (remoteVideo.msRequestFullscreen) {
-                    remoteVideo.msRequestFullscreen();
+                if (remoteVideoCanvas.requestFullscreen) {
+                    remoteVideoCanvas.requestFullscreen();
+                } else if (remoteVideoCanvas.webkitRequestFullscreen) {
+                    remoteVideoCanvas.webkitRequestFullscreen();
+                } else if (remoteVideoCanvas.msRequestFullscreen) {
+                    remoteVideoCanvas.msRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -342,6 +376,52 @@ function setCallButtonState(enabled) {
     if (startCallButton) {
         startCallButton.disabled = !enabled;
     }
+}
+
+// Toggle video display for debugging
+window.toggleRawVideoDisplay = function() {
+    const localVideo = document.getElementById('localVideo');
+    const localCanvas = document.getElementById('localVideoCanvas');
+    
+    if (localVideo && localCanvas) {
+        if (localVideo.style.display === 'none') {
+            // Show raw video, hide canvas
+            localVideo.style.display = 'block';
+            localCanvas.style.display = 'none';
+            addLogEntry('Showing raw video element for debugging', 'info');
+        } else {
+            // Show canvas, hide raw video (normal mode)
+            localVideo.style.display = 'none';
+            localCanvas.style.display = 'block';
+            addLogEntry('Showing canvas element (normal mode)', 'info');
+        }
+    }
+    
+    const remoteVideo = document.getElementById('remoteVideo');
+    const remoteCanvas = document.getElementById('remoteVideoCanvas');
+    
+    if (remoteVideo && remoteCanvas) {
+        if (remoteVideo.style.display === 'none') {
+            // Show raw video, hide canvas
+            remoteVideo.style.display = 'block';
+            remoteCanvas.style.display = 'none';
+        } else {
+            // Show canvas, hide raw video (normal mode)
+            remoteVideo.style.display = 'none';
+            remoteCanvas.style.display = 'block';
+        }
+    }
+};
+
+// Add debugging tools to UI
+const featureButtonsContainer = document.querySelector('.feature-buttons');
+if (featureButtonsContainer) {
+    const debugButton = document.createElement('button');
+    debugButton.id = 'toggleDebugView';
+    debugButton.className = 'btn btn-sm btn-outline-dark';
+    debugButton.innerHTML = '<i class="fa fa-bug"></i> Debug View';
+    debugButton.addEventListener('click', window.toggleRawVideoDisplay);
+    featureButtonsContainer.appendChild(debugButton);
 }
 
 // Export connectionId for other modules to use

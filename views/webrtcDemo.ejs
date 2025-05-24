@@ -4,14 +4,37 @@
         justify-content: center;
         gap: 20px;
         margin-top: 20px;
+        position: relative;
     }
     .video {
-        width: 400px;
+        position: relative;
+        display: block;
+        width: 100%;
+        max-width: 400px;
         height: 300px;
-        background-color: #333;
+        background-color: #000;
         border: 1px solid #666;
         border-radius: 8px;
+        object-fit: contain; /* Maintain aspect ratio */
     }
+    canvas.video {
+        image-rendering: -webkit-optimize-contrast; /* Sharper rendering in Chrome */
+        image-rendering: crisp-edges; /* Sharper rendering in Firefox */
+    }
+    
+    /* Fix canvas scaling during fullscreen */
+    canvas.video:-webkit-full-screen {
+        width: 100vw !important;
+        height: 100vh !important;
+        object-fit: contain;
+    }
+    
+    canvas.video:fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        object-fit: contain;
+    }
+    
     .video-controls {
         margin-top: 10px;
         padding: 10px;
@@ -167,6 +190,40 @@
         flex-wrap: wrap;
         gap: 10px;
     }
+    /* CSS fixes for canvas-based video rendering */
+    .video-container {
+        position: relative;
+    }
+    
+    .video {
+        position: relative;
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        height: 300px;
+        background-color: #000;
+        border: 1px solid #666;
+        border-radius: 8px;
+        object-fit: contain; /* Maintain aspect ratio */
+    }
+    
+    canvas.video {
+        image-rendering: -webkit-optimize-contrast; /* Sharper rendering in Chrome */
+        image-rendering: crisp-edges; /* Sharper rendering in Firefox */
+    }
+    
+    /* Fix canvas scaling during fullscreen */
+    canvas.video:-webkit-full-screen {
+        width: 100vw !important;
+        height: 100vh !important;
+        object-fit: contain;
+    }
+    
+    canvas.video:fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        object-fit: contain;
+    }
 </style>
 
 <div class="container">
@@ -197,10 +254,9 @@
         <div id="connectionStatus" class="status alert alert-warning">Connecting to signaling server...</div>
     </div>
     
-    <div class="video-container">
-        <div>
-            <h4 class="text-center">Local Video</h4>
-            <video id="localVideo" autoplay muted class="video"></video>
+    <div class="video-container">        <div>            <h4 class="text-center">Local Video</h4>
+            <canvas id="localVideoCanvas" class="video" style="display:block;"></canvas>
+            <video id="localVideo" autoplay muted class="video" style="display:none;"></video>
             <!-- Hidden canvases for AI processing -->
             <canvas id="aiProcessingCanvas" style="display:none;"></canvas>
             <canvas id="backgroundOutputCanvas" style="display:none;"></canvas>
@@ -262,10 +318,9 @@
                 </div>
             </div>
         </div>
-        
-        <div>
-            <h4 class="text-center">Remote Video</h4>
-            <video id="remoteVideo" autoplay class="video"></video>
+          <div>            <h4 class="text-center">Remote Video</h4>
+            <canvas id="remoteVideoCanvas" class="video" style="display:block;"></canvas>
+            <video id="remoteVideo" autoplay class="video" style="display:none;"></video>
               <div class="video-controls">
                 <div class="d-flex align-items-center mb-2">
                     <div class="mr-3">
@@ -431,14 +486,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.5/dist/body-pix.min.js"></script>
 
 <!-- Include WebRTC modules in the correct order -->
-<script src="/webrtcUI.js"></script>
-<script src="/webrtcMedia.js"></script>
-<script src="/webrtcConnection.js"></script>
-<script src="/webrtcDataChannel.js"></script>
-<script src="/webrtcSignaling.js"></script>
-<script src="/webrtcAI.js"></script>
-<script src="/webrtcAIUI.js"></script>
-<script src="/webrtcDemo.js"></script>
+<script src="/webrtcDemo/webrtcUI.js"></script>
+<script src="/webrtcDemo/webrtcMedia.js"></script>
+<script src="/webrtcDemo/webrtcConnection.js"></script>
+<script src="/webrtcDemo/webrtcDataChannel.js"></script>
+<script src="/webrtcDemo/webrtcSignaling.js"></script>
+<script src="/webrtcDemo/webrtcAI.js"></script>
+<!-- AI UI Modules -->
+<script src="/webrtcDemo/webrtcAIUI.core.js"></script>
+<script src="/webrtcDemo/webrtcAI.age.js"></script>
+<script src="/webrtcDemo/webrtcAI.emotion.js"></script>
+<script src="/webrtcDemo/webrtcAI.content.js"></script>
+<script src="/webrtcDemo/webrtcAI.background.js"></script>
+<script src="/webrtcDemo/webrtcAIUI.js"></script>
+<script src="/webrtcDemo/webrtcDemo.js"></script>
 
 <!-- Module loader to initialize everything properly -->
-<script src="/webrtcLoader.js"></script>
+<script src="/webrtcDemo/webrtcLoader.js"></script>

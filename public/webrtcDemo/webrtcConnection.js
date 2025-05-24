@@ -88,11 +88,15 @@ async function createPeerConnection(onDataChannel, onTrack, onConnectionStateCha
             if (peerConnection.connectionState === 'connected') {
                 updateStatus('Peer connection established successfully');
                 startConnectionQualityMonitoring();
-            } 
-            else if (peerConnection.connectionState === 'disconnected' || 
+            }            else if (peerConnection.connectionState === 'disconnected' || 
                      peerConnection.connectionState === 'failed' ||
                      peerConnection.connectionState === 'closed') {
                 updateStatus('Peer connection ' + peerConnection.connectionState, true);
+                
+                // Stop remote canvas rendering if available
+                if (window.stopRemoteCanvasRendering) {
+                    window.stopRemoteCanvasRendering();
+                }
             }
             
             if (onConnectionStateChange) {
@@ -330,3 +334,8 @@ function updateConnectionQuality(videoBitrate) {
 function getPeerConnection() {
     return peerConnection;
 }
+
+// Export all functions to window for other modules
+window.getPeerConnection = getPeerConnection;
+window.createPeerConnection = createPeerConnection;
+window.closePeerConnection = closePeerConnection;

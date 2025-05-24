@@ -1,103 +1,133 @@
-<div class="container py-5">
+<div class="container py-4">
   <div class="text-center mb-4">
     <h1 class="fw-bold text-primary">Video Chat</h1>
     <p class="text-muted">Connect with others via video in real-time.</p>
   </div>
-  <div class="row justify-content-center">
+
+  <div class="row">
+    <!-- Main video display area -->
     <div class="col-md-8">
-      <div class="video-container mb-4">
-        <video id="localVideo" autoplay muted class="w-100 border rounded"></video>
-        <video id="remoteVideo" autoplay class="w-100 border rounded mt-3"></video>
+      <div class="video-container bg-light rounded shadow-sm p-2 mb-3">
+        <div class="position-relative">
+          <video id="remoteVideo" autoplay class="w-100 rounded main-video-feed"></video>
+          <div class="local-video-wrapper">
+            <video id="localVideo" autoplay muted class="rounded shadow-sm"></video>
+          </div>
+        </div>
       </div>
-      <div class="d-flex justify-content-center gap-3">
-        <button id="startButton" class="btn btn-primary">Start Looking</button>
-        <button id="endButton" class="btn btn-danger" disabled>End Call</button>
-        <button class="btn btn-secondary">Mute</button>
-        <button class="btn btn-secondary">Turn Off Camera</button>
+
+      <!-- Video controls -->
+      <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
+        <button id="startButton" class="btn btn-primary">
+          <i class="bi bi-play-fill"></i> Start Looking
+        </button>
+        <button id="endButton" class="btn btn-danger" disabled>
+          <i class="bi bi-telephone-x-fill"></i> End Call
+        </button>
+        <button id="toggle-mic" class="btn btn-outline-secondary">
+          <i class="bi bi-mic-fill"></i> Turn Mic Off
+        </button>
+        <button id="toggle-camera" class="btn btn-outline-secondary">
+          <i class="bi bi-camera-video-fill"></i> Turn Camera Off
+        </button>
       </div>
-      <div id="statusMessage" class="text-center mt-3 text-muted"></div>
+
+      <div id="statusMessage" class="alert alert-info text-center"></div>
+    </div>
+
+    <!-- Chat sidebar -->
+    <div class="col-md-4">
+      <div class="chat-sidebar">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <i class="bi bi-chat-dots-fill"></i> Chat
+          </div>
+          <div class="card-body chat-messages" id="chat-messages">
+            <p class="text-muted">No messages yet. Start the conversation!</p>
+          </div>
+          <div class="card-footer p-2">
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Type here..." id="chat-input">
+              <button class="btn btn-primary" id="chat-send">
+                <i class="bi bi-send-fill"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Include the Socket.IO client library -->
 <script src="/socket.io/socket.io.js"></script>
-<script src="/webrtcManager.js"></script>
+
+<!-- Include WebRTCClient.js -->
+<script src="/WebRTCClient.js"></script>
+
+<!-- Include the SimplePeer library via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/simple-peer/simplepeer.min.js"></script>
+
+<!-- Add functionality to call matchmaking API endpoints -->
 <script>
-  const webrtcManager = new WebRTCManager();
-  const startButton = document.getElementById('startButton');
-  const endButton = document.getElementById('endButton');
-  const statusMessage = document.getElementById('statusMessage');
-  const localVideo = document.getElementById('localVideo');
-  const remoteVideo = document.getElementById('remoteVideo');
+  document.getElementById('startButton').addEventListener('click', async () =>
+  {
+      console.log('Start button clicked, joining matchmaking queue...');
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const topics = JSON.parse(urlParams.get('topics') || '[]');
+      // Disable the start button to prevent multiple clicks
+      const startButton = document.getElementById('startButton');
+      startButton.disabled = true;
 
-  startButton.addEventListener('click', () => {
-    console.log('Start button clicked, joining queue with topics:', topics);
-    webrtcManager.joinQueue();
-    let matched = false;
+      try
+      {
+          // Call the join-queue endpoint
+          const response = await fetch('/api/matchmaking/join-queue', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ socketId: mySocketId, topics: [] }) // Add topics if needed
+          });
 
-    webrtcManager.socket.on('chat-ready', () => {
-      console.log('Chat ready event received, user matched.');
-      matched = true;
-    });
-
-    setTimeout(() => {
-      if (!matched) {
-        console.log('No match found within 10 seconds, performing delayed matchmaking.');
-        fetch('/api/matchmaking/perform-delayed-matchmaking', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: webrtcManager.webrtcId, topics: topics })
-        }).then(response => {
-          if (!response.ok) {
-            console.error('Failed to perform delayed matchmaking');
-          } else {
-            console.log('Delayed matchmaking request sent successfully.');
+          if (!response.ok)
+          {
+              throw new Error('Failed to join matchmaking queue');
           }
-        }).catch(error => console.error('Error:', error));
+
+          console.log('Successfully joined matchmaking queue');
+
+          // Wait for 10 seconds before calling delayed matchmaking
+          setTimeout(async () =>
+          {
+              console.log('10 seconds passed, calling delayed matchmaking...');
+
+              try
+              {
+                  const delayedResponse = await fetch('/api/matchmaking/delayed-matchmaking', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ socketId: mySocketId, topics: [] }) // Add topics if needed
+                  });
+
+                  if (!delayedResponse.ok)
+                  {
+                      throw new Error('Failed to perform delayed matchmaking');
+                  }
+
+                  console.log('Successfully called delayed matchmaking');
+              }
+              catch (error)
+              {
+                  console.error('Error during delayed matchmaking:', error);
+              }
+          }, 10000);
       }
-    }, 10000); // 10 seconds delay
-
-    startButton.disabled = true;
-    statusMessage.textContent = 'Looking for a chat partner...';
-  });
-
-  endButton.addEventListener('click', () => {
-    webrtcManager.endCall();
-    startButton.disabled = false;
-    endButton.disabled = true;
-    statusMessage.textContent = '';
-  });
-
-  webrtcManager.onTrack = (event) => {
-    remoteVideo.srcObject = event.streams[0];
-  };
-
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    .then((stream) => {
-      localVideo.srcObject = stream;
-      webrtcManager.addLocalStream(stream);
-    })
-    .catch((error) => {
-      console.error('Error accessing media devices:', error);
-      statusMessage.textContent = 'Error accessing camera or microphone.';
-    });
-
-  // Listen for Socket.IO events
-  webrtcManager.socket.on('waiting', (e) => {
-    statusMessage.textContent = 'Waiting for someone to join...';
-  });
-
-  webrtcManager.socket.on('chat-ready', (e) => {
-    endButton.disabled = false;
-    statusMessage.textContent = 'Connected! Chat session started.';
-  });
-
-  webrtcManager.socket.on('peer-disconnected', (e) => {
-    statusMessage.textContent = 'Your chat partner disconnected.';
-    startButton.disabled = false;
-    endButton.disabled = true;
+      catch (error)
+      {
+          console.error('Error joining matchmaking queue:', error);
+      }
+      finally
+      {
+          // Re-enable the start button
+          startButton.disabled = false;
+      }
   });
 </script>

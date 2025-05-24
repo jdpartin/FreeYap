@@ -8,8 +8,9 @@ router.post('/join-queue', async (req: Request, res: Response) =>
 {
     try
     {
-        const { sessionId, topics } = req.body;
-        await MatchmakingManager.JoinQueue(sessionId, topics);
+        const { socketId, mode, topics = [] } = req.body;
+        
+        await MatchmakingManager.JoinQueue(socketId, topics, mode);
         res.status(200).json({ message: 'User added to queue' });
     }
     catch (error)
@@ -23,8 +24,8 @@ router.post('/leave-queue', async (req: Request, res: Response) =>
 {
     try
     {
-        const { sessionId } = req.body;
-        await MatchmakingManager.LeaveQueue(sessionId);
+        const { socketId } = req.body;
+        await MatchmakingManager.LeaveQueue(socketId);
         res.status(200).send('User removed from queue');
     }
     catch (error)
@@ -34,18 +35,38 @@ router.post('/leave-queue', async (req: Request, res: Response) =>
     }
 });
 
-router.post('/perform-delayed-matchmaking', async (req: Request, res: Response) =>
+router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
 {
     try
     {
-        const { sessionId, topics } = req.body;
-        await MatchmakingManager.PerformDelayedMatchmaking(sessionId, topics);
-        res.status(200).send('Delayed matchmaking performed');
+        const { socketId, interests = [], mode = 'text', filters = [] } = req.body;
+        
+        // Use interests as topics for backward compatibility
+        const topics = interests || [];
+        
+        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, { mode, filters });
+        
+        // Set proper content type
+        res.setHeader('Content-Type', 'application/json');
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Delayed matchmaking performed',
+            result: result
+        });
     }
     catch (error)
     {
         console.error('Error in /perform-delayed-matchmaking:', error);
-        res.status(500).send('Failed to perform delayed matchmaking');
+        
+        // Set proper content type
+        res.setHeader('Content-Type', 'application/json');
+        
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to perform delayed matchmaking',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 

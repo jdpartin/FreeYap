@@ -1,10 +1,6 @@
--- Purpose: Adds a user to the matchmaking queue.
--- Parameters:
---   session_id (UUID): The session ID of the user.
---   topics (JSONB): A JSONB array of topics associated with the session.
 
 CREATE OR REPLACE PROCEDURE public.add_to_queue(
-    sessionId UUID,
+    socketId TEXT,
     topics JSONB
 )
 LANGUAGE plpgsql
@@ -12,34 +8,42 @@ AS $$
 BEGIN
 
     DELETE FROM matchmaking_queue
-    WHERE session_id = sessionId;
-
+    WHERE socket_id = socketId;    
+    
     IF topics IS NOT NULL AND jsonb_array_length(topics) > 0 THEN
 
         INSERT INTO matchmaking_queue 
         (
-            session_id,
+            socket_id,
             inserted_at,
             has_topics
         )
         VALUES
         (
-            sessionId,
+            socketId,
             NOW(),
             TRUE
         );
+
+        -- Add topics to the queue_topics table
+        INSERT INTO queue_topics
+        (
+            socket_id,
+            topic
+        )
+        SELECT socketId, jsonb_array_elements_text(topics);
 
     ELSE
 
         INSERT INTO matchmaking_queue 
         (
-            session_id,
+            socket_id,
             inserted_at,
             has_topics
         )
         VALUES
         (
-            sessionId,
+            socketId,
             NOW(),
             FALSE
         );

@@ -109,23 +109,30 @@ async function initializeAgeEstimator() {
 }
 
 /**
- * Estimate age from a video element
- * @param {HTMLVideoElement} videoElement - Video element to analyze
+ * Estimate age from a video element or canvas
+ * @param {HTMLVideoElement|HTMLCanvasElement} inputElement - Video or canvas element to analyze
  * @returns {Promise<Object|null>} Age estimation result or null if failed
  */
-async function estimateAgeFromVideo(videoElement) {
+async function estimateAgeFromVideo(inputElement) {
     if (!ageEstimatorInitialized) {
         console.error('[AI] Age estimator not initialized');
         return null;
     }
     
     try {
-        if (!videoElement || videoElement.readyState < 2) {
+        // For video elements, check if it's ready
+        if (inputElement instanceof HTMLVideoElement && inputElement.readyState < 2) {
             return null; // Video not ready yet
         }
         
+        // If it's a canvas, check if it has valid dimensions
+        if (inputElement instanceof HTMLCanvasElement && 
+            (inputElement.width <= 0 || inputElement.height <= 0)) {
+            return null; // Canvas not valid
+        }
+        
         // Detect faces
-        const detections = await faceapi.detectAllFaces(videoElement, new faceapi.TinyFaceDetectorOptions({ 
+        const detections = await faceapi.detectAllFaces(inputElement, new faceapi.TinyFaceDetectorOptions({ 
             inputSize: 320,
             scoreThreshold: confidenceThreshold
         }))
@@ -781,11 +788,13 @@ async function applyVirtualBackground(inputVideo, outputCanvas, effect = 'blur',
             return false;
         }
     }
-    
-    // Log actual dimensions after validation
+      // Log actual dimensions after validation
     console.log('[AI] Applying virtual background with dimensions:', inputVideo.videoWidth, 'x', inputVideo.videoHeight);
     
-    // Make sure the canvas matches the video dimensions
+    // Get the main canvas that's being displayed
+    const mainDisplayCanvas = document.getElementById('localVideoCanvas');
+    
+    // Make sure the output canvas matches the video dimensions
     outputCanvas.width = Math.max(inputVideo.videoWidth, 16); // Ensure minimum width
     outputCanvas.height = Math.max(inputVideo.videoHeight, 16); // Ensure minimum height
     
@@ -796,11 +805,12 @@ async function applyVirtualBackground(inputVideo, outputCanvas, effect = 'blur',
     virtualBackgroundActive = true;
     virtualBackgroundEffect = effect;
     
-    // Make the output canvas visible (but position it off-screen) to ensure it renders properly
+    // When background processing is active, hide the normal canvas and show the backgroundOutputCanvas
+    if (mainDisplayCanvas) {
+        mainDisplayCanvas.style.display = 'none';
+    }
     outputCanvas.style.display = 'block';
-    outputCanvas.style.position = 'fixed';
-    outputCanvas.style.top = '-9999px';
-    outputCanvas.style.left = '-9999px';
+    outputCanvas.className = 'video'; // Apply the same styling as the main video
     
     // Clean up existing background image if any
     if (backgroundImage) {
@@ -830,13 +840,21 @@ async function applyVirtualBackground(inputVideo, outputCanvas, effect = 'blur',
                     requestAnimationFrame(processFrame);
                     return;
                 }
-                
-                // Make sure output canvas dimensions match the video (they may have changed)
+                  // Make sure output canvas dimensions match the video (they may have changed)
                 if (outputCanvas.width !== inputVideo.videoWidth || outputCanvas.height !== inputVideo.videoHeight) {
-                    console.log('[AI] Updating canvas dimensions to match video:', 
-                                inputVideo.videoWidth, 'x', inputVideo.videoHeight);
-                    outputCanvas.width = Math.max(inputVideo.videoWidth, 16);  // Ensure minimum width
-                    outputCanvas.height = Math.max(inputVideo.videoHeight, 16); // Ensure minimum height
+                    // Only resize if the difference is significant to avoid constant micro-adjustments
+                    const widthDiff = Math.abs(outputCanvas.width - inputVideo.videoWidth);
+                    const heightDiff = Math.abs(outputCanvas.height - inputVideo.videoHeight);
+                    
+                    if (widthDiff > 2 || heightDiff > 2) {
+                        console.log('[AI] Updating canvas dimensions to match video:', 
+                                    inputVideo.videoWidth, 'x', inputVideo.videoHeight);
+                        outputCanvas.width = Math.max(inputVideo.videoWidth, 16);  // Ensure minimum width
+                        outputCanvas.height = Math.max(inputVideo.videoHeight, 16); // Ensure minimum height
+                        
+                        // Update the context reference since canvas was resized
+                        backgroundCanvasContext = outputCanvas.getContext('2d');
+                    }
                 }
                   // Process the frame with BodyPix with enhanced error handling
                 let segmentation;
@@ -1182,14 +1200,18 @@ async function applyVirtualBackground(inputVideo, outputCanvas, effect = 'blur',
         }
     }
       // Start the processing loop
-    processFrame();
-
-    // Add a small delay before attempting to replace the video track to ensure the canvas has time to initialize
-    setTimeout(() => {
+    processFrame();    // Add a small delay before attempting to replace the video track to ensure the canvas has time to initialize
+    setTimeout(async () => {
         // Replace the WebRTC video track with our processed canvas
-        if (replaceVideoTrackWithCanvas(outputCanvas)) {
-            logAIMessage('Virtual background is now active in the remote video feed', 'success');
-        } else {
+        try {
+            const success = await replaceVideoTrackWithCanvas(outputCanvas);
+            if (success) {
+                logAIMessage('Virtual background is now active in the remote video feed', 'success');
+            } else {
+                logAIMessage('Virtual background visible locally but could not be sent to remote peer', 'warning');
+            }
+        } catch (error) {
+            console.error('[AI] Error replacing video track:', error);
             logAIMessage('Virtual background visible locally but could not be sent to remote peer', 'warning');
         }
     }, 1000);
@@ -1222,8 +1244,7 @@ function stopVirtualBackground() {
             console.error('[AI] Error clearing canvas:', clearError);
         }
     }
-    
-    // Restore the original video track if we have a peer connection
+      // Restore the original video track if we have a peer connection
     if (window.peerConnection) {
         // Find the local video element
         const localVideo = document.getElementById('localVideo');
@@ -1250,11 +1271,16 @@ function stopVirtualBackground() {
             }
         }
     }
-    
     // Hide the output canvas
     const backgroundOutputCanvas = document.getElementById('backgroundOutputCanvas');
     if (backgroundOutputCanvas) {
         backgroundOutputCanvas.style.display = 'none';
+    }
+    
+    // Show the main display canvas again
+    const mainDisplayCanvas = document.getElementById('localVideoCanvas');
+    if (mainDisplayCanvas) {
+        mainDisplayCanvas.style.display = 'block';
     }
     
     // Reset effect
@@ -1323,6 +1349,22 @@ function setVirtualBackgroundEffect(effect, backgroundImageUrl = null) {
 }
 
 /**
+ * Check if virtual background is currently active
+ * @returns {boolean} Whether virtual background is active
+ */
+function isVirtualBackgroundActive() {
+    return virtualBackgroundActive;
+}
+
+/**
+ * Get the current virtual background effect type
+ * @returns {string} The current effect type ('blur', 'image', 'custom', 'none')
+ */
+function getVirtualBackgroundEffect() {
+    return virtualBackgroundEffect;
+}
+
+/**
  * Get a MediaStream from the processed canvas to use with WebRTC
  * @param {HTMLCanvasElement} canvas - The canvas element with processed video
  * @param {number} [frameRate=30] - The desired frame rate for the canvas capture
@@ -1337,6 +1379,7 @@ function getProcessedCanvasStream(canvas, frameRate = 30) {
         }
         
         // Create a stream from the canvas with specified frame rate
+        // Use a consistent frame rate that matches typical webcam rates
         const stream = canvas.captureStream(frameRate);
         
         if (!stream || stream.getVideoTracks().length === 0) {
@@ -1344,7 +1387,20 @@ function getProcessedCanvasStream(canvas, frameRate = 30) {
             return null;
         }
         
-        console.log('[AI] Successfully created MediaStream from processed canvas');
+        // Configure the video track for better WebRTC compatibility
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+            // Apply constraints to ensure stable streaming
+            videoTrack.applyConstraints({
+                frameRate: { ideal: frameRate, max: frameRate },
+                width: { ideal: canvas.width },
+                height: { ideal: canvas.height }
+            }).catch(error => {
+                console.warn('[AI] Could not apply track constraints:', error);
+            });
+        }
+        
+        console.log('[AI] Successfully created MediaStream from processed canvas with frame rate:', frameRate);
         return stream;
     } catch (error) {
         console.error('[AI] Error creating canvas stream:', error);
@@ -1362,6 +1418,7 @@ function replaceVideoTrackWithCanvas(canvas) {
         // Create stream from canvas
         const canvasStream = getProcessedCanvasStream(canvas);
         if (!canvasStream) {
+            logAIMessage('Failed to create stream from canvas', 'error');
             return false;
         }
         
@@ -1369,36 +1426,66 @@ function replaceVideoTrackWithCanvas(canvas) {
         const canvasVideoTrack = canvasStream.getVideoTracks()[0];
         if (!canvasVideoTrack) {
             console.error('[AI] No video track in canvas stream');
+            logAIMessage('Failed to get video track from canvas stream', 'error');
+            return false;
+        }        // Find the WebRTC connection and replace the track
+        let peerConnection = null;
+        
+        // First try the connection module's getter function
+        if (typeof window.getPeerConnection === 'function') {
+            try {
+                peerConnection = window.getPeerConnection();
+                console.log('[AI] Got peer connection from getPeerConnection()', peerConnection ? 'successfully' : 'but it was null');
+            } catch (e) {
+                console.error('[AI] Error calling getPeerConnection():', e);
+            }
+        }
+        
+        // Fallback to direct window reference
+        if (!peerConnection && window.peerConnection) {
+            peerConnection = window.peerConnection;
+            console.log('[AI] Got peer connection from window.peerConnection');
+        }
+        
+        if (!peerConnection) {
+            console.error('[AI] No peer connection found');
+            logAIMessage('Could not find WebRTC peer connection. Make sure you are connected to a peer.', 'error');
             return false;
         }
         
-        // Find the WebRTC connection and replace the track
-        if (window.peerConnection) {
-            const sender = window.peerConnection.getSenders().find(s => 
-                s.track && s.track.kind === 'video'
-            );
-            
-            if (sender) {
-                sender.replaceTrack(canvasVideoTrack)
-                    .then(() => {
-                        console.log('[AI] Successfully replaced WebRTC video track with canvas stream');
-                        logAIMessage('Virtual background is now being sent to the remote peer', 'success');
-                    })
-                    .catch(error => {
-                        console.error('[AI] Error replacing track:', error);
-                        logAIMessage('Failed to apply virtual background to the remote video', 'error');
-                    });
-                return true;
-            } else {
-                console.error('[AI] No video sender found in peer connection');
-            }
-        } else {
-            console.error('[AI] No peer connection found');
+        // Check if the peer connection is in a valid state
+        if (peerConnection.connectionState === 'closed' || peerConnection.connectionState === 'failed') {
+            console.error('[AI] Peer connection is in an invalid state:', peerConnection.connectionState);
+            logAIMessage('Cannot replace video track: peer connection is not active', 'error');
+            return false;
         }
         
-        return false;
+        // Find the video sender in the peer connection
+        const sender = peerConnection.getSenders().find(s => 
+            s.track && s.track.kind === 'video'
+        );
+        
+        if (!sender) {
+            console.error('[AI] No video sender found in peer connection');
+            logAIMessage('Could not find video track in WebRTC connection', 'error');
+            return false;
+        }
+          // Replace the track and handle result
+        return sender.replaceTrack(canvasVideoTrack)
+            .then(() => {
+                console.log('[AI] Successfully replaced WebRTC video track with canvas stream');
+                logAIMessage('Virtual background is now being sent to the remote peer', 'success');
+                return true;
+            })
+            .catch(error => {
+                console.error('[AI] Error replacing track:', error);
+                logAIMessage('Failed to apply virtual background to the remote video: ' + error.message, 'error');
+                return false;
+            });
+        
     } catch (error) {
         console.error('[AI] Error replacing video track:', error);
+        logAIMessage('Unexpected error applying virtual background: ' + error.message, 'error');
         return false;
     }
 }
