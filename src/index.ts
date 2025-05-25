@@ -80,6 +80,10 @@ app.get('/text-chat', (req: Request, res: Response) => {
   res.render('textChat', { title: 'Text Chat' });
 });
 
+app.get('/topics-demo', (req: Request, res: Response) => {
+  res.render('topics-demo', { title: 'Topics Demo' });
+});
+
 app.get('/simple-text-chat', (req: Request, res: Response) => {
   res.render('simpleTextChat', { title: 'Simple Text Chat' });
 });

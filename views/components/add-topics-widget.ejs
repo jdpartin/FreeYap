@@ -1,0 +1,56 @@
+/**
+ * Example script showing how to add a topics widget to any page
+ * This can be included directly in any EJS file or HTML page
+ */
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if required modules are loaded
+        const checkDependencies = () => {
+            if (window.webrtcCore && window.WebRTCWidgetLoader) {
+                // Add the topics widget to the page at the specified location
+                const topicsContainer = WebRTCWidgetLoader.addTopicsWidget({
+                    // Container ID for the new widget
+                    containerId: 'page-topics-widget',
+                    
+                    // Where to add the widget in the DOM
+                    parentSelector: '#sidebar', // For example, add to a sidebar
+                    
+                    // Configure the topics widget
+                    widgetOptions: {
+                        // You can provide static topics if needed
+                        // userTopics: ['Programming', 'Music', 'Travel'],
+                        
+                        // Disable smart hello if this is just for display
+                        enableSmartHello: false,
+                        
+                        // Custom callback when topic similarities are calculated
+                        onTopicSimilarityCalculated: (data) => {
+                            console.log('Topics similarity calculated:', data);
+                            
+                            // Example: Update page elements based on topic similarities
+                            if (data.topMatch && data.topMatch.similarity > 0.7) {
+                                // You could highlight matching interests on the page
+                                const matchAlert = document.createElement('div');
+                                matchAlert.className = 'alert alert-success mt-3';
+                                matchAlert.textContent = `You have a strong match with ${window.webrtcCore.getPartnerName()} on ${data.topMatch.userTopic}!`;
+                                
+                                document.querySelector('#page-topics-widget').appendChild(matchAlert);
+                                
+                                // Auto-hide after 10 seconds
+                                setTimeout(() => matchAlert.remove(), 10000);
+                            }
+                        }
+                    }
+                });
+                
+                console.log('Topics widget added to the page');
+            } else {
+                // Retry after a short delay
+                setTimeout(checkDependencies, 100);
+            }
+        };
+        
+        // Start dependency check
+        checkDependencies();
+    });
+</script>
