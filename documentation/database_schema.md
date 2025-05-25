@@ -9,12 +9,22 @@ This document outlines the database schema for the FreeYap project, including ta
 - `inserted_at` (TIMESTAMP): Timestamp when the user was added to the queue.
                 disconnected users from queue via foreign key
 - `has_topics` (BOOLEAN): Indicates if the user has associated topics.
+- `chat_mode` (TEXT): The chat mode; video, voice, or text
 Foreign key on session id being in session_sockets, cascade on update or delete
 
 ### `queue_topics`
 - `socket_id` (UUID): Foreign key referencing `matchmaking_queue.session_id`.
 - `topic` (TEXT): A single topic associated with the session.
 Foreign Key on session_id being in matchmaking_queue cascade on update or delete
+
+### `topic_embeddings`
+- `topic` (TEXT): Primary key
+- `embedding` (double precision[]): the embedding
+
+### `topic_history`
+- `id` (UUID): Primary key auto generated
+- `topic` (TEXT): The topic that was used
+- `used_at` (TIMESTAMP): Auto generated, the time the topic was used
 
 ## Naming Conventions
 

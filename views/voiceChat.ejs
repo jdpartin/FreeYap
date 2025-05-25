@@ -1,16 +1,31 @@
 <div class="container py-4">
-  <div class="text-center mb-4">
-    <h1 class="fw-bold text-primary">Voice Chat</h1>
-    <p class="text-muted">Engage in real-time voice conversations.</p>
-  </div>
-  
-  <div class="row">
+    <div class="row">
     <!-- Main voice interface area -->
     <div class="col-md-8">
+      <!-- Topics Display -->
+      <div class="topics-display">
+        <div class="topics-section user-topics">
+          <div class="topics-title">
+            <i class="fas fa-user"></i>
+            Your Topics
+          </div>
+          <div class="topics-list" id="user-topics-list">
+            <div class="topics-empty">No topics selected</div>
+          </div>
+        </div>        <div class="topics-section partner-topics">
+          <div class="topics-title">
+            <i class="fas fa-users"></i>
+            <span id="partner-topics-header">Partner's Topics</span>
+          </div>
+          <div class="topics-list" id="partner-topics-list">
+            <div class="topics-empty">Waiting for partner...</div>
+          </div>
+        </div>
+      </div>
+
       <div class="voice-container bg-light rounded shadow-sm p-4 mb-3 text-center">
-        <div class="avatar-display mb-3">
-          <div class="avatar-circle pulse">
-            <i class="bi bi-mic-fill fs-1 text-primary"></i>
+        <div class="avatar-display mb-3">          <div class="avatar-circle pulse">
+            <i class="bi bi-mic-fill fs-1" style="color: var(--primary);"></i>
           </div>
         </div>
         
@@ -30,8 +45,7 @@
       </div>
       
       <!-- Voice controls -->
-      <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
-        <button id="startButton" class="btn btn-primary">
+      <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">        <button id="startButton" class="btn" style="background-color: var(--primary); color: white;">
           <i class="bi bi-play-fill"></i> Start Looking
         </button>
         <button id="endButton" class="btn btn-danger" disabled>
@@ -64,23 +78,25 @@
         </div>
       </div>
       
-      <div id="statusMessage" class="alert alert-info text-center"></div>
+      <div id="statusMessage" class="alert text-center" style="background-color: rgba(255, 77, 109, 0.1); color: var(--primary);"></div>
     </div>
     
     <!-- Chat sidebar -->
     <div class="col-md-4">
-      <div class="chat-sidebar">
-        <div class="card shadow-sm">
-          <div class="card-header bg-primary text-white">
-            <i class="bi bi-chat-dots-fill"></i> Chat
+      <div class="chat-sidebar">        <div class="card shadow-sm">          <div class="card-header text-white" style="background-color: var(--primary);">
+            <span id="chat-session-title">
+              <i class="bi bi-chat-dots-fill"></i> Chat
+              <i class="bi bi-info-circle ms-2 chat-info-icon" 
+                 title="This is a randomly generated name to help you connect personally while staying anonymous" 
+                 style="cursor: help; display: none;"></i>
+            </span>
           </div>
           <div class="card-body chat-messages" id="chat-messages">
             <p class="text-muted">No messages yet. Start the conversation!</p>
           </div>
           <div class="card-footer p-2">
             <div class="input-group">
-              <input type="text" class="form-control" placeholder="Type here..." id="chat-input">
-              <button class="btn btn-primary" id="chat-send">
+              <input type="text" class="form-control" placeholder="Type here..." id="chat-input">              <button class="btn" id="chat-send" style="background-color: var(--primary); color: white;">
                 <i class="bi bi-send-fill"></i>
               </button>
             </div>
@@ -116,10 +132,66 @@
 
 <!-- Voice chat specific functionality -->
 <script>
+  // Variable to track delayed matchmaking timeout
+  let delayedMatchmakingTimeout = null;
+  let matchFound = false;
+  
+  // Wait for WebRTCClient.js to load and use its socket connection
+  document.addEventListener('DOMContentLoaded', async function() {
+      // Disable start button initially until permissions are granted
+      const startButton = document.getElementById('startButton');
+      startButton.disabled = true;
+      startButton.textContent = 'Requesting Permissions...';
+
+      try {
+          // Request audio permissions immediately for voice chat
+          console.log('Voice chat page - requesting audio permissions on load...');
+          await initializeMediaStream({ audio: true, video: false });
+          
+          // Permissions granted - enable start button
+          startButton.disabled = false;
+          startButton.innerHTML = '<i class="bi bi-play-fill"></i> Start Looking';
+          console.log('Audio permissions granted - start button enabled');
+      } catch (error) {
+          console.error('Failed to get audio permissions:', error);
+          startButton.disabled = true;
+          startButton.textContent = 'Permissions Required';
+          
+          // Show error message to user
+          const statusMessage = document.getElementById('statusMessage');
+          if (statusMessage) {
+              statusMessage.className = 'alert alert-danger text-center';
+              statusMessage.textContent = 'Audio permissions are required for voice chat. Please refresh and allow microphone access.';
+          }
+      }
+
+      // Use the socket from WebRTCClient.js instead of creating a new one
+      if (typeof window.socket !== 'undefined') {
+          // Listen for match-found event to abort delayed matchmaking
+          window.socket.on('match-found', () => {
+              console.log('Match found! Aborting delayed matchmaking...');
+              matchFound = true;
+              if (delayedMatchmakingTimeout) {
+                  clearTimeout(delayedMatchmakingTimeout);
+                  delayedMatchmakingTimeout = null;
+                  console.log('Delayed matchmaking timeout cleared');
+              }
+          });
+      } else {
+          console.error('Socket not available from WebRTCClient.js');
+      }
+  });
   document.getElementById('startButton').addEventListener('click', async () =>
   {
       console.log('Start button clicked, joining matchmaking queue...');
       
+      // Reset match state
+      matchFound = false;
+      if (delayedMatchmakingTimeout) {
+          clearTimeout(delayedMatchmakingTimeout);
+          delayedMatchmakingTimeout = null;
+      }
+
       // Update status message
       const statusMessage = document.getElementById('statusMessage');
       statusMessage.textContent = 'Looking for a chat partner...';
@@ -130,14 +202,34 @@
 
       try
       {
-          // Initialize audio stream for voice chat
-          await initializeMediaStream(true, false); // audio only, no video
+          // Media stream already initialized on page load, just verify it exists
+          if (!localStream) {
+              throw new Error('Audio stream not available. Please refresh the page.');
+          }
+          
+          // Extract topics from URL query parameters
+          const urlParams = new URLSearchParams(window.location.search);
+          const topicsParam = urlParams.get('topics');
+          let topics = [];
+          
+          if (topicsParam) {
+              try {
+                  topics = JSON.parse(decodeURIComponent(topicsParam));
+                  console.log('Extracted topics from URL:', topics);
+              } catch (e) {
+                  console.error('Error parsing topics from URL:', e);
+              }
+          }
           
           // Call the join-queue endpoint
           const response = await fetch('/api/matchmaking/join-queue', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ socketId: mySocketId, topics: [] }) // Add topics if needed
+              body: JSON.stringify({ 
+                socketId: mySocketId, 
+                mode: 'voice', // Specify voice mode
+                topics: topics 
+              })
           });
 
           if (!response.ok)
@@ -149,16 +241,20 @@
           statusMessage.textContent = 'Successfully joined queue. Looking for a match...';
 
           // Wait for 10 seconds before calling delayed matchmaking
-          setTimeout(async () =>
+          delayedMatchmakingTimeout = setTimeout(async () =>
           {
-              console.log('10 seconds passed, calling delayed matchmaking...');
+              // Check if match was already found
+              if (matchFound) {
+                  console.log('Match already found, skipping delayed matchmaking');
+                  return;
+              }
 
-              try
+              console.log('10 seconds passed, calling delayed matchmaking...');              try
               {
                   const delayedResponse = await fetch('/api/matchmaking/delayed-matchmaking', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ socketId: mySocketId, topics: [] }) // Add topics if needed
+                      body: JSON.stringify({ socketId: mySocketId, topics: topics })
                   });
 
                   if (!delayedResponse.ok)
@@ -313,9 +409,8 @@
           peer.on('data', data => {
               try {
                   const message = JSON.parse(data.toString());
-                  
-                  if (message.type === 'chat') {
-                      appendChatMessage('Partner', message.content);
+                    if (message.type === 'chat') {
+                      appendChatMessage(window.getPartnerName ? window.getPartnerName() : 'Partner', message.content);
                   } else if (message.type === 'sound') {
                       playSoundEffect(message.sound);
                   }
@@ -390,27 +485,6 @@
           return p;
       };
   });
-
-  // Initialize media stream with audio-only option for voice chat
-  async function initializeMediaStream(audio = true, video = false) {
-      try {
-          localStream = await navigator.mediaDevices.getUserMedia({
-              audio: audio,
-              video: video
-          });
-          
-          console.log('Got local stream with audio:', audio, 'video:', video);
-          
-          // If peer exists already, add the stream
-          if (peer) {
-              peer.addStream(localStream);
-          }
-          
-          return localStream;
-      } catch (err) {
-          console.error('Error getting media stream:', err);
-          document.getElementById('statusMessage').textContent = 'Error accessing microphone. Please check your permissions.';
-          throw err;
-      }
-  }
+  // Voice chat will use the initializeMediaStream from WebRTCClient.js
+  // No need for a separate implementation
 </script>

@@ -1,5 +1,6 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { Pool } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
 
 class DatabaseManager
 {
@@ -34,23 +35,19 @@ class DatabaseManager
         const query = `CALL public.${functionName}(${placeholders})`;
         const values = Object.values(params);
         return this.runQuery(query, values);
-    }
-
-    public async insertVector(collectionName: string, vector: number[], metadata: Record<string, unknown>): Promise<any>
+    }    public async insertVector(collectionName: string, vector: number[], metadata: Record<string, unknown>): Promise<any>
     {
         try
         {
             const response = await this.vectorDbClient.upsert(collectionName, {
                 points: [
                     {
-                        id: Date.now().toString(), // Add unique ID for each point
+                        id: uuidv4(), // Use UUID for unique point IDs
                         vector,
                         payload: metadata
                     }
                 ]
-            });
-
-            if (!response || response.status !== 'acknowledged') // Update status comparison
+            });            if (!response || (response.status !== 'acknowledged' && response.status !== 'completed')) // Accept both acknowledged and completed
             {
                 throw new Error(`Error inserting vector into ${collectionName}: ${response.status}`);
             }
@@ -62,21 +59,17 @@ class DatabaseManager
             console.error(`Error inserting vector into ${collectionName}:`, err);
             throw err;
         }
-    }
-
-    public async vectorBatchInsert(collectionName: string, vectors: { vector: number[]; metadata: Record<string, unknown> }[]): Promise<any>
+    }    public async vectorBatchInsert(collectionName: string, vectors: { vector: number[]; metadata: Record<string, unknown> }[]): Promise<any>
     {
         try
         {
             const points = vectors.map(({ vector, metadata }) => ({
-                id: Date.now().toString(), // Add unique ID for each point
+                id: uuidv4(), // Use UUID for unique point IDs
                 vector,
                 payload: metadata
             }));
 
-            const response = await this.vectorDbClient.upsert(collectionName, { points });
-
-            if (!response || response.status !== 'acknowledged') // Update status comparison
+            const response = await this.vectorDbClient.upsert(collectionName, { points });            if (!response || (response.status !== 'acknowledged' && response.status !== 'completed')) // Accept both acknowledged and completed
             {
                 throw new Error(`Error batch inserting vectors into ${collectionName}: ${response.status}`);
             }
@@ -111,22 +104,44 @@ class DatabaseManager
             console.error(`Error searching vectors in ${collectionName}:`, err);
             throw err;
         }
-    }
-
-    // Refactor searchVectorBatch to handle individual searches
-    public async searchVectorBatch(topics: string[], topK = 10): Promise<{ topic: string; matches: any[] }[]>
+    }    // Search for similar topics using embeddings from PostgreSQL
+    public async searchVectorBatch(topics: string[], mode?: string, topK = 10): Promise<{ topic: string; matches: any[] }[]>
     {
-        const collectionName = 'your_collection_name';
+        const collectionName = 'topics_collection';
 
         try
         {
             const results = await Promise.all(
                 topics.map(async (topic) =>
-                {
-                    const response = await this.vectorDbClient.search(collectionName, {
-                        vector: [0], // Placeholder vector for the topic
+                {                    // Get the embedding for this topic from PostgreSQL
+                    const embeddingResult = await this.executeFunction('get_topic_embedding', { topicText: topic }) as { topic: string; embedding: number[] }[];
+                    
+                    if (!embeddingResult || embeddingResult.length === 0 || !embeddingResult[0].embedding) {
+                        console.log(`No embedding found for topic: ${topic}`);
+                        return { topic, matches: [] };
+                    }
+
+                    // Prepare search options with optional mode filtering
+                    const searchOptions: any = {
+                        vector: embeddingResult[0].embedding,
                         limit: topK
-                    });
+                    };
+
+                    // Add mode filtering if mode is specified
+                    if (mode) {
+                        searchOptions.filter = {
+                            must: [
+                                {
+                                    key: 'mode',
+                                    match: {
+                                        value: mode
+                                    }
+                                }
+                            ]
+                        };
+                    }
+
+                    const response = await this.vectorDbClient.search(collectionName, searchOptions);
 
                     if (!response || !Array.isArray(response))
                     {
@@ -191,6 +206,62 @@ class DatabaseManager
         const query = `SELECT * FROM public.${functionName}(${placeholders})`;
         const values = Object.values(params);
         return this.runQuery(query, values);
+    }
+
+    /**
+     * Get a client from the connection pool
+     * @returns A client from the pool that must be released after use
+     */
+    public async getClient()
+    {
+        return await this.pool.connect();
+    }
+
+    /**
+     * Returns the singleton instance of DatabaseManager
+     * @returns The singleton instance of DatabaseManager
+     */
+    public static getInstance(): DatabaseManager
+    {
+        if (!DatabaseManager.instance)
+        {
+            DatabaseManager.instance = new DatabaseManager();
+        }
+        return DatabaseManager.instance;
+    }
+
+    private static instance: DatabaseManager;
+
+    public async deleteVectorsBySocketId(collectionName: string, socketId: string): Promise<any>
+    {
+        try
+        {
+            const response = await this.vectorDbClient.delete(collectionName, {
+                filter: {
+                    must: [
+                        {
+                            key: 'socketId',
+                            match: {
+                                value: socketId
+                            }
+                        }
+                    ]
+                }
+            });
+
+            if (!response || (response.status !== 'acknowledged' && response.status !== 'completed'))
+            {
+                console.warn(`Warning: Vector deletion response status: ${response?.status || 'unknown'}`);
+            }
+
+            console.log(`Deleted vectors for socketId: ${socketId} from collection: ${collectionName}`);
+            return response;
+        }
+        catch (err)
+        {
+            console.error(`Error deleting vectors for socketId ${socketId} from ${collectionName}:`, err);
+            throw err;
+        }
     }
 }
 

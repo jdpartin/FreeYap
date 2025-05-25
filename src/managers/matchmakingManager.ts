@@ -33,16 +33,16 @@ class MatchmakingManager
         this.socketIo = socketIo;
     }
 
-    static async JoinQueue(socketId: string, topics: string[], options: MatchmakingOptions = {}): Promise<void>
+    static async JoinQueue(socketId: string, topics: string[], mode: string, options: MatchmakingOptions = {}): Promise<void>
     {
-        await this.#initialMatchmaking(socketId, topics);
+        await this.#initialMatchmaking(socketId, topics, mode);
     }    
     
-    static async PerformDelayedMatchmaking(socketId: string, topics: string[], options: MatchmakingOptions = {}): Promise<any>
+    static async PerformDelayedMatchmaking(socketId: string, topics: string[], mode: string, options: MatchmakingOptions = {}): Promise<any>
     {
         const queueInfo = await db.executeFunction('get_and_delete_queue_entry', { socketId: socketId as unknown as 'UUID' }) as UserQueueInfo[];
 
-        const matchmakingResult = await this.#delayedMatchmaking(socketId, topics);
+        const matchmakingResult = await this.#delayedMatchmaking(socketId, topics, mode);
 
         if (!matchmakingResult)
         {
@@ -66,7 +66,8 @@ class MatchmakingManager
                     socket_id: mappedUser.socketId,
                     topics: JSON.stringify(mappedUser.topics), // Convert topics to JSONB array
                     has_topics: mappedUser.topics.length > 0,
-                    inserted_at: mappedUser.insertedAt
+                    inserted_at: mappedUser.insertedAt,
+                    mode: mode
                 });
             }
         }
@@ -77,6 +78,36 @@ class MatchmakingManager
     static async LeaveQueue(socketId: string): Promise<void>
     {
         await this.#removeFromQueue(socketId);
+    }
+
+    // Public method to get embeddings for semantic similarity comparison
+    static async getEmbedding(topic: string): Promise<number[]>
+    {
+        return await this.#getEmbedding(topic);
+    }
+
+    // Public method to get bulk embeddings with missing topic identification
+    static async getBulkEmbeddings(topics: string[]): Promise<{ topic: string; embedding: number[] | null; found: boolean }[]>
+    {
+        if (!topics || topics.length === 0) 
+        {
+            return [];
+        }
+
+        try 
+        {
+            // Use the new stored procedure to get bulk embeddings
+            const results = await db.executeFunction('get_bulk_topic_embeddings', { topics_array: topics }) as { topic: string; embedding: number[] | null; found: boolean }[];
+            
+            // For topics that weren't found, we could optionally generate embeddings here
+            // But for now, we'll just return the results as-is
+            return results;
+        } 
+        catch (error) 
+        {
+            console.error('Error getting bulk embeddings:', error);
+            throw error;
+        }
     }
 
     //#region Private Methods
@@ -90,11 +121,18 @@ class MatchmakingManager
         };
     }
 
-    static async #initialMatchmaking(socketId: string, topics: string[]): Promise<void>
+    static async #initialMatchmaking(socketId: string, topics: string[], mode: string): Promise<void>
     {
-        if (topics && topics.length > 0)
+        if (!socketId || !mode)
         {
-            const bestMatch = await this.getBestTopicMatch(socketId, topics);
+            throw new Error('Invalid parameters for matchmaking. SocketId and mode are required.');
+        }
+
+        if (topics && topics.length > 0) // User has topics
+        {
+            this.saveTopicUsage(topics); // for popularity and reporting
+
+            const bestMatch = await this.getBestTopicMatch(socketId, topics, mode);
 
             if (bestMatch && bestMatch.length > 0)
             {
@@ -103,9 +141,9 @@ class MatchmakingManager
                 return;
             }
         }
-        else
+        else // Random topic user
         {
-            const result = (await db.executeFunction('get_oldest_delayed_term_user', {})) as { get_oldest_delayed_term_user: string | null }[];
+            const result = (await db.executeFunction('get_oldest_delayed_term_user', {mode})) as { get_oldest_delayed_term_user: string | null }[];
             
             if (result && result.length > 0)
             {
@@ -119,47 +157,57 @@ class MatchmakingManager
             }
         }
 
-        await this.#addToQueue(socketId, topics);
-    }
-
-    static async getBestTopicMatch(socketId: string, topics: string[]): Promise<UserQueueInfo[]>
+        await this.#addToQueue(socketId, topics, mode);
+    }    static async getBestTopicMatch(socketId: string, topics: string[], mode: string): Promise<UserQueueInfo[]>
     {
-        const matchingTopics = await this.#getMatchingTopics(topics);
+        const matchingTopics = await this.#getMatchingTopics(topics, mode);
 
         if (matchingTopics && matchingTopics.length > 0)
         {
-            return (await db.executeFunction('get_queued_user_with_most_matches', {
-                matchedTopics: matchingTopics
+            return (await db.executeFunction('get_queued_user_with_most_matches',
+            {
+                matchedTopics: matchingTopics,
+                mode: mode
             })) as UserQueueInfo[];
         }
 
         return [];
-    }
-
-    static async #getMatchingTopics(topics: string[]): Promise<string[]>
+    }    
+    
+    static async saveTopicUsage(topics: string[]): Promise<void>
+    {
+        db.executeStoredProcedure('bulk_insert_topic_history', { topicArray: topics as unknown as 'TEXT[]' });
+    }    
+    
+    static async #getMatchingTopics(topics: string[], mode: string): Promise<string[]>
     {
         if (topics && topics.length > 0)
         {
-            const threshold = 0.9;
+            const threshold = 0.8;
 
-            const results = await db.searchVectorBatch(topics, 1000);
+            const results = await db.searchVectorBatch(topics, mode, 1000);
 
             const matchedTopics = results.flatMap((result: any) =>
-                result.matches.filter((match: any) => match.score >= threshold).map((match: any) => match.topic)
+                result.matches
+                    .filter((match: any) => match.score >= threshold)
+                    .map((match: any) => {
+                        return match.payload?.topic || match.topic;
+                    })
+                    .filter((topic: any) => topic !== undefined) // Remove undefined values
             );
 
             return [...new Set(matchedTopics)]; // Remove duplicates
         }
 
         return [];
-    }    
-      static async #triggerConnection(socketId: string, matchedSocketId: string): Promise<void>
+    }
+    
+    static async #triggerConnection(socketId: string, matchedSocketId: string): Promise<void>
     {
         try
-        {
-            console.log(`Triggering connection between ${socketId} and ${matchedSocketId}`);
+        {            console.log(`Triggering connection between ${socketId} and ${matchedSocketId}`);
 
-            // delete both from queue
+            // delete both from queue - await these since they're now async
             await this.#removeFromQueue(socketId);
             await this.#removeFromQueue(matchedSocketId);
 
@@ -180,32 +228,34 @@ class MatchmakingManager
         {
             console.error('Error triggering connection:', error);
         }
-    }
-
-    static async #addToQueue(socketId: string, topics: string[]): Promise<void>
+    }    
+    
+    static async #addToQueue(socketId: string, topics: string[], mode: string): Promise<void>
     {
         if (topics && topics.length > 0)
         {
             const embeddings = await Promise.all(topics.map(topic => this.#getEmbedding(topic)));
             const vectorDataArray = topics.map((topic, index) => ({
                 vector: embeddings[index],
-                metadata: { socketId, topic }
+                metadata: { socketId, topic, mode }
             }));
 
             db.vectorBatchInsert('topics_collection', vectorDataArray);
         }
 
-        db.executeStoredProcedure('add_to_queue', {
+        db.executeStoredProcedure('add_to_queue',
+        {
             socket_id: socketId as unknown as 'UUID',
-            topics: JSON.stringify(topics) as unknown as 'JSONB' // Convert topics to JSONB array
+            topics: JSON.stringify(topics) as unknown as 'JSONB', // Convert topics to JSONB array
+            mode: mode
         });
     }    
     
-    static async #delayedMatchmaking(socketId: string, topics: string[]): Promise<boolean>
+    static async #delayedMatchmaking(socketId: string, topics: string[], mode: string): Promise<boolean>
     {
         if (topics && topics.length > 0)
         {
-            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {})) as { get_oldest_random_topic_user: UserQueueInfo[] | null }[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: UserQueueInfo[] | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
@@ -218,7 +268,7 @@ class MatchmakingManager
                 }
             }
             
-            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', {})) as { get_oldest_topic_user: UserQueueInfo[] | null }[];
+            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', {mode})) as { get_oldest_topic_user: UserQueueInfo[] | null }[];
 
             if (mismatchedTopicResult && mismatchedTopicResult.length > 0 && mismatchedTopicResult[0].get_oldest_topic_user)
             {
@@ -233,7 +283,7 @@ class MatchmakingManager
         }        
         else
         {
-            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {})) as { get_oldest_random_topic_user: string | null }[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: string | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
@@ -245,28 +295,29 @@ class MatchmakingManager
         }
 
         return false;
-    }
-
+    }    
+    
     static async #removeFromQueue(socketId: string): Promise<void>
     {
         db.executeStoredProcedure('remove_from_queue', { socketId });
+        db.deleteVectorsBySocketId('topics_collection', socketId);
     }
-
+    
     static async #getEmbedding(topic: string): Promise<number[]>
     {
-        const existingEmbedding = (await db.executeStoredProcedure('get_text_embedding', { topic })) as EmbeddingResponse;
+        const existingEmbedding = (await db.executeFunction('get_topic_embedding', { topicText: topic })) as EmbeddingResponse[];
 
-        if (existingEmbedding && existingEmbedding.embedding)
+        if (existingEmbedding && existingEmbedding.length > 0 && existingEmbedding[0].embedding)
         {
-            return existingEmbedding.embedding;
+            return existingEmbedding[0].embedding;
         }
 
-        const openai = require('openai');
-        const apiKey = process.env.OPENAI_API_KEY;
-        const configuration = new openai.Configuration({ apiKey });
-        const openaiClient = new openai.OpenAIApi(configuration);
+        const { OpenAI } = require('openai');
+        const openaiClient = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
+        });
 
-        const response = await openaiClient.createEmbedding({
+        const response = await openaiClient.embeddings.create({
             model: 'text-embedding-ada-002',
             input: topic
         });
@@ -278,7 +329,7 @@ class MatchmakingManager
 
         const embedding = response.data[0].embedding;
 
-        db.executeStoredProcedure('save_text_embedding', { topic, embedding });
+        db.executeStoredProcedure('save_topic_embedding', { topicText: topic, topicEmbedding: embedding });
 
         return embedding;
     }

@@ -1,0 +1,460 @@
+<div class="semantic-similarity-container">
+  <div class="card main-card">
+    <div class="card-body">
+      <h1 class="card-title fs-2 fw-bold mb-3 text-center">
+        <i class="fas fa-brain me-2 text-primary"></i>
+        Semantic Similarity Tester
+      </h1>
+      <p class="mb-4 text-center text-muted">
+        Compare how similar two words or phrases are using AI embeddings and cosine similarity.
+      </p>
+
+      <!-- Input Form -->
+      <div class="similarity-form mb-4">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="fas fa-quote-left text-primary"></i>
+              </span>
+              <input 
+                type="text" 
+                id="word1Input" 
+                class="form-control" 
+                placeholder="Enter first word or phrase"
+                maxlength="100"
+              >
+            </div>
+          </div>
+          
+          <div class="col-md-2 text-center d-flex align-items-center justify-content-center">
+            <span class="fw-bold text-muted fs-4">VS</span>
+          </div>
+          
+          <div class="col-md-5">
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="fas fa-quote-right text-primary"></i>
+              </span>
+              <input 
+                type="text" 
+                id="word2Input" 
+                class="form-control" 
+                placeholder="Enter second word or phrase"
+                maxlength="100"
+              >
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-center mt-3">
+          <button 
+            id="compareBtn" 
+            class="btn btn-primary btn-lg px-4"
+            disabled
+          >
+            <i class="fas fa-search me-2"></i>
+            Compare Similarity
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="text-center py-4 d-none">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Computing similarity...</span>
+        </div>
+        <p class="text-muted mt-2">
+          <i class="fas fa-cogs me-1"></i>
+          Computing embeddings and similarity...
+        </p>
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsSection" class="results-section d-none">
+        <div class="card border-0 bg-light">
+          <div class="card-body">
+            <h3 class="card-title text-center mb-4">
+              <i class="fas fa-chart-line me-2 text-success"></i>
+              Similarity Results
+            </h3>
+            
+            <!-- Similarity Score Display -->
+            <div class="text-center mb-4">
+              <div class="similarity-circle mx-auto mb-3" id="similarityCircle">
+                <span class="similarity-percentage" id="similarityPercentage">0%</span>
+                <small class="similarity-label">Similar</small>
+              </div>
+              
+              <!-- Similarity Bar -->
+              <div class="similarity-bar-container mb-3">
+                <div class="similarity-bar" id="similarityBar"></div>
+              </div>
+              
+              <div class="row text-center">
+                <div class="col-md-6">
+                  <strong id="comparedWord1" class="text-primary"></strong>
+                </div>
+                <div class="col-md-6">
+                  <strong id="comparedWord2" class="text-primary"></strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="technical-details">
+              <h5 class="mb-3">
+                <i class="fas fa-info-circle me-2 text-info"></i>
+                Technical Details
+              </h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <strong>Cosine Similarity:</strong> 
+                    <span id="cosineSimilarity" class="text-monospace">0.000</span>
+                  </p>
+                  <p class="mb-2">
+                    <strong>Embedding Dimensions:</strong> 
+                    <span id="embeddingDimensions" class="text-monospace">0</span>
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <strong>Model:</strong> 
+                    <span class="text-monospace">OpenAI text-embedding-ada-002</span>
+                  </p>
+                  <p class="mb-2">
+                    <strong>Computed:</strong> 
+                    <span id="timestamp" class="text-monospace">-</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="alert alert-danger d-none">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span id="errorMessage">An error occurred while computing similarity.</span>
+      </div>
+
+      <!-- Example Suggestions -->
+      <div class="examples-section mt-4">
+        <h5 class="mb-3">
+          <i class="fas fa-lightbulb me-2 text-warning"></i>
+          Try These Examples
+        </h5>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary btn-sm w-100 example-btn" 
+                    data-word1="cat" data-word2="dog">
+              Cat vs Dog
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary btn-sm w-100 example-btn" 
+                    data-word1="happy" data-word2="joyful">
+              Happy vs Joyful
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary btn-sm w-100 example-btn" 
+                    data-word1="car" data-word2="bicycle">
+              Car vs Bicycle
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary btn-sm w-100 example-btn" 
+                    data-word1="programming" data-word2="coding">
+              Programming vs Coding
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary btn-sm w-100 example-btn" 
+                    data-word1="ocean" data-word2="mountain">
+              Ocean vs Mountain
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-secondary btn-sm w-100 example-btn" 
+                    data-word1="love" data-word2="hate">
+              Love vs Hate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information Section -->
+      <div class="info-section mt-4">
+        <div class="card border-0 bg-primary bg-opacity-10">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="fas fa-question-circle me-2 text-primary"></i>
+              How It Works
+            </h5>
+            <p class="card-text small">
+              This tool uses OpenAI's text-embedding-ada-002 model to convert words into high-dimensional vectors. 
+              It then calculates the cosine similarity between these vectors to determine semantic similarity. 
+              A score of 100% means identical meaning, while 0% means completely unrelated.
+            </p>
+            <div class="row text-center mt-3">
+              <div class="col-4">
+                <div class="fw-bold text-success">90-100%</div>
+                <small class="text-muted">Very Similar</small>
+              </div>
+              <div class="col-4">
+                <div class="fw-bold text-warning">50-89%</div>
+                <small class="text-muted">Related</small>
+              </div>
+              <div class="col-4">
+                <div class="fw-bold text-danger">0-49%</div>
+                <small class="text-muted">Different</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .semantic-similarity-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .similarity-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .similarity-percentage {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .similarity-label {
+    font-size: 0.7rem;
+    opacity: 0.9;
+  }
+
+  .similarity-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .similarity-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #dc3545, #ffc107, #28a745);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.8s ease;
+    position: relative;
+  }
+
+  .example-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .technical-details {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+
+  .results-section {
+    animation: slideIn 0.5s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .similarity-circle {
+      width: 100px;
+      height: 100px;
+    }
+    
+    .similarity-percentage {
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const word1Input = document.getElementById('word1Input');
+  const word2Input = document.getElementById('word2Input');
+  const compareBtn = document.getElementById('compareBtn');
+  const loadingState = document.getElementById('loadingState');
+  const resultsSection = document.getElementById('resultsSection');
+  const errorState = document.getElementById('errorState');
+
+  // Enable/disable compare button based on input
+  function updateCompareButton() {
+    const word1 = word1Input.value.trim();
+    const word2 = word2Input.value.trim();
+    compareBtn.disabled = !word1 || !word2;
+  }
+
+  word1Input.addEventListener('input', updateCompareButton);
+  word2Input.addEventListener('input', updateCompareButton);
+
+  // Handle Enter key press
+  function handleEnterKey(event) {
+    if (event.key === 'Enter' && !compareBtn.disabled) {
+      compareSimilarity();
+    }
+  }
+
+  word1Input.addEventListener('keypress', handleEnterKey);
+  word2Input.addEventListener('keypress', handleEnterKey);
+
+  // Compare button click handler
+  compareBtn.addEventListener('click', compareSimilarity);
+
+  // Example button handlers
+  document.querySelectorAll('.example-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const word1 = this.getAttribute('data-word1');
+      const word2 = this.getAttribute('data-word2');
+      
+      word1Input.value = word1;
+      word2Input.value = word2;
+      updateCompareButton();
+      
+      // Auto-compare after short delay
+      setTimeout(() => {
+        if (!compareBtn.disabled) {
+          compareSimilarity();
+        }
+      }, 200);
+    });
+  });
+
+  async function compareSimilarity() {
+    const word1 = word1Input.value.trim();
+    const word2 = word2Input.value.trim();
+
+    if (!word1 || !word2) {
+      showError('Please enter both words or phrases.');
+      return;
+    }
+
+    // Show loading state
+    hideAllStates();
+    loadingState.classList.remove('d-none');
+    compareBtn.disabled = true;
+
+    try {
+      const response = await fetch('/api/semantic-similarity/compare-similarity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          word1: word1,
+          word2: word2
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to compare similarity');
+      }
+
+      const data = await response.json();
+      displayResults(data);
+
+    } catch (error) {
+      console.error('Error comparing similarity:', error);
+      showError(error.message || 'An error occurred while computing similarity.');
+    } finally {
+      loadingState.classList.add('d-none');
+      updateCompareButton(); // Re-enable button if inputs are valid
+    }
+  }
+
+  function displayResults(data) {
+    hideAllStates();
+    resultsSection.classList.remove('d-none');
+
+    // Update text displays
+    document.getElementById('comparedWord1').textContent = data.word1;
+    document.getElementById('comparedWord2').textContent = data.word2;
+    document.getElementById('cosineSimilarity').textContent = data.similarity.toFixed(4);
+    document.getElementById('embeddingDimensions').textContent = data.embeddingDimensions;
+    document.getElementById('timestamp').textContent = new Date(data.timestamp).toLocaleTimeString();
+
+    // Update similarity displays
+    const percentage = data.similarityPercentage;
+    const similarityCircle = document.getElementById('similarityCircle');
+    const similarityBar = document.getElementById('similarityBar');
+    const percentageElement = document.getElementById('similarityPercentage');
+
+    // Set percentage text
+    percentageElement.textContent = `${percentage}%`;
+
+    // Set colors based on similarity score
+    let color;
+    if (percentage >= 90) {
+      color = '#28a745'; // Green
+    } else if (percentage >= 70) {
+      color = '#20c997'; // Teal
+    } else if (percentage >= 50) {
+      color = '#ffc107'; // Yellow
+    } else if (percentage >= 30) {
+      color = '#fd7e14'; // Orange
+    } else {
+      color = '#dc3545'; // Red
+    }
+
+    // Update circle background
+    similarityCircle.style.background = color;
+
+    // Animate similarity bar
+    setTimeout(() => {
+      similarityBar.style.width = `${percentage}%`;
+    }, 100);
+  }
+
+  function showError(message) {
+    hideAllStates();
+    document.getElementById('errorMessage').textContent = message;
+    errorState.classList.remove('d-none');
+  }
+
+  function hideAllStates() {
+    loadingState.classList.add('d-none');
+    resultsSection.classList.add('d-none');
+    errorState.classList.add('d-none');
+  }
+});
+</script>

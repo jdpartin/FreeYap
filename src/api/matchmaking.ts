@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import axios from 'axios';
 import MatchmakingManager from '../managers/matchmakingManager';
 
 const router = express.Router();
@@ -44,7 +43,7 @@ router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
         // Use interests as topics for backward compatibility
         const topics = interests || [];
         
-        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, { mode, filters });
+        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, mode, { filters });
         
         // Set proper content type
         res.setHeader('Content-Type', 'application/json');
@@ -79,12 +78,6 @@ router.post('/match-found', async (req: Request, res: Response) => {
             res.status(400).json({ error: 'Invalid request' });
             return;
         }
-
-        // Notify the WebRTC API about the match
-        await axios.post(`http://localhost:${process.env.PORT || 3000}/api/webrtc/join-room`, {
-            roomId,
-            socketId
-        });
 
         res.status(200).json({ message: 'Match notification sent to WebRTC API' });
     }

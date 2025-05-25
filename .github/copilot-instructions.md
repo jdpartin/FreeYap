@@ -32,6 +32,7 @@ This project is called FreeYap, a Node.js-based anonymous chat platform. Users c
 1. Use Allman style.
 2. Follow project structure/naming.
 3. Use CommonJS modules.
+4. **CRITICAL**: Always add a new line before function declarations to avoid placing them inside comments or beside closing brackets. This prevents syntax errors and maintains proper code structure.
 
 ### Validation & Error Handling:
 1. Validate API inputs.

@@ -1,25 +1,43 @@
 
 -- DO NOT REMOVE TOPICS THEY HAVE A FOREIGN KEY CONSTRAINT THAT WILL CLEAN THEM UP
+-- Updated to explicitly delete queue_topics FIRST to avoid foreign key constraint violation
 
 CREATE OR REPLACE FUNCTION get_and_delete_queue_entry(socketId TEXT)
 RETURNS TABLE (
     socket_id TEXT,
     inserted_at TIMESTAMP,
-    has_topics BOOLEAN
+    has_topics BOOLEAN,
+    chat_mode TEXT
 ) AS $$
+DECLARE
+    queue_entry_record RECORD;
 BEGIN
-
+    -- First, get the queue entry before deleting anything
+    SELECT q.socket_id, q.inserted_at, q.has_topics, q.chat_mode
+    INTO queue_entry_record
+    FROM matchmaking_queue q
+    WHERE q.socket_id = socketId;
+    
+    -- If no entry found, return empty result
+    IF NOT FOUND THEN
+        RETURN;
+    END IF;
+    
+    -- Delete from queue_topics first (child table)
+    DELETE FROM queue_topics
+    WHERE queue_topics.socket_id = socketId;
+    
+    -- Then delete from matchmaking_queue (parent table)
+    DELETE FROM matchmaking_queue
+    WHERE matchmaking_queue.socket_id = socketId;
+    
+    -- Return the stored queue entry data
     RETURN QUERY
-    WITH deleted_entry AS (
-        DELETE FROM matchmaking_queue
-        WHERE matchmaking_queue.socket_id = socketId
-        RETURNING matchmaking_queue.socket_id, matchmaking_queue.inserted_at, matchmaking_queue.has_topics
-    )
     SELECT 
-        d.socket_id,
-        d.inserted_at,
-        d.has_topics
-    FROM deleted_entry d;
+        queue_entry_record.socket_id,
+        queue_entry_record.inserted_at,
+        queue_entry_record.has_topics,
+        queue_entry_record.chat_mode;
     
 END;
 $$ LANGUAGE plpgsql;

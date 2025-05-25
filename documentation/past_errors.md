@@ -19,6 +19,26 @@ This file serves as a record of errors encountered during the development and ma
 - **Resolution**: Ensure all stored procedure calls include explicit casts for parameters to match the expected types.
 - **Date**: May 19, 2025
 
+## ⚠️ Critical Development Notes
+
+### Express.js Response Pattern
+**Important:** When using Express.js response methods, avoid chaining `res.status().json()` if you need to return after sending the response.
+
+**Wrong Pattern:**
+```typescript
+res.status(400).json({ error: 'Bad request' });
+return; // This return statement is unreachable and causes issues
+```
+
+**Correct Pattern:**
+```typescript
+res.status(400);
+res.json({ error: 'Bad request' });
+return; // Now the return works correctly
+```
+
+**Reason:** When chaining `res.status().json()`, the return statement becomes unreachable or doesn't execute properly, which can lead to the function continuing to execute and potentially sending multiple responses, causing "Cannot set headers after they are sent" errors.
+
 ---
 
 Add new entries below this line.

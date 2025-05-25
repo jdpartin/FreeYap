@@ -7,6 +7,8 @@ import { Request, Response } from 'express';
 import { Server } from 'socket.io';
 import { setupWebRTCSignaling } from './webrtc';
 import matchmakingApi from './api/matchmaking';
+import topicPopularityApi from './api/topic_popularity';
+import semanticSimilarityApi from './api/semantic_similarity';
 import MatchmakingManager from './managers/matchmakingManager';
 
 const app = express();
@@ -35,6 +37,8 @@ MatchmakingManager.initialize(io);
 
 // API routes
 app.use('/api/matchmaking', matchmakingApi);
+app.use('/api/topic-popularity', topicPopularityApi);
+app.use('/api/semantic-similarity', semanticSimilarityApi);
 
 // Initialize WebRTC signaling
 setupWebRTCSignaling(io);
@@ -78,6 +82,10 @@ app.get('/text-chat', (req: Request, res: Response) => {
 
 app.get('/simple-text-chat', (req: Request, res: Response) => {
   res.render('simpleTextChat', { title: 'Simple Text Chat' });
+});
+
+app.get('/semantic-similarity', (req: Request, res: Response) => {
+  res.render('semanticSimilarity', { title: 'Semantic Similarity Tester' });
 });
 
 server.listen(PORT, () => {

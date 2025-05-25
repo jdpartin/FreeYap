@@ -1,7 +1,8 @@
 
 CREATE OR REPLACE PROCEDURE public.add_to_queue(
     socketId TEXT,
-    topics JSONB
+    topics JSONB,
+    mode TEXT
 )
 LANGUAGE plpgsql
 AS $$
@@ -16,13 +17,15 @@ BEGIN
         (
             socket_id,
             inserted_at,
-            has_topics
+            has_topics,
+            chat_mode
         )
         VALUES
         (
             socketId,
             NOW(),
-            TRUE
+            TRUE,
+            mode
         );
 
         -- Add topics to the queue_topics table
@@ -39,13 +42,15 @@ BEGIN
         (
             socket_id,
             inserted_at,
-            has_topics
+            has_topics,
+            chat_mode
         )
         VALUES
         (
             socketId,
             NOW(),
-            FALSE
+            FALSE,
+            mode
         );
 
     END IF;

@@ -1,46 +1,570 @@
 <div class="d-flex align-items-center justify-content-center">
   <div class="card main-card">
-    <div class="card-body">
-      <h1 class="card-title fs-1 fw-bold mb-2 text-center">FreeYap</h1>
-      <p class="mb-4 text-center text-muted">Chat with strangers, be treated like an adult.</p>
-      <input type="text" id="topicInput" placeholder="Add up to 10 topics (optional)" class="form-control mb-3">      <div id="topicList" class="mb-3"></div>
-      <div class="d-flex gap-3 justify-content-center mb-4">
-        <a href="/video-chat" class="main-btn flex-fill"><span class="me-2">📹</span>Video Chat</a>
-        <a href="/voice-chat" class="main-btn flex-fill"><span class="me-2">🎤</span>Voice Chat</a>
-        <a href="/text-chat" class="main-btn flex-fill"><span class="me-2">💬</span>Text Chat</a>
+    <div class="card-body">      <h1 class="card-title fs-2 fw-bold mb-3 text-center" style="letter-spacing: 0.04em;">FreeYap</h1>
+      <p class="mb-4 text-center text-muted small">Chat with strangers, be treated like an adult.</p>      <div class="input-group mb-4">
+        <span class="input-group-text" id="basic-addon1"><i class="fas fa-tag"></i></span>        <input type="text" id="topicInput" placeholder="Add up to 10 topics (optional)" class="form-control">
+        <button id="addTopicBtn" class="btn btn-add d-none" type="button" style="background-color: #ff4f7a; color: white; border: none; transition: all 0.2s ease; font-weight: 500; font-size: 0.9rem;">Add</button>
       </div>
-      <div class="d-flex justify-content-center mb-4">
-        <a href="/simple-text-chat" class="secondary-btn"><span class="me-2">📱</span>Simple Text Chat</a>
+
+      <style>
+        .btn-add:hover {
+          background-color: #ff2e5d !important;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(255, 79, 122, 0.25);
+        }
+
+        .badge.bg-secondary {
+          transition: all 0.2s ease;
+        }
+        .badge.bg-secondary:hover {
+          background-color: #5a6268 !important;
+          transform: translateY(-1px);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+        
+        .badge.bg-light {
+          transition: all 0.2s ease;
+          border: 1px solid #dee2e6;
+        }
+        
+        .badge.bg-light:hover {
+          background-color: #f8f9fa !important;
+          border-color: #adb5bd !important;
+          transform: translateY(-1px);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+          /* Topic list placeholder space to prevent layout shift */
+        #topicList {
+          min-height: 2.5rem; /* Increased height for better spacing */
+        }
+        
+        /* Popularity indicator styles */
+        .popularity-icon {
+          font-size: 0.7em;
+          vertical-align: middle;
+        }
+        
+        .badge .fa-spinner {
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }      </style>
+        <div id="topicList" class="mb-4"></div>
+
+      <div class="d-flex gap-2 justify-content-center mb-4">
+        <a href="/video-chat" class="main-btn flex-fill" title="Video Chat" aria-label="Video Chat">
+          <i class="fas fa-video"></i>
+          <span>Video</span>
+        </a>
+        <a href="/voice-chat" class="main-btn flex-fill" title="Voice Chat" aria-label="Voice Chat">
+          <i class="fas fa-microphone"></i>
+          <span>Voice</span>
+        </a>
+        <a href="/text-chat" class="main-btn flex-fill" title="Text Chat" aria-label="Text Chat">
+          <i class="fas fa-comment-dots"></i>
+          <span>Text</span>
+        </a>
       </div>
-      <div class="mb-3 text-center">
-        <span class="badge bg-secondary">FreeYap</span>
-        <span class="badge bg-light text-dark ms-2">Unfiltered</span>
-      </div>
-      <div class="text-muted small mb-3 text-center">You must be 18 or older to use this site.<br>By using FreeYap you agree to our <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>.<br>We trust you to engage responsibly.</div>
-      <div class="fw-bold text-primary mb-1 text-center">⚫ Popular Topics</div>
-      <div class="text-muted small text-center">No active discussions on popular topics right now. Start one!</div>
+        <div class="text-muted small mb-4 text-center" style="font-size: 0.8rem;">You must be 18 or older to use this site.<br>By using FreeYap you agree to our <a href="#" style="color: var(--primary);">Terms of Service</a> and <a href="#" style="color: var(--primary);">Privacy Policy</a>.<br>We trust you to engage responsibly.</div>
+      
+      <div class="fw-bold mb-2 text-center" style="font-size: 0.9rem; color: var(--primary);"><i class="fas fa-fire me-1"></i> Popular Topics</div>
+      <div id="popularTopics" class="text-muted small text-center" style="font-size: 0.8rem;">Loading popular topics...</div>
     </div>
   </div>
 </div>
-<script>
-  const topicInput = document.getElementById('topicInput');
-  const topicList = document.getElementById('topicList');
-  const topics = [];
+<script>  const topicInput = document.getElementById('topicInput');
+  const addTopicBtn = document.getElementById('addTopicBtn');
+  const topicList = document.getElementById('topicList');  const topics = [];
+    // Local cache for topic popularity - stores known values to avoid API calls
+  const topicPopularityCache = new Map();
+  
+  // Debounce timer for input changes
+  let inputDebounceTimer = null;
 
+  // Cookie utility functions
+  function setCookie(name, value, days = 30) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+  }
+
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) {
+        return decodeURIComponent(c.substring(nameEQ.length, c.length));
+      }
+    }
+    return null;
+  }
+
+  // Save topics to cookie
+  function saveTopicsToCookie() {
+    setCookie('freeyap_user_topics', JSON.stringify(topics), 30);
+  }
+  // Load topics from cookie
+  function loadTopicsFromCookie() {
+    const savedTopics = getCookie('freeyap_user_topics');
+    if (savedTopics) {
+      try {
+        const parsedTopics = JSON.parse(savedTopics);
+        if (Array.isArray(parsedTopics) && parsedTopics.length > 0) {
+          // Clear current topics first
+          topics.length = 0;
+          topicList.innerHTML = '';
+          
+          // Add saved topics back (ensure they're lowercase)
+          parsedTopics.forEach(topic => {
+            if (typeof topic === 'string' && topic.trim() !== '' && topics.length < 10) {
+              const lowercaseTopic = topic.toLowerCase();
+              topics.push(lowercaseTopic);
+              
+              // Check if we have the popularity in cache to avoid redundant API call
+              const cachedPopularity = topicPopularityCache.get(lowercaseTopic);
+              const badge = createTopicElement(lowercaseTopic, cachedPopularity, true);
+              topicList.appendChild(badge);
+            }
+          });
+          
+          updatePlaceholder();
+        }
+      } catch (error) {
+        console.error('Error loading topics from cookie:', error);
+      }
+    }
+  }
+  // Reusable function to create topic elements with popularity indicators
+  function createTopicElement(topicName, popularity = null, isUserTopic = false) {
+    const badge = document.createElement('span');
+    badge.className = isUserTopic ? 'badge bg-secondary me-2 mb-2' : 'badge bg-light text-dark me-2 mb-2';
+    badge.style.display = 'inline-flex';
+    badge.style.alignItems = 'center';
+    badge.style.gap = '0.25rem';
+    
+    // Create the content structure
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'me-1';
+    
+    const topicText = document.createElement('span');
+    topicText.textContent = topicName;
+    topicText.style.cursor = isUserTopic ? 'default' : 'pointer';
+    
+    // Set initial loading state if popularity is not provided
+    if (popularity === null) {
+      iconSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      badge.appendChild(iconSpan);
+      badge.appendChild(topicText);
+      
+      // Fetch popularity asynchronously
+      fetchTopicPopularity(topicName).then(pop => {
+        updatePopularityIcon(iconSpan, pop);
+      });
+    } else {
+      updatePopularityIcon(iconSpan, popularity);
+      badge.appendChild(iconSpan);
+      badge.appendChild(topicText);
+    }
+    
+    if (isUserTopic) {
+      // Add remove "×" button for user-added topics
+      const removeBtn = document.createElement('span');
+      removeBtn.innerHTML = '×';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.opacity = '0.6';
+      removeBtn.style.marginLeft = '0.25rem';
+      removeBtn.style.fontWeight = 'bold';
+      removeBtn.title = 'Remove topic';      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const index = topics.findIndex(existingTopic => existingTopic.toLowerCase() === topicName.toLowerCase());
+        if (index > -1) {
+          topics.splice(index, 1);
+        }
+        badge.remove();
+        updatePlaceholder();
+        saveTopicsToCookie(); // Save to cookie when topic is removed
+      });
+      
+      // Add hover effects for the remove button
+      removeBtn.addEventListener('mouseenter', () => {
+        removeBtn.style.opacity = '1';
+      });
+      removeBtn.addEventListener('mouseleave', () => {
+        removeBtn.style.opacity = '0.6';
+      });
+      
+      badge.appendChild(removeBtn);
+      
+      // Prevent the badge itself from being clickable
+      badge.style.cursor = 'default';
+    } else {      // Add click functionality for popular topics (only on the text, not the whole badge)
+      topicText.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const lowercaseTopicName = topicName.toLowerCase();
+        
+        if (topics.length < 10 && !topics.some(existingTopic => existingTopic.toLowerCase() === lowercaseTopicName)) {
+          const newBadge = createTopicElement(lowercaseTopicName, popularity, true);
+          topicList.appendChild(newBadge);
+          topics.push(lowercaseTopicName);
+          updatePlaceholder();
+          saveTopicsToCookie(); // Save to cookie when topic is added from popular topics
+        }
+      });
+      
+      // Set badge cursor to default since we only want the text to be clickable
+      badge.style.cursor = 'default';
+    }
+    
+    return badge;
+  }
+    // Function to update popularity icon based on score  
+  function updatePopularityIcon(iconElement, popularity) {
+    let iconClass = '';
+    
+    if (popularity === 0) {
+      iconClass = 'fas fa-minus-circle text-secondary popularity-icon';
+      iconElement.title = 'New topic';
+    } else if (popularity < 10) {
+      iconClass = 'fas fa-thumbs-up text-success popularity-icon';
+      iconElement.title = `${popularity} users discussing`;
+    } else if (popularity < 25) {
+      iconClass = 'fas fa-chart-line text-info popularity-icon';
+      iconElement.title = `Trending topic (${popularity} users)`;
+    } else if (popularity < 50) {
+      iconClass = 'fas fa-comments text-primary popularity-icon';
+      iconElement.title = `Popular topic (${popularity} users)`;
+    } else {
+      iconClass = 'fas fa-fire text-danger popularity-icon';
+      iconElement.title = `Hot topic (${popularity}+ users)`;
+    }
+    
+    iconElement.innerHTML = `<i class="${iconClass}"></i>`;
+  }
+
+  // Function to fetch individual topic popularity (uses cache first)
+  async function fetchTopicPopularity(topicName) {
+    // Check cache first - if we have it, return immediately
+    if (topicPopularityCache.has(topicName)) {
+      return topicPopularityCache.get(topicName);
+    }
+    
+    try {
+      const response = await fetch('/api/topic-popularity/get-topic-popularity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ topic: topicName })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const popularity = data.popularity || 0;
+        
+        // Cache the result for future use
+        topicPopularityCache.set(topicName, popularity);
+        return popularity;
+      }
+      
+      // Cache zero popularity for failed requests to avoid repeated failures
+      topicPopularityCache.set(topicName, 0);
+      return 0;
+    } catch (error) {
+      console.error('Error fetching topic popularity:', error);
+      // Cache zero popularity for failed requests
+      topicPopularityCache.set(topicName, 0);
+      return 0;
+    }
+  }
+    // Function to update the input field tag icon with popularity indicator
+  async function updateInputIcon(topicName) {
+    const tagIcon = document.querySelector('#basic-addon1 i');
+    
+    if (!topicName || topicName.trim() === '') {
+      // Reset to default tag icon
+      tagIcon.className = 'fas fa-tag';
+      tagIcon.parentElement.title = '';
+      return;
+    }
+    
+    // Check cache first - if we have it, update immediately
+    if (topicPopularityCache.has(topicName)) {
+      const popularity = topicPopularityCache.get(topicName);
+      updateTagIconBasedOnPopularity(tagIcon, popularity);
+      return;
+    }
+    
+    // Show loading spinner only if we need to fetch
+    tagIcon.className = 'fas fa-spinner fa-spin';
+    tagIcon.parentElement.title = 'Checking popularity...';
+    
+    // Fetch popularity and update icon
+    const popularity = await fetchTopicPopularity(topicName);
+    updateTagIconBasedOnPopularity(tagIcon, popularity);
+  }
+  
+  // Function to update the tag icon based on popularity  
+  function updateTagIconBasedOnPopularity(iconElement, popularity) {
+    if (popularity === 0) {
+      iconElement.className = 'fas fa-minus-circle text-secondary';
+      iconElement.parentElement.title = 'New topic';
+    } else if (popularity < 10) {
+      iconElement.className = 'fas fa-thumbs-up text-success';
+      iconElement.parentElement.title = `${popularity} users discussing`;
+    } else if (popularity < 25) {
+      iconElement.className = 'fas fa-chart-line text-info';
+      iconElement.parentElement.title = `Trending topic (${popularity} users)`;
+    } else if (popularity < 50) {      iconElement.className = 'fas fa-comments';
+      iconElement.style.color = 'var(--primary)';
+      iconElement.parentElement.title = `Popular topic (${popularity} users)`;
+    } else {
+      iconElement.className = 'fas fa-fire text-danger';
+      iconElement.parentElement.title = `Hot topic (${popularity}+ users)`;
+    }
+  }
+    function addTopic() {
+    if (topicInput.value.trim() !== '' && topics.length < 10) {
+      const originalTopic = topicInput.value.trim();
+      const topic = originalTopic.toLowerCase(); // Force to lowercase
+      
+      // Check if topic already exists (case-insensitive)
+      if (topics.some(existingTopic => existingTopic.toLowerCase() === topic)) {
+        topicInput.value = '';
+        addTopicBtn.classList.add('d-none');
+        // Reset icon
+        updateInputIcon('');
+        return;
+      }      // Always check spelling since spell checking is now always enabled
+      if (window.freeYapSpellChecker && window.freeYapSpellChecker.isInitialized) {
+        if (!window.freeYapSpellChecker.isCorrect(topic)) {
+          const suggestions = window.freeYapSpellChecker.getSuggestions(topic);
+          showSpellCheckDialog(originalTopic, topic, suggestions);
+          return;
+        }
+      }
+
+      // Add the topic (using lowercase version)
+      addTopicToList(topic);
+    }
+  }
+
+  // Function to actually add topic to the list
+  function addTopicToList(topic) {
+    topics.push(topic);
+
+    // Check if we have the popularity in cache to avoid redundant API call
+    const cachedPopularity = topicPopularityCache.get(topic);
+    const badge = createTopicElement(topic, cachedPopularity, true);
+    topicList.appendChild(badge);
+    
+    topicInput.value = '';
+    addTopicBtn.classList.add('d-none');
+    updatePlaceholder();
+    saveTopicsToCookie(); // Save to cookie when topic is added manually
+    
+    // Reset icon
+    updateInputIcon('');
+  }
+
+  // Function to show spell check dialog
+  function showSpellCheckDialog(originalTopic, lowercaseTopic, suggestions) {
+    // Create modal backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    // Create modal dialog
+    const modal = document.createElement('div');
+    modal.className = 'spell-check-modal';
+    modal.style.cssText = `
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      animation: modalFadeIn 0.2s ease-out;
+    `;
+
+    // Add animation keyframes if not already present
+    if (!document.querySelector('#spellCheckModalStyles')) {
+      const style = document.createElement('style');
+      style.id = 'spellCheckModalStyles';
+      style.textContent = `
+        @keyframes modalFadeIn {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .spell-check-btn {
+          padding: 8px 16px;
+          margin: 4px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background: white;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .spell-check-btn:hover {
+          background: #f8f9fa;
+          border-color: #adb5bd;
+        }
+        .spell-check-btn.primary {
+          background: #007bff;
+          color: white;
+          border-color: #007bff;
+        }
+        .spell-check-btn.primary:hover {
+          background: #0056b3;
+          border-color: #004085;
+        }
+        .spell-check-btn.secondary {
+          background: #6c757d;
+          color: white;
+          border-color: #6c757d;
+        }
+        .spell-check-btn.secondary:hover {
+          background: #545b62;
+          border-color: #4e555b;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    let modalContent = `
+      <h5 style="margin-bottom: 16px; color: #333;">Possible Spelling Error</h5>
+      <p style="margin-bottom: 16px; color: #666;">
+        The topic "<strong>${originalTopic}</strong>" might be misspelled.
+      </p>
+    `;
+
+    if (suggestions.length > 0) {
+      modalContent += `
+        <p style="margin-bottom: 12px; color: #666; font-size: 14px;">Did you mean:</p>
+        <div style="margin-bottom: 20px;">
+      `;
+      
+      suggestions.slice(0, 3).forEach(suggestion => {
+        modalContent += `
+          <button class="spell-check-btn suggestion-btn" data-suggestion="${suggestion}" style="display: block; width: 100%; text-align: left; margin-bottom: 4px;">
+            ${suggestion}
+          </button>
+        `;
+      });
+      
+      modalContent += `</div>`;
+    }
+
+    modalContent += `
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button class="spell-check-btn cancel-btn">Cancel</button>
+        <button class="spell-check-btn secondary use-original-btn">Use "${lowercaseTopic}"</button>
+      </div>
+    `;
+
+    modal.innerHTML = modalContent;
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    // Add event listeners
+    modal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      if (e.target.classList.contains('suggestion-btn')) {
+        const suggestion = e.target.dataset.suggestion;
+        addTopicToList(suggestion);
+        document.body.removeChild(backdrop);
+      } else if (e.target.classList.contains('use-original-btn')) {
+        addTopicToList(lowercaseTopic);
+        document.body.removeChild(backdrop);
+      } else if (e.target.classList.contains('cancel-btn')) {
+        document.body.removeChild(backdrop);
+      }
+    });
+
+    // Close on backdrop click
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        document.body.removeChild(backdrop);
+      }
+    });
+
+    // Close on Escape key
+    const escapeHandler = (e) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(backdrop);
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
+  }
+    // Show/hide "Add" button based on input content and check popularity  
+  topicInput.addEventListener('input', () => {
+    const inputValue = topicInput.value.trim();
+    
+    if (inputValue !== '' && topics.length < 10) {
+      addTopicBtn.classList.remove('d-none');
+    } else {
+      addTopicBtn.classList.add('d-none');
+    }
+    
+    // Clear existing debounce timer
+    if (inputDebounceTimer) {
+      clearTimeout(inputDebounceTimer);
+    }
+    
+    // If input is empty, immediately reset to default tag icon
+    if (inputValue === '') {
+      updateInputIcon('');
+    } else {
+      // Set new debounce timer to check popularity after user stops typing
+      inputDebounceTimer = setTimeout(() => {
+        updateInputIcon(inputValue.toLowerCase()); // Use lowercase for consistency
+      }, 500); // Wait 500ms after user stops typing
+    }
+  });
+  
+  // Update placeholder text when max topics reached
+  function updatePlaceholder() {
+    if (topics.length >= 10) {
+      topicInput.placeholder = "Maximum 10 topics reached";
+      topicInput.disabled = true;
+    } else {
+      topicInput.placeholder = "Add up to 10 topics (optional)";
+      topicInput.disabled = false;
+    }
+  }
+  // Add topic when Enter key is pressed
   topicInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && topicInput.value.trim() !== '' && topics.length < 10) {
-      const topic = topicInput.value.trim();
-      topics.push(topic);
-
-      const badge = document.createElement('span');
-      badge.className = 'badge bg-secondary me-2';
-      badge.textContent = topic;
-
-      topicList.appendChild(badge);
-      topicInput.value = '';
+    if (event.key === 'Enter') {
+      addTopic();
+    }
+  });
+  
+  // Reset icon when input loses focus if empty
+  topicInput.addEventListener('blur', () => {
+    if (topicInput.value.trim() === '') {
+      updateInputIcon('');
     }
   });
 
+  // Add topic when Add button is clicked
+  addTopicBtn.addEventListener('click', addTopic);
   document.querySelectorAll('.main-btn').forEach(button => {
     button.addEventListener('click', (event) => {
       event.preventDefault();
@@ -48,5 +572,70 @@
       const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
       window.location.href = `${chatMode}?${queryParams}`;
     });
+  });
+  // Fetch and display popular topics
+  async function fetchPopularTopics() {
+    try {
+      const response = await fetch('/api/topic-popularity/get-popular-topics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch popular topics');
+      }
+      
+      const data = await response.json();
+      const popularTopicsElement = document.getElementById('popularTopics');
+      
+      if (Array.isArray(data) && data.length > 0) {
+        popularTopicsElement.innerHTML = '';
+        
+        const topicsContainer = document.createElement('div');
+        topicsContainer.className = 'mt-2';
+        
+        data.forEach(topicData => {
+          // Cache the popularity data to avoid redundant API calls
+          topicPopularityCache.set(topicData.topic, topicData.popularity_score);
+          
+          const badge = createTopicElement(topicData.topic, topicData.popularity_score, false);
+          badge.classList.add('me-2', 'mb-2');
+          topicsContainer.appendChild(badge);
+        });
+        
+        popularTopicsElement.appendChild(topicsContainer);
+        popularTopicsElement.insertAdjacentHTML('beforeend', 
+          '<div class="mt-1 small">Click a topic to add it to your list</div>');
+      } else {
+        popularTopicsElement.textContent = 'No active discussions on popular topics right now. Start one!';
+      }
+    } catch (error) {
+      console.error('Error fetching popular topics:', error);
+      document.getElementById('popularTopics').textContent = 
+        'No active discussions on popular topics right now. Start one!';
+    }  }
+  // Load saved topics from cookie on page load
+  loadTopicsFromCookie();
+  
+  // Fetch popular topics on page load
+  fetchPopularTopics();
+
+  // Always enable spell checking on topic input
+  if (window.SpellCheckUtils) {
+    window.SpellCheckUtils.enableSpellCheck(topicInput, {
+      showUnderlines: true,
+      showSuggestions: false
+    });
+  }
+
+  // Listen for spell check events to show status
+  topicInput.addEventListener('spellcheckComplete', (event) => {
+    const { errors } = event.detail;
+    
+    if (errors.length > 0) {
+      console.log(`Spell check found ${errors.length} potential errors:`, errors);
+    }
   });
 </script>
