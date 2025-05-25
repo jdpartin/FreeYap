@@ -1,5 +1,6 @@
 <!-- Include text chat specific styles -->
 <link href="/textChat.css" rel="stylesheet">
+<link href="/textChatMedia.css" rel="stylesheet">
 
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -52,52 +53,231 @@
             </div>
           </div>
         </div>
-        
-        <!-- Status message -->
-        <div id="statusMessage" class="text-center py-2 bg-light border-top border-bottom status-bar"></div>
-          <!-- Message input area -->
-        <div class="card-footer p-2">
-          <div class="input-group">
-            <button class="btn btn-outline-secondary emoji-button me-2" id="emojiButton" disabled>
+          <!-- Status message -->
+        <div id="statusMessage" class="text-center bg-light border-top border-bottom status-bar"></div>
+          <!-- Message input area -->        <div class="card-footer p-2">
+          <div class="input-group">            <button class="btn btn-outline-secondary emoji-button me-2" id="emojiButton" disabled>
               <i class="bi bi-emoji-smile"></i>
             </button>
             <input type="text" class="form-control" placeholder="Type your message here..." id="messageInput" disabled>
             <button class="btn" id="sendButton" style="background-color: var(--primary); color: white;" disabled>
               <i class="bi bi-send-fill"></i>
-            </button>
+            </button>          </div>
+              <!-- Utility UI Panels -->
+            <!-- Each panel will be shown based on the selected utility -->
+            
+            <!-- Voice Recording UI -->
+            <div class="utility-panel voice-recorder-ui d-none" id="voiceRecorderUI">
+              <div class="panel-header">
+                <h6><i class="bi bi-mic-fill me-2"></i>Voice Recording</h6>
+                <button class="btn-close btn-sm" aria-label="Close"></button>
+              </div>
+              <div class="voice-recorder-container text-center">
+                <div class="voice-recorder-timer mb-2" id="voiceTimer">00:00</div>
+                <div class="voice-recorder-visualizer mb-3" id="voiceVisualizer">
+                  <div class="visualizer-bar"></div>
+                  <div class="visualizer-bar"></div>
+                  <div class="visualizer-bar"></div>
+                  <div class="visualizer-bar"></div>
+                  <div class="visualizer-bar"></div>
+                </div>
+                <div class="voice-recorder-controls">
+                  <button class="btn btn-danger btn-circle me-2" id="voiceRecordButton">
+                    <i class="bi bi-mic-fill"></i>
+                  </button>
+                  <button class="btn btn-secondary btn-circle me-2 d-none" id="voiceStopButton">
+                    <i class="bi bi-stop-fill"></i>
+                  </button>
+                  <button class="btn btn-success btn-circle me-2 d-none" id="voiceSendButton">
+                    <i class="bi bi-send-fill"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-circle" id="voiceCancelButton">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Video Recording UI -->
+            <div class="utility-panel video-recorder-ui d-none" id="videoRecorderUI">
+              <div class="panel-header">
+                <h6><i class="bi bi-camera-video-fill me-2"></i>Video Recording</h6>
+                <button class="btn-close btn-sm" aria-label="Close"></button>
+              </div>
+              <div class="video-recorder-container">
+                <div class="video-preview-container">
+                  <video id="videoPreview" muted playsinline></video>
+                </div>
+                <div class="video-recorder-timer mb-2" id="videoTimer">00:00</div>
+                <div class="video-recorder-controls">
+                  <button class="btn btn-danger btn-circle me-2" id="videoRecordButton">
+                    <i class="bi bi-record-circle"></i>
+                  </button>
+                  <button class="btn btn-secondary btn-circle me-2 d-none" id="videoStopButton">
+                    <i class="bi bi-stop-fill"></i>
+                  </button>
+                  <button class="btn btn-success btn-circle me-2 d-none" id="videoSendButton">
+                    <i class="bi bi-send-fill"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-circle" id="videoCancelButton">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Camera/Photo UI -->
+            <div class="utility-panel photo-ui d-none" id="photoUI">
+              <div class="panel-header">
+                <h6><i class="bi bi-camera-fill me-2"></i>Take Photo</h6>
+                <button class="btn-close btn-sm" aria-label="Close"></button>
+              </div>
+              <div class="camera-container">
+                <div class="camera-preview-container">
+                  <video id="cameraPreview" autoplay muted playsinline></video>
+                  <img id="photoPreview" class="d-none" alt="Photo preview">
+                </div>
+                <div class="camera-controls">
+                  <button class="btn btn-primary btn-circle me-2" id="takePictureButton">
+                    <i class="bi bi-camera-fill"></i>
+                  </button>
+                  <button class="btn btn-secondary btn-circle me-2 d-none" id="retakePictureButton">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                  <button class="btn btn-success btn-circle me-2 d-none" id="sendPictureButton">
+                    <i class="bi bi-send-fill"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-circle" id="cancelPictureButton">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Screen Share UI -->
+            <div class="utility-panel screen-share-ui d-none" id="screenShareUI">
+              <div class="panel-header">
+                <h6><i class="bi bi-display me-2"></i>Screen Sharing</h6>
+                <button class="btn-close btn-sm" aria-label="Close"></button>
+              </div>
+              <div class="screen-share-container">
+                <div class="screen-share-preview-container">
+                  <video id="screenSharePreview" autoplay muted playsinline></video>
+                </div>
+                <div class="screen-share-controls">
+                  <button class="btn btn-primary btn-circle me-2" id="startScreenShareButton">
+                    <i class="bi bi-display"></i>
+                  </button>
+                  <button class="btn btn-danger btn-circle me-2 d-none" id="stopScreenShareButton">
+                    <i class="bi bi-stop-fill"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-circle" id="cancelScreenShareButton">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Drawing UI -->
+            <div class="utility-panel drawing-ui d-none" id="drawingUI">
+              <div class="panel-header">
+                <h6><i class="bi bi-brush-fill me-2"></i>Drawing</h6>
+                <button class="btn-close btn-sm" aria-label="Close"></button>
+              </div>
+              <div class="drawing-container">
+                <canvas id="drawingCanvas" width="300" height="200"></canvas>
+                <div class="drawing-tools">
+                  <div class="color-picker">
+                    <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button>
+                    <button class="color-btn" data-color="#ff0000" style="background-color: #ff0000;"></button>
+                    <button class="color-btn" data-color="#00ff00" style="background-color: #00ff00;"></button>
+                    <button class="color-btn" data-color="#0000ff" style="background-color: #0000ff;"></button>
+                    <button class="color-btn" data-color="#ffff00" style="background-color: #ffff00;"></button>
+                  </div>
+                  <div class="drawing-controls">
+                    <button class="btn btn-sm btn-outline-secondary me-1" id="clearDrawingButton">
+                      <i class="bi bi-eraser-fill"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary me-1" id="undoDrawingButton">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                    <button class="btn btn-success btn-sm" id="sendDrawingButton">
+                      <i class="bi bi-send-fill"></i> Send
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Poll UI -->
+            <div class="utility-panel poll-ui d-none" id="pollUI">
+              <div class="panel-header">
+                <h6><i class="bi bi-bar-chart-fill me-2"></i>Create Poll</h6>
+                <button class="btn-close btn-sm" aria-label="Close"></button>
+              </div>
+              <div class="poll-container">
+                <div class="form-group mb-2">
+                  <label for="pollQuestion" class="form-label small">Question</label>
+                  <input type="text" class="form-control form-control-sm" id="pollQuestion" placeholder="Ask a question...">
+                </div>
+                <div id="pollOptionsContainer">
+                  <div class="form-group mb-2 poll-option">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">1</span>
+                      <input type="text" class="form-control" placeholder="Option">
+                    </div>
+                  </div>
+                  <div class="form-group mb-2 poll-option">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">2</span>
+                      <input type="text" class="form-control" placeholder="Option">
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary w-100 mb-2" id="addPollOptionButton">
+                  <i class="bi bi-plus"></i> Add Option
+                </button>
+                <button class="btn btn-sm btn-success w-100" id="createPollButton">
+                  <i class="bi bi-send-fill"></i> Create Poll
+                </button>
+              </div>
+            </div>
+              <!-- Location Sharing UI has been removed -->
+            
+            <!-- Hidden file inputs -->
+            <input type="file" id="attachmentInput" style="display: none;">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <input type="file" id="videoInput" accept="video/*" style="display: none;">
           </div>
           
           <!-- Emoji and GIF Panel -->
-          <div class="emoji-gif-panel mt-2 d-none" id="emojiGifPanel">
-            <ul class="nav nav-tabs" id="emojiGifTabs" role="tablist">
+          <div class="emoji-gif-panel mt-2 d-none" id="emojiGifPanel">            <ul class="nav nav-tabs" id="emojiGifTabs" role="tablist">
               <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="emojis-tab" data-bs-toggle="tab" data-bs-target="#emojis" type="button" role="tab" aria-controls="emojis" aria-selected="true">Emojis</button>
               </li>
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="gifs-tab" data-bs-toggle="tab" data-bs-target="#gifs" type="button" role="tab" aria-controls="gifs" aria-selected="false">GIFs</button>
               </li>
-            </ul>
-            <div class="tab-content p-2" id="emojiGifTabContent">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab" aria-controls="media" aria-selected="false">Media</button>
+              </li>
+            </ul><div class="tab-content p-2" id="emojiGifTabContent">
               <div class="tab-pane fade show active" id="emojis" role="tabpanel" aria-labelledby="emojis-tab">
-                <div class="emoji-container">
-                  <button class="emoji-item">😊</button>
-                  <button class="emoji-item">😂</button>
-                  <button class="emoji-item">❤️</button>
-                  <button class="emoji-item">👍</button>
-                  <button class="emoji-item">🎉</button>
-                  <button class="emoji-item">🔥</button>
-                  <button class="emoji-item">😎</button>
-                  <button class="emoji-item">🤔</button>
-                  <button class="emoji-item">😢</button>
-                  <button class="emoji-item">🙏</button>
-                  <button class="emoji-item">👋</button>
-                  <button class="emoji-item">🥰</button>
-                  <button class="emoji-item">😍</button>
-                  <button class="emoji-item">👌</button>
-                  <button class="emoji-item">🤣</button>
+                <!-- Emoji Categories -->
+                <div class="emoji-categories mb-2">
+                  <button class="btn btn-sm btn-outline-secondary active" data-category="smileys" title="Smileys & Emotion">😊</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="people" title="People & Body">👋</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="animals" title="Animals & Nature">🐶</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="food" title="Food & Drink">🍕</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="activities" title="Activities">⚽</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="travel" title="Travel & Places">🚗</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="objects" title="Objects">💎</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-category="symbols" title="Symbols">❤️</button>
                 </div>
-              </div>
-              <div class="tab-pane fade" id="gifs" role="tabpanel" aria-labelledby="gifs-tab">
+                <div class="emoji-container" id="emojiContainer">
+                  <!-- Emojis will be populated by JavaScript -->
+                </div>
+              </div>              <div class="tab-pane fade" id="gifs" role="tabpanel" aria-labelledby="gifs-tab">
                 <div class="gif-search mb-2">
                   <input type="text" class="form-control" id="gifSearchInput" placeholder="Search GIFs...">
                 </div>
@@ -105,6 +285,64 @@
                   <div class="text-center p-3 text-muted">
                     Search for GIFs to display here
                   </div>
+                </div>
+              </div>              <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">
+                <div class="media-options-container p-2">
+                  <div class="utilities-grid">
+                    <!-- Media Section -->
+                    <button class="utility-item" id="attachmentOption" title="Attach Files">
+                      <div class="utility-icon">
+                        <i class="bi bi-paperclip"></i>
+                      </div>
+                      <span>Files</span>
+                    </button>
+                    <button class="utility-item" id="photoOption" title="Take Photo">
+                      <div class="utility-icon">
+                        <i class="bi bi-camera-fill"></i>
+                      </div>
+                      <span>Photo</span>
+                    </button>
+                    <button class="utility-item" id="videoRecordOption" title="Record Video">
+                      <div class="utility-icon">
+                        <i class="bi bi-camera-video-fill"></i>
+                      </div>
+                      <span>Video</span>
+                    </button>
+                    <button class="utility-item" id="voiceRecordOption" title="Record Audio">
+                      <div class="utility-icon">
+                        <i class="bi bi-mic-fill"></i>
+                      </div>
+                      <span>Audio</span>
+                    </button>
+                    
+                    <!-- Sharing Section -->
+                    <button class="utility-item" id="screenShareOption" title="Share Screen">
+                      <div class="utility-icon">
+                        <i class="bi bi-display"></i>
+                      </div>
+                      <span>Screen</span>
+                    </button>
+                    <button class="utility-item" id="drawingOption" title="Create Drawing">
+                      <div class="utility-icon">
+                        <i class="bi bi-brush-fill"></i>
+                      </div>
+                      <span>Draw</span>
+                    </button>
+                    <button class="utility-item" id="pollOption" title="Create Poll">
+                      <div class="utility-icon">
+                        <i class="bi bi-bar-chart-fill"></i>
+                      </div>
+                      <span>Poll</span>
+                    </button>
+                    <button class="utility-item" id="translateOption" title="Translate Message">
+                      <div class="utility-icon">
+                        <i class="bi bi-translate"></i>
+                      </div>
+                      <span>Translate</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
                 </div>
               </div>
             </div>
@@ -130,6 +368,12 @@
 <!-- Include the SimplePeer library via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/simple-peer/simplepeer.min.js"></script>
 
+<!-- Include emoji-js library for comprehensive emoji support -->
+<script src="https://cdn.jsdelivr.net/npm/emoji-js@8.0.0/lib/emoji.min.js"></script>
+
+<!-- Include Twemoji for better emoji rendering -->
+<script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js"></script>
+
 <!-- Include WebRTCClient.js with a custom implementation of appendMessage -->
 <script>
   // Create a placeholder function that will be replaced
@@ -149,23 +393,217 @@
       const statusMessage = document.getElementById('statusMessage');
       const chatBox = document.getElementById('chatBox');
       const messageInput = document.getElementById('messageInput');
-      const sendButton = document.getElementById('sendButton');
-      const emojiButton = document.getElementById('emojiButton');
+      const sendButton = document.getElementById('sendButton');      const emojiButton = document.getElementById('emojiButton');
       const emojiGifPanel = document.getElementById('emojiGifPanel');
-      const emojiItems = document.querySelectorAll('.emoji-item');
+      const emojiContainer = document.getElementById('emojiContainer');
       const gifSearchInput = document.getElementById('gifSearchInput');
       const gifResults = document.getElementById('gifResults');
       
-      console.log('Elements found:', {
-          startButton: !!startButton,
+      console.log('Elements found:', {          startButton: !!startButton,
           endButton: !!endButton,
           statusMessage: !!statusMessage,
           chatBox: !!chatBox,
           messageInput: !!messageInput,
           sendButton: !!sendButton,
           emojiButton: !!emojiButton,
-          emojiGifPanel: !!emojiGifPanel
+          emojiGifPanel: !!emojiGifPanel,
+          emojiContainer: !!emojiContainer
       });
+        // Initialize comprehensive emoji library with Unicode 15.0 support
+      const emojiCategories = {
+          smileys: [
+              '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '🫠', '😉', '😊', '😇', 
+              '🥰', '😍', '🤩', '😘', '😗', '☺️', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', 
+              '🤑', '🤗', '🤭', '🫢', '🫣', '🤫', '🤔', '🫡', '🤐', '🤨', '😐', '😑', '😶', '🫥', 
+              '😶‍🌫️', '😏', '😒', '🙄', '😬', '😮‍💨', '🤥', '😔', '😪', '🤤', '😴', '😷', '🤒', 
+              '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '😵‍💫', '🤯', '🤠', '🥳', '🥸', 
+              '😎', '🤓', '🧐', '😕', '🫤', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '🥹', 
+              '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', 
+              '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', 
+              '👽', '👾', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'
+          ],
+          people: [
+              '👋', '🤚', '🖐️', '✋', '🖖', '🫱', '🫲', '🫳', '🫴', '👌', '🤌', '🤏', '✌️', '🤞', 
+              '🫰', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '🫵', '👍', '👎', '👊', 
+              '✊', '🤛', '🤜', '👏', '🙌', '🫶', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', 
+              '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', 
+              '👅', '👄', '🫦', '💋', '🩸', '👶', '🧒', '👦', '👧', '🧑', '👱', '👨', '🧔', '🧔‍♂️', 
+              '🧔‍♀️', '👨‍🦰', '👨‍🦱', '👨‍🦳', '👨‍🦲', '👩', '👩‍🦰', '🧑‍🦰', '👩‍🦱', '🧑‍🦱', 
+              '👩‍🦳', '🧑‍🦳', '👩‍🦲', '🧑‍🦲', '👱‍♀️', '👱‍♂️', '🧓', '👴', '👵', '🙍', '🙍‍♂️', 
+              '🙍‍♀️', '🙎', '🙎‍♂️', '🙎‍♀️', '🙅', '🙅‍♂️', '🙅‍♀️', '🙆', '🙆‍♂️', '🙆‍♀️', '💁', 
+              '💁‍♂️', '💁‍♀️', '🙋', '🙋‍♂️', '🙋‍♀️', '🧏', '🧏‍♂️', '🧏‍♀️', '🙇', '🙇‍♂️', '🙇‍♀️', 
+              '🤦', '🤦‍♂️', '🤦‍♀️', '🤷', '🤷‍♂️', '🤷‍♀️', '🧑‍⚕️', '👨‍⚕️', '👩‍⚕️', '🧑‍🎓', 
+              '👨‍🎓', '👩‍🎓', '🧑‍🏫', '👨‍🏫', '👩‍🏫', '🧑‍⚖️', '👨‍⚖️', '👩‍⚖️', '🧑‍🌾', '👨‍🌾', 
+              '👩‍🌾', '🧑‍🍳', '👨‍🍳', '👩‍🍳', '🧑‍🔧', '👨‍🔧', '👩‍🔧'
+          ],
+          animals: [
+              '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐻‍❄️', '🐨', '🐯', '🦁', '🐮', '🐷', 
+              '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', 
+              '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🪲', '🐛', '🦋', '🐌', '🐞', '🐜', 
+              '🪰', '🪱', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', 
+              '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🦭', '🐊', '🐅', '🐆', 
+              '🦓', '🦍', '🦧', '🦣', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🦬', '🐃', '🐂', 
+              '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', 
+              '🐈‍⬛', '🪶', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡', 
+              '🦫', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔', '🐾', '🐉', '🐲', '🌵', '🎄', '🌲', '🌳', 
+              '🌴', '🪵', '🌱', '🌿', '☘️', '🍀', '🎍', '🪴', '🎋', '🍃', '🍂', '🍁', '🍄', '🐚', 
+              '🪨', '🌾', '💐', '🌷', '🌹', '🥀', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝', '🌛', '🌜', 
+              '🌚', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌙', '🌎', '🌍', '🌏', '🪐', 
+              '💫', '⭐', '🌟', '✨', '⚡', '☄️', '💥', '🔥', '🌪️', '🌈', '☀️', '🌤️', '⛅', '🌦️', 
+              '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️', '💨', '💧', '💦', '☔', '☂️', '🌊', 
+              '🌫️'
+          ],
+          food: [
+              '🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', '🍐', '🍑', '🍒', '🍓', 
+              '🫐', '🥝', '🍅', '🫒', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', 
+              '🥦', '🧄', '🧅', '🍄', '🥜', '🫘', '🌰', '🍞', '🥐', '🥖', '🫓', '🥨', '🥯', '🥞', 
+              '🧇', '🧀', '🍖', '🍗', '🥩', '🥓', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', '🫔', 
+              '🥙', '🧆', '🥚', '🍳', '🥘', '🍲', '🫕', '🥣', '🥗', '🍿', '🧈', '🧂', '🥫', '🍱', 
+              '🍘', '🍙', '🍚', '🍛', '🍜', '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🥮', '🍡', '🥟', 
+              '🥠', '🥡', '🦀', '🦞', '🦐', '🦑', '🦪', '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🍰', 
+              '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛', '☕', '🫖', '🍵', '🍶', '🍾', 
+              '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃', '🫗', '🥤', '🧋', '🧃', '🧉', '🧊', '🥢', 
+              '🍽️', '🍴', '🥄', '🔪', '🫙'
+          ],
+          activities: [
+              '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', 
+              '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', 
+              '🛼', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂', '🪂', '🏋️‍♀️', '🏋️', '🏋️‍♂️', '🤼‍♀️', 
+              '🤼', '🤼‍♂️', '🤸‍♀️', '🤸', '🤸‍♂️', '⛹️‍♀️', '⛹️', '⛹️‍♂️', '🤺', '🤾‍♀️', 
+              '🤾', '🤾‍♂️', '🏌️‍♀️', '🏌️', '🏌️‍♂️', '🏇', '🧘‍♀️', '🧘', '🧘‍♂️', '🏄‍♀️', 
+              '🏄', '🏄‍♂️', '🏊‍♀️', '🏊', '🏊‍♂️', '🤽‍♀️', '🤽', '🤽‍♂️', '🚣‍♀️', '🚣', 
+              '🚣‍♂️', '🧗‍♀️', '🧗', '🧗‍♂️', '🚵‍♀️', '🚵', '🚵‍♂️', '🚴‍♀️', '🚴', '🚴‍♂️', 
+              '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️', '🏵️', '🎗️', '🎫', '🎟️', '🎪', '🤹‍♀️', '🤹', 
+              '🤹‍♂️', '🎭', '🩰', '🎨', '🎬', '🎤', '🎧', '🎼', '🎵', '🎶', '🪘', '🥁', '🪗', 
+              '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩'
+          ],
+          travel: [
+              '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', 
+              '🏍️', '🛵', '🚲', '🛴', '🛹', '🛼', '🚁', '✈️', '🛫', '🛬', '🪂', '💺', '🚀', '🛸', 
+              '🚉', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚝', '🚃', '🚋', '🚎', 
+              '🚌', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🎢', '🎡', '🎠', '🏗️', '🌁', '🗼', '🏭', 
+              '⛽', '🚧', '🚦', '🚥', '🗺️', '🗿', '🗽', '⛪', '🕌', '🛕', '🕍', '⛩️', '🕋', '⛲', 
+              '⛱️', '🏖️', '🏝️', '🏞️', '🌋', '⛰️', '🏔️', '🗻', '🏕️', '⛺', '🛖', '🏠', '🏡', 
+              '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', 
+              '🏩', '💒', '🏛️', '⛪', '🕌', '🕍', '🛕', '🕋', '⛩️', '🛤️', '🛣️', '🗾', '🏞️', 
+              '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'
+          ],
+          objects: [
+              '⌚', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💽', '💾', 
+              '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', 
+              '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', 
+              '🔋', '🪫', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', 
+              '💷', '🪙', '💰', '💳', '💎', '⚖️', '🪜', '🧰', '🪛', '🔧', '🔨', '⚒️', '🛠️', 
+              '⛏️', '🪚', '🔩', '⚙️', '🪤', '🧱', '⛓️', '🧲', '🔫', '💣', '🧨', '🪓', '🔪', 
+              '🗡️', '⚔️', '🛡️', '🚬', '⚰️', '🪦', '⚱️', '🏺', '🔮', '📿', '🧿', '🪬', '💈', 
+              '⚗️', '🔭', '🔬', '🕳️', '🩹', '🩺', '🩻', '🪶', '💊', '💉', '🩸', '🧬', '🦠', 
+              '🧫', '🧪', '🌡️', '🪝', '🧹', '🪠', '🧺', '🧻', '🚽', '🚰', '🚿', '🛁', '🛀', 
+              '🧼', '🪥', '🪒', '🧽', '🪣', '🧴', '🛎️', '🔑', '🗝️', '🚪', '🪑', '🛋️', '🛏️', 
+              '🛌', '🧸', '🪆', '🖼️', '🪞', '🪟', '🛍️', '🛒', '🎁', '🎈', '🎏', '🎀', '🪄', 
+              '🎊', '🎉', '🎎', '🏮', '🎐', '🪩', '🧧', '✉️', '📩', '📨', '📧', '💌', '📥', 
+              '📤', '📦', '🏷️', '🪧', '📪', '📫', '📬', '📭', '📮', '📯', '📜', '📃', '📄', 
+              '📑', '🧾', '📊', '📈', '📉', '🗒️', '🗓️', '📆', '📅', '🗑️', '📇', '🗃️', '🗳️', 
+              '🗄️', '📋', '📁', '📂', '🗂️', '🗞️', '📰', '📓', '📔', '📒', '📕', '📗', '📘', 
+              '📙', '📚', '📖', '🔖', '🧷', '🔗', '📎', '🖇️', '📐', '📏', '🧮', '📌', '📍', 
+              '✂️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📝', '✏️', '🔍', '🔎', '🔏', '🔐', '🔒', 
+              '🔓'
+          ],
+          symbols: [
+              '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❤️‍🔥', '❤️‍🩹', '❣️', 
+              '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', 
+              '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', 
+              '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', 
+              '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', 
+              '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', 
+              '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', 
+              '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', 
+              '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🛗', 
+              '🈳', '🈂️', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼', '⚧️', '🚻', '🚮', '🎦', 
+              '📶', '🈁', '🔣', 'ℹ️', '🔤', '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', 
+              '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', 
+              '#️⃣', '*️⃣', '⏏️', '▶️', '⏸️', '⏯️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', 
+              '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️', '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', 
+              '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔀', '🔁', '🔂', '🔄', '🔃', '🎵', '🎶', '➕', 
+              '➖', '➗', '✖️', '🟰', '♾️', '💲', '💱', '™️', '©️', '®️', '〰️', '➰', '➿', 
+              '🔚', '🔙', '🔛', '🔝', '🔜', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', 
+              '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🔸', '🔹', '🔶', '🔷', '🔳', '🔲', '▪️', 
+              '▫️', '◾', '◽', '◼️', '◻️', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '⬛', '⬜', 
+              '🟫', '🔈', '🔇', '🔉', '🔊', '🔔', '🔕', '📣', '📢', '👁️‍🗨️', '💬', '💭', 
+              '🗯️', '♠️', '♣️', '♥️', '♦️', '🃏', '🎴', '🀄', '🕐', '🕑', '🕒', '🕓', '🕔', 
+              '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛', '🕜', '🕝', '🕞', '🕟', '🕠', '🕡', 
+              '🕢', '🕣', '🕤', '🕥', '🕦', '🕧'
+          ]
+      };
+      
+      let currentEmojiCategory = 'smileys';
+      
+      // Function to populate emoji container
+      function populateEmojis(category) {
+          currentEmojiCategory = category;
+          const emojis = emojiCategories[category] || emojiCategories.smileys;
+          emojiContainer.innerHTML = '';
+          
+          emojis.forEach(emoji => {
+              const emojiButton = document.createElement('button');
+              emojiButton.className = 'emoji-item';
+              emojiButton.textContent = emoji;
+              emojiButton.title = emoji;
+              emojiButton.addEventListener('click', () => {
+                  insertTextAtCursor(messageInput, emoji);
+              });
+              emojiContainer.appendChild(emojiButton);
+          });
+      }
+      
+      // Add category button listeners
+      document.querySelectorAll('.emoji-categories button').forEach(btn => {
+          btn.addEventListener('click', () => {
+              // Update active state
+              document.querySelectorAll('.emoji-categories button').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              
+              // Load emojis for this category
+              const category = btn.dataset.category;
+              populateEmojis(category);
+          });
+      });
+        // Initialize with default category
+      populateEmojis('smileys');
+        // Load trending GIFs by default
+      loadTrendingGifs();
+      
+      // Add GIF category quick search buttons
+      const gifCategories = ['trending', 'funny', 'happy', 'love', 'excited', 'thumbs up', 'dancing', 'celebration'];
+      
+      // Function to add GIF category buttons
+      function addGifCategories() {
+          const gifSearchContainer = document.querySelector('.gif-search');
+          if (gifSearchContainer) {
+              const categoryContainer = document.createElement('div');
+              categoryContainer.className = 'gif-categories';
+              
+              gifCategories.forEach(category => {
+                  const btn = document.createElement('button');
+                  btn.className = 'gif-category-btn';
+                  btn.textContent = category;
+                  btn.addEventListener('click', () => {
+                      if (category === 'trending') {
+                          loadTrendingGifs();
+                      } else {
+                          searchGifs(category);
+                      }
+                      // Update search input
+                      gifSearchInput.value = category === 'trending' ? '' : category;
+                  });
+                  categoryContainer.appendChild(btn);
+              });
+              
+              gifSearchContainer.appendChild(categoryContainer);
+          }
+      }
+      
+      // Add category buttons after DOM is ready
+      setTimeout(addGifCategories, 100);
       
       // Override the appendMessage function from WebRTCClient.js to use our chat UI
       window.appendMessage = function(sender, message) {
@@ -358,7 +796,7 @@
           sendButton.disabled = true;
           emojiButton.disabled = true;
           
-          // Hide emoji panel if it's open
+          // Hide panels if they're open
           emojiGifPanel.classList.add('d-none');
           
           // Destroy the WebRTC connection
@@ -402,17 +840,90 @@
       {
           emojiGifPanel.classList.toggle('d-none');
       });
-      
-      // Add click handlers for emoji buttons
-      emojiItems.forEach(item => 
+        // Setup utility item click handlers
+      document.querySelectorAll('.utility-item').forEach(item => 
       {
-          item.addEventListener('click', () => 
+          item.addEventListener('click', function() 
           {
-              const emoji = item.textContent;
-              // Insert emoji at cursor position
-              insertTextAtCursor(messageInput, emoji);
+              const utilityId = this.id;
+              const panelId = utilityId.replace('Option', 'UI');
+              
+              // Hide emoji-gif panel
+              emojiGifPanel.classList.add('d-none');
+              
+              // Hide all utility panels first
+              document.querySelectorAll('.utility-panel').forEach(panel => 
+              {
+                  panel.classList.add('d-none');
+              });
+              
+              // Show the selected panel if it exists
+              const selectedPanel = document.getElementById(panelId);
+              if (selectedPanel) 
+              {
+                  selectedPanel.classList.remove('d-none');
+              }
+              else 
+              {
+                  // Handle special cases that don't have UI panels
+                  handleSpecialUtilityOption(utilityId);
+              }
           });
       });
+      
+      // Close panel buttons
+      document.querySelectorAll('.utility-panel .btn-close').forEach(button => 
+      {
+          button.addEventListener('click', function() 
+          {
+              // Find the closest utility panel and hide it
+              const panel = this.closest('.utility-panel');
+              if (panel) 
+              {
+                  panel.classList.add('d-none');
+              }
+          });
+      });
+      
+      // Function to handle special utility options that don't have UI panels      
+      function handleSpecialUtilityOption(optionId) 
+      {
+          switch (optionId) 
+          {
+              case 'attachmentOption':
+                  document.getElementById('attachmentInput').click();
+                  break;
+                  
+              case 'translateOption':
+                  showToast('Translation feature will be implemented soon!');
+                  break;
+                  
+              default:
+                  console.log(`Handler for ${optionId} not implemented yet`);
+          }
+      }
+      
+      // Helper function to show a toast message
+      function showToast(message) 
+      {
+          // Create toast element
+          const toastEl = document.createElement('div');
+          toastEl.className = 'utilities-toast';
+          toastEl.textContent = message;
+          
+          // Add to document
+          document.body.appendChild(toastEl);
+          
+          // Trigger animation
+          setTimeout(() => toastEl.classList.add('show'), 10);
+          
+          // Remove after delay
+          setTimeout(() => {
+              toastEl.classList.remove('show');
+              setTimeout(() => document.body.removeChild(toastEl), 300);
+          }, 3000);
+      }
+        // Focus mode function removed
       
       // Function to insert text at cursor position in input field
       function insertTextAtCursor(input, text) 
@@ -449,49 +960,105 @@
               clearTimeout(timeout);
               timeout = setTimeout(() => func.apply(context, args), delay);
           };
-      }
-      
-      // Function to search GIFs using a mock API (replace with actual GIF API)
+      }      // Function to search GIFs using Giphy API
       function searchGifs(query) 
       {
           // Display loading state
           gifResults.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
           
-          // Sample GIFs - replace with actual API call
-          const sampleGifs = [
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTFhMGFtOHg2cDk3dDltbWV4dXp2cjZsbG9zZDkwYWd3cjZtcmI1YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/13CoXDiaCcCoyk/giphy.gif',
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmEyMDRkYmEwM2MyN2YxY2RlODRjYzQ1ZTljNjJiNjdmOTExM2NiMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUPGcg1IJEKGCI6r5e/giphy.gif',
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmduYnJoYTJnMzBuN2xuZjc2M3dvN2U1aGJiNjB0dTB2MzJ0d3JtYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7abKhOpu0NwenH3O/giphy.gif',
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnJseTdwc3ExeDhjZWVhZ2Z6YmFheTI4bHA5NXZ5c3RjdnAzN3l1eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/10bxTLrpJNS0PC/giphy.gif'
-          ];
+          // Use Giphy API (you should replace this with your own API key for production)
+          const apiKey = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65'; // Public demo key - replace with your own
+          const url = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=20&offset=0&rating=pg&lang=en`;
           
-          // Simulate API delay
-          setTimeout(() => {
-              let html = '';
-              
-              if (sampleGifs.length > 0) 
-              {
-                  sampleGifs.forEach(url => {
-                      html += `<div class="gif-item"><img src="${url}" alt="GIF" data-gif-url="${url}"></div>`;
+          fetch(url)
+              .then(response => response.json())
+              .then(data => {
+                  let html = '';
+                  
+                  if (data.data && data.data.length > 0) 
+                  {
+                      data.data.forEach(gif => {
+                          const gifUrl = gif.images.fixed_height_small.url;
+                          const title = gif.title || 'GIF';
+                          html += `<div class="gif-item">
+                                     <img src="${gifUrl}" alt="${title}" title="${title}" data-gif-url="${gif.images.fixed_height.url}">
+                                   </div>`;
+                      });
+                  } 
+                  else 
+                  {
+                      html = '<div class="text-center p-3 text-muted">No GIFs found for this search</div>';
+                  }
+                  
+                  gifResults.innerHTML = html;
+                  
+                  // Add click handlers to GIFs
+                  document.querySelectorAll('.gif-item img').forEach(img => {
+                      img.addEventListener('click', () => {
+                          const gifUrl = img.getAttribute('data-gif-url');
+                          sendGif(gifUrl);
+                          emojiGifPanel.classList.add('d-none');
+                      });
                   });
-              } 
-              else 
-              {
-                  html = '<div class="text-center p-3 text-muted">No GIFs found</div>';
-              }
-              
-              gifResults.innerHTML = html;
-              
-              // Add click handlers to GIFs
-              document.querySelectorAll('.gif-item img').forEach(img => {
-                  img.addEventListener('click', () => {
-                      // For this implementation, we'll just send the GIF URL as a message
-                      const gifUrl = img.getAttribute('data-gif-url');
-                      sendGif(gifUrl);
-                      emojiGifPanel.classList.add('d-none');
-                  });
+              })
+              .catch(error => {
+                  console.error('Error fetching GIFs:', error);
+                  // Fallback to sample GIFs if API fails
+                  loadTrendingGifs();
               });
-          }, 700);
+      }
+      
+      // Function to load trending GIFs
+      function loadTrendingGifs() 
+      {
+          const apiKey = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65';
+          const url = `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20&rating=pg`;
+          
+          fetch(url)
+              .then(response => response.json())
+              .then(data => {
+                  let html = '';
+                  
+                  if (data.data && data.data.length > 0) 
+                  {
+                      data.data.forEach(gif => {
+                          const gifUrl = gif.images.fixed_height_small.url;
+                          const title = gif.title || 'Trending GIF';
+                          html += `<div class="gif-item">
+                                     <img src="${gifUrl}" alt="${title}" title="${title}" data-gif-url="${gif.images.fixed_height.url}">
+                                   </div>`;
+                      });
+                  } 
+                  else 
+                  {
+                      // Ultimate fallback to hardcoded GIFs
+                      const fallbackGifs = [
+                          'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTFhMGFtOHg2cDk3dDltbWV4dXp2cjZsbG9zZDkwYWd3cjZtcmI1YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/13CoXDiaCcCoyk/giphy.gif',
+                          'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmEyMDRkYmEwM2MyN2YxY2RlODRjYzQ1ZTljNjJiNjdmOTExM2NiMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUPGcg1IJEKGCI6r5e/giphy.gif',
+                          'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmduYnJoYTJnMzBuN2xuZjc2M3dvN2U1aGJiNjB0dTB2MzJ0d3JtYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7abKhOpu0NwenH3O/giphy.gif',
+                          'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnJseTdwc3ExeDhjZWVhZ2Z6YmFheTI4bHA5NXZ5c3RjdnAzN3l1eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/10bxTLrpJNS0PC/giphy.gif'
+                      ];
+                      
+                      fallbackGifs.forEach(url => {
+                          html += `<div class="gif-item"><img src="${url}" alt="GIF" data-gif-url="${url}"></div>`;
+                      });
+                  }
+                  
+                  gifResults.innerHTML = html;
+                  
+                  // Add click handlers
+                  document.querySelectorAll('.gif-item img').forEach(img => {
+                      img.addEventListener('click', () => {
+                          const gifUrl = img.getAttribute('data-gif-url');
+                          sendGif(gifUrl);
+                          emojiGifPanel.classList.add('d-none');
+                      });
+                  });
+              })
+              .catch(error => {
+                  console.error('Error loading trending GIFs:', error);
+                  gifResults.innerHTML = '<div class="text-center p-3 text-muted">Unable to load GIFs</div>';
+              });
       }
       
       // Function to send a GIF
