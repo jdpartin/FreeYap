@@ -1,0 +1,51 @@
+#video-container {
+    margin: 20px auto;
+    max-width: 1200px;
+}
+
+#video-controls {
+    margin-bottom: 15px;
+}
+
+.btn {
+    padding: 8px 16px;
+    margin-right: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+#videos {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.video-wrapper {
+    flex: 1;
+    min-width: 320px;
+    text-align: center;
+}
+
+video {
+    width: 100%;
+    max-width: 640px;
+    height: auto;
+    background-color: #222;
+    border: 1px solid #444;
+}
+
+#connection-status {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}

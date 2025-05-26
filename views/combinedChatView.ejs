@@ -1,0 +1,530 @@
+<!-- Include the SimplePeer library via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/simple-peer/simplepeer.min.js"></script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/webRTC/WebRTCConnectionManager.js"></script>
+<script src="/js/apiClients/matchmakingAPIClient.js"></script>
+
+<div class="container my-4">
+    <div class="row">
+        <%- include('./components/video-chat-widget') %>
+        <%- include('./components/text-chat-widget') %>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Common elements for both chat types
+        const socket = io();
+        const matchmakingClient = new MatchmakingAPIClient();
+        let webRTCManager = null;
+
+        // Video chat elements
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const testCameraBtn = document.getElementById('test-camera-btn');
+        const startVideoBtn = document.getElementById('start-video-btn');
+        const stopVideoBtn = document.getElementById('stop-video-btn');
+        const muteVideoBtn = document.getElementById('mute-video-btn');
+        const muteAudioBtn = document.getElementById('mute-audio-btn');
+        const videoConnectionStatus = document.getElementById('connection-status');
+        
+        // Text chat elements
+        const statusBar = document.getElementById('status-bar');
+        const textConnectionStatus = document.getElementById('text-connection-status');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const chatLogContainer = document.getElementById('chat-log-container');
+        
+        // Shared state
+        let videoChat = null;
+        let textChat = null;
+        let isVideoMuted = false;
+        let isAudioMuted = false;
+        let localStream = null;
+        let isInQueue = false;
+        let matchFound = false;
+        
+        // Initialize media first
+        async function initializeMediaAndQueue() {
+            try {
+                if (videoConnectionStatus) {
+                    videoConnectionStatus.textContent = 'Status: Requesting camera and microphone permissions...';
+                }
+                console.log('Auto-requesting camera and microphone permissions...');
+                
+                // Check available devices first
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                const audioDevices = devices.filter(device => device.kind === 'audioinput');
+                
+                console.log('Available video devices:', videoDevices);
+                console.log('Available audio devices:', audioDevices);
+                
+                if (videoDevices.length === 0) {
+                    console.warn('No video devices found!');
+                }
+                
+                if (audioDevices.length === 0) {
+                    console.warn('No audio devices found!');
+                }
+                
+                // Request permissions and get media stream
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true,
+                    audio: true 
+                });
+                
+                // Display the stream in local video
+                if (localVideo) {
+                    localVideo.srcObject = localStream;
+                    videoConnectionStatus.textContent = 'Status: Camera and microphone access granted! Connecting to queue...';
+                    
+                    // Hide the test camera button since we now have automatic access
+                    if (testCameraBtn) testCameraBtn.style.display = 'none';
+                    
+                    // Enable the video controls
+                    if (muteVideoBtn) muteVideoBtn.disabled = false;
+                    if (muteAudioBtn) muteAudioBtn.disabled = false;
+                    if (stopVideoBtn) stopVideoBtn.disabled = false;
+                }
+                
+                console.log('Media permissions granted successfully');
+                return true;
+                
+            } catch (error) {
+                console.error('Media access error:', error);
+                
+                // Provide specific error messages
+                let errorMessage = 'Status: Error accessing camera/microphone.';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Status: Camera/microphone access denied. Please allow access and refresh the page.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = 'Status: No camera or microphone found. Please connect devices and refresh.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Status: Camera/microphone in use by another application. Please close other apps.';
+                }
+                
+                if (videoConnectionStatus) {
+                    videoConnectionStatus.textContent = errorMessage;
+                }
+                
+                // Show the test camera button as fallback
+                if (testCameraBtn) testCameraBtn.style.display = 'inline-block';
+                return false;
+            }
+        }
+          // Initialize socket and matchmaking after media is ready
+        async function initializeSocketAndMatchmaking() {
+            try {
+                console.log('Initializing socket connection and matchmaking');
+                // Wait for socket connection
+                await new Promise((resolve) => {
+                    if (socket.connected) {
+                        console.log('Socket already connected');
+                        resolve();
+                    } else {
+                        console.log('Waiting for socket to connect...');
+                        socket.on('connect', () => {
+                            console.log('Socket connected successfully');
+                            resolve();
+                        });
+                    }
+                });
+                
+                const socketId = socket.id;
+                const mode = 'combined'; // Use 'combined' mode for both video and text
+                  // Join the matchmaking queue immediately
+                console.log(`Starting matchmaking process with socket ID: ${socketId}, mode: ${mode}`);
+                await matchmakingClient.joinQueue(socketId, mode);
+                console.log('Successfully joined matchmaking queue');
+                
+                if (videoConnectionStatus) {
+                    videoConnectionStatus.textContent = 'Status: Connected to queue! Searching for a match...';
+                }
+                
+                if (statusBar) {
+                    statusBar.textContent = 'Searching for a match...';
+                }
+                
+                if (textConnectionStatus) {
+                    textConnectionStatus.innerHTML = '<span class="badge bg-warning">Searching...</span>';
+                }
+                
+                isInQueue = true;
+                console.log('Joined matchmaking queue automatically');
+                
+                // Set a timeout for delayed matchmaking
+                const matchmakingTimeout = setTimeout(async () => {
+                    console.log('No match found within 10 seconds. Initiating delayed matchmaking...');
+                    if (statusBar) statusBar.textContent = 'Still searching for a match...';
+                    await matchmakingClient.delayedMatchmaking(socketId, mode);
+                }, 10000); // 10 seconds
+                
+                // Listen for match-found event
+                socket.on('match-found', ({ socketId, matchedSocketId, isInitiator }) => {
+                    console.log(`Match found! Matched with: ${matchedSocketId}, Initiator: ${isInitiator}`);
+                    
+                    // Only handle the match once
+                    if (matchFound) return;
+                    matchFound = true;
+                    
+                    // Clear the matchmaking timeout if a match is found
+                    clearTimeout(matchmakingTimeout);
+                    
+                    // Update UI to show connected state for video chat
+                    if (videoConnectionStatus) {
+                        videoConnectionStatus.textContent = 'Status: Connected to chat partner';
+                    }
+                    
+                    // Update UI to show connected state for text chat
+                    if (statusBar) {
+                        statusBar.textContent = 'Connected to chat partner';
+                        statusBar.classList.remove('searching');
+                        statusBar.classList.add('connected');
+                    }
+                    
+                    if (textConnectionStatus) {
+                        textConnectionStatus.innerHTML = '<span class="badge bg-success">Connected</span>';
+                    }
+                    
+                    // Enable text chat input
+                    if (chatInput) chatInput.disabled = false;
+                    if (sendButton) sendButton.disabled = false;
+                    
+                    // Initialize WebRTC connection
+                    webRTCManager = new WebRTCConnectionManager(socket);
+                    
+                    if (isInitiator) {
+                        // Initiate connection as the initiator
+                        webRTCManager.connectToPeer(matchedSocketId);
+                    } else {
+                        // Wait for signaling from the initiator
+                        console.log('Waiting for initiator to connect...');
+                    }
+                    
+                    // Initialize both chat types with the same WebRTC connection
+                    if (localVideo) {
+                        videoChat = new VideoChat(webRTCManager);
+                        
+                        // Set up video chat event handlers for streams
+                        videoChat.on('localStream', (event) => {
+                            localVideo.srcObject = event.detail.stream;
+                        });
+                        
+                        videoChat.on('remoteStream', (event) => {
+                            remoteVideo.srcObject = event.detail.stream;
+                            console.log('Remote video stream connected to video element');
+                        });
+                        
+                        // Enable the start button now that we have a connection
+                        if (startVideoBtn) startVideoBtn.disabled = false;
+                    }
+                    
+                    if (chatLogContainer) {
+                        textChat = new TextChat(webRTCManager);
+                        
+                        // Clear welcome message
+                        chatLogContainer.innerHTML = '';
+                        
+                        // Set up text chat event listeners
+                        setupTextChatListeners();
+                    }
+                });
+                
+                return { socket, matchmakingClient };
+            } catch (error) {
+                console.error('Socket/matchmaking error:', error);
+                
+                if (videoConnectionStatus) {
+                    videoConnectionStatus.textContent = `Status: Connection error - ${error.message}`;
+                }
+                
+                if (statusBar) {
+                    statusBar.textContent = 'Error connecting to chat service';
+                    statusBar.classList.remove('searching');
+                    statusBar.style.backgroundColor = '#f8d7da';
+                    statusBar.style.color = '#721c24';
+                }
+                
+                return null;
+            }
+        }
+        
+        // Function to set up text chat event listeners
+        function setupTextChatListeners() {
+            if (!sendButton || !chatInput || !textChat) return;
+            
+            sendButton.addEventListener('click', () => {
+                sendMessage();
+            });
+            
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            function sendMessage() {
+                const message = chatInput.value;
+                if (message.trim()) {
+                    textChat.sendMessage(message);
+                    
+                    // Add message to UI
+                    const messageEl = createMessageElement('sent', message);
+                    chatLogContainer.appendChild(messageEl);
+                    
+                    // Clear input and scroll to bottom
+                    chatInput.value = '';
+                    chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+                }
+            }
+            
+            // Handle receiving messages
+            textChat.on('message', (event) => {
+                const { content } = event.detail;
+                
+                // Add message to UI
+                const messageEl = createMessageElement('received', content);
+                chatLogContainer.appendChild(messageEl);
+                
+                // Scroll to bottom
+                chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+            });
+        }
+        
+        // Helper function to create message elements
+        function createMessageElement(type, content) {
+            const container = document.createElement('div');
+            container.className = `message-container ${type}`;
+            
+            const message = document.createElement('div');
+            message.className = `message message-${type}`;
+            message.textContent = content;
+            
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            meta.textContent = time;
+            
+            container.appendChild(message);
+            container.appendChild(meta);
+            
+            return container;
+        }
+        
+        // Set up video chat event listeners
+        function setupVideoChatListeners() {
+            // Only set up if video elements exist
+            if (!startVideoBtn || !stopVideoBtn || !muteVideoBtn || !muteAudioBtn) return;
+            
+            // Start video button
+            startVideoBtn.addEventListener('click', async () => {
+                if (!videoChat) {
+                    videoConnectionStatus.textContent = 'Status: Please wait for connection to be established';
+                    return;
+                }
+                
+                try {
+                    videoConnectionStatus.textContent = 'Status: Starting video chat...';
+                    console.log('Starting video chat with WebRTC...');
+                    
+                    const success = await videoChat.startVideo();
+                    
+                    if (success) {
+                        startVideoBtn.disabled = true;
+                    } else {
+                        videoConnectionStatus.textContent = 'Status: Failed to start video chat';
+                    }
+                } catch (error) {
+                    console.error('Video start error:', error);
+                    videoConnectionStatus.textContent = `Status: Failed to start video - ${error.message}`;
+                }
+            });
+            
+            // Stop video button
+            stopVideoBtn.addEventListener('click', () => {
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                    localVideo.srcObject = null;
+                }
+                
+                if (videoChat) {
+                    const success = videoChat.stopVideo();
+                    if (success) {
+                        videoConnectionStatus.textContent = 'Status: Video stopped';
+                        startVideoBtn.disabled = false;
+                        stopVideoBtn.disabled = true;
+                        muteVideoBtn.disabled = true;
+                        muteAudioBtn.disabled = true;
+                    }
+                } else {
+                    videoConnectionStatus.textContent = 'Status: Video stopped';
+                    disableVideoControls();
+                }
+            });
+            
+            // Mute video button
+            muteVideoBtn.addEventListener('click', () => {
+                if (!videoChat && localStream) {
+                    // Handle muting for local stream
+                    const videoTrack = localStream.getVideoTracks()[0];
+                    if (videoTrack) {
+                        videoTrack.enabled = !videoTrack.enabled;
+                        muteVideoBtn.textContent = videoTrack.enabled ? 'Mute Video' : 'Unmute Video';
+                    }
+                    return;
+                }
+                
+                if (!videoChat) return;
+                
+                isVideoMuted = !isVideoMuted;
+                const success = videoChat.toggleVideo(isVideoMuted);
+                
+                if (success) {
+                    muteVideoBtn.textContent = isVideoMuted ? 'Unmute Video' : 'Mute Video';
+                }
+            });
+            
+            // Mute audio button
+            muteAudioBtn.addEventListener('click', () => {
+                if (!videoChat && localStream) {
+                    // Handle muting for local stream
+                    const audioTrack = localStream.getAudioTracks()[0];
+                    if (audioTrack) {
+                        audioTrack.enabled = !audioTrack.enabled;
+                        muteAudioBtn.textContent = audioTrack.enabled ? 'Mute Audio' : 'Unmute Audio';
+                    }
+                    return;
+                }
+                
+                if (!videoChat) return;
+                
+                isAudioMuted = !isAudioMuted;
+                const success = videoChat.toggleAudio(isAudioMuted);
+                
+                if (success) {
+                    muteAudioBtn.textContent = isAudioMuted ? 'Unmute Audio' : 'Mute Audio';
+                }
+            });
+        }
+        
+        // Helper functions for button states
+        function disableControls() {
+            if (startVideoBtn) startVideoBtn.disabled = true;
+            if (stopVideoBtn) stopVideoBtn.disabled = true;
+            if (muteVideoBtn) muteVideoBtn.disabled = true;
+            if (muteAudioBtn) muteAudioBtn.disabled = true;
+        }
+        
+        function disableVideoControls() {
+            if (startVideoBtn) startVideoBtn.disabled = false;
+            if (stopVideoBtn) stopVideoBtn.disabled = true;
+            if (muteVideoBtn) muteVideoBtn.disabled = true;
+            if (muteAudioBtn) muteAudioBtn.disabled = true;
+        }
+        
+        // Fallback: Test Camera button function (for when auto-init fails)
+        async function testCamera() {
+            try {
+                if (videoConnectionStatus) {
+                    videoConnectionStatus.textContent = 'Status: Requesting camera and microphone permissions...';
+                }
+                console.log('Manual testing camera access...');
+                
+                // Display available media devices
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                console.log('Available video devices:', videoDevices);
+                
+                if (videoDevices.length === 0) {
+                    console.warn('No video devices found!');
+                }
+                
+                // Stop existing stream if any
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                }
+                
+                // Request permissions and get media stream
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true,
+                    audio: true 
+                });
+                
+                // Display the stream in local video
+                if (localVideo) {
+                    localVideo.srcObject = localStream;
+                    videoConnectionStatus.textContent = 'Status: Camera test successful! Attempting to join queue...';
+                    
+                    // Update button states
+                    testCameraBtn.textContent = 'Stop Camera Test';
+                    testCameraBtn.style.backgroundColor = '#dc3545'; // Red color
+                    testCameraBtn.onclick = stopCameraTest;
+                }
+                
+                // Try to initialize matchmaking if not already in queue
+                if (!isInQueue) {
+                    await initializeSocketAndMatchmaking();
+                }
+                
+            } catch (error) {
+                console.error('Camera test error:', error);
+                
+                let errorMessage = `Status: Failed to access camera - ${error.message}`;
+                
+                // Add specific error messages
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Status: Camera access denied. Please allow camera access in your browser settings and try again.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = 'Status: No camera found. Please connect a camera and try again.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Status: Camera is already in use by another application. Please close other apps using the camera.';
+                }
+                
+                if (videoConnectionStatus) {
+                    videoConnectionStatus.textContent = errorMessage;
+                }
+            }
+        }
+        
+        function stopCameraTest() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+                if (localVideo) localVideo.srcObject = null;
+            }
+            
+            if (videoConnectionStatus) {
+                videoConnectionStatus.textContent = 'Status: Camera test stopped';
+            }
+            
+            if (testCameraBtn) {
+                testCameraBtn.textContent = 'Test Camera';
+                testCameraBtn.style.backgroundColor = '#007bff'; // Blue color
+                testCameraBtn.onclick = testCamera;
+            }
+        }
+        
+        // Set up camera test button if it exists
+        if (testCameraBtn) {
+            testCameraBtn.addEventListener('click', testCamera);
+        }
+        
+        // Set up video chat listeners if elements exist
+        setupVideoChatListeners();
+          // Auto-initialize everything on page load
+        console.log('Starting initialization process for combined chat');
+        const mediaSuccess = await initializeMediaAndQueue();
+        if (mediaSuccess) {
+            console.log('Media initialization successful, proceeding to matchmaking');
+            await initializeSocketAndMatchmaking();
+            console.log('Matchmaking initialization completed');
+        } else {
+            console.log('Media initialization failed, waiting for manual camera test');
+        }
+    });
+</script>

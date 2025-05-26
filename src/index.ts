@@ -96,6 +96,34 @@ app.get('/modular-text-chat-demo', (req: Request, res: Response) => {
   res.render('modularTextChatDemo', { title: 'Modular Text Chat Demo' });
 });
 
+app.get('/text-chat-test', (req: Request, res: Response) => {
+    res.render('textChatTest', { 
+        title: 'Text Chat Test', 
+        layout: 'layout' // Explicitly set the layout
+    });
+});
+
+app.get('/video-chat-test', (req: Request, res: Response) => {
+    res.render('videoChatTest', { 
+        title: 'Video Chat Test', 
+        layout: 'layout' // Explicitly set the layout
+    });
+});
+
+app.get('/voice-chat-test', (req: Request, res: Response) => {
+    res.render('voiceChatTest', { 
+        title: 'Voice Chat Test', 
+        layout: 'layout' // Explicitly set the layout
+    });
+});
+
+app.get('/combined-chat', (req: Request, res: Response) => {
+    res.render('combinedChatView', { 
+        title: 'Combined Chat Experience', 
+        layout: 'layout' // Explicitly set the layout
+    });
+});
+
 server.listen(PORT, () => {
   console.log(`FreeYap server running at http://localhost:${PORT}`);
 });

@@ -1,0 +1,29 @@
+<link href="/css/video-chat-widget.css" rel="stylesheet">
+
+<script src="/js/modules/videoChat.js"></script>
+
+<div class="container">
+    <h1>Video Chat Test</h1>
+    
+    <div id="video-container">        <div id="video-controls">
+            <button id="test-camera-btn" class="btn" style="background-color: #007bff; display: none;">Test Camera (Fallback)</button>
+            <button id="start-video-btn" class="btn" disabled>Start Video Chat</button>
+            <button id="stop-video-btn" class="btn" disabled>Stop Video</button>
+            <button id="mute-video-btn" class="btn" disabled>Mute Video</button>
+            <button id="mute-audio-btn" class="btn" disabled>Mute Audio</button>
+        </div>
+        
+        <div id="videos">
+            <div class="video-wrapper">
+                <label>Local Video</label>
+                <video id="local-video" autoplay muted></video>
+            </div>
+            <div class="video-wrapper">
+                <label>Remote Video</label>
+                <video id="remote-video" autoplay></video>
+            </div>
+        </div>        <div id="connection-status">
+            Status: Initializing camera and microphone permissions...
+        </div>
+    </div>
+</div>

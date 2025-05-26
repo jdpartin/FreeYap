@@ -1,0 +1,46 @@
+<link href="/css/voice-chat-widget.css" rel="stylesheet">
+
+<script src="/js/modules/voiceChat.js"></script>
+
+<div class="container">
+    <h1>Voice Chat Test</h1>
+    
+    <div id="voice-container">
+        <div id="voice-controls">
+            <button id="test-mic-btn" class="btn" style="background-color: #007bff; display: none;">Test Microphone (Fallback)</button>
+            <button id="start-voice-btn" class="btn" disabled>Start Voice Chat</button>
+            <button id="stop-voice-btn" class="btn" disabled>Stop Voice</button>
+            <button id="mute-audio-btn" class="btn" disabled>Mute Audio</button>
+            <button id="voice-effect-btn" class="btn" disabled>Voice Effect</button>
+        </div>
+        
+        <div id="audio-visualizer">
+            <div class="audio-wrapper">
+                <label>Local Audio</label>
+                <audio id="local-audio" autoplay muted></audio>
+                <div class="audio-wave local-wave" id="local-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+            </div>
+            <div class="audio-wrapper">
+                <label>Remote Audio</label>
+                <audio id="remote-audio" autoplay></audio>
+                <div class="audio-wave remote-wave" id="remote-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="connection-status">
+            Status: Initializing microphone permissions...
+        </div>
+    </div>
+</div>

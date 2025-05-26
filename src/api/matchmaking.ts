@@ -38,12 +38,9 @@ router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
 {
     try
     {
-        const { socketId, interests = [], mode = 'text', filters = [] } = req.body;
+        const { socketId, mode, topics = [] } = req.body;
         
-        // Use interests as topics for backward compatibility
-        const topics = interests || [];
-        
-        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, mode, { filters });
+        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, mode);
         
         // Set proper content type
         res.setHeader('Content-Type', 'application/json');
@@ -66,25 +63,6 @@ router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
             error: 'Failed to perform delayed matchmaking',
             message: error instanceof Error ? error.message : 'Unknown error'
         });
-    }
-});
-
-router.post('/match-found', async (req: Request, res: Response) => {
-    try
-    {
-        const { roomId, socketId } = req.body;
-        if (!roomId || !socketId)
-        {
-            res.status(400).json({ error: 'Invalid request' });
-            return;
-        }
-
-        res.status(200).json({ message: 'Match notification sent to WebRTC API' });
-    }
-    catch (error)
-    {
-        console.error('Error in /match-found:', error);
-        res.status(500).send('Failed to notify WebRTC API');
     }
 });
 

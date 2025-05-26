@@ -1,0 +1,40 @@
+<link href="/css/text-chat-widget.css" rel="stylesheet">
+
+<script src="/js/modules/textChat.js"></script>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm chat-card">
+                <!-- Chat header with controls -->
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: var(--primary);">
+                    <span id="chat-session-title">
+                        <i class="bi bi-chat-dots-fill me-2"></i>Text Chat Test
+                    </span>
+                    <div class="status-indicator" id="connection-status">
+                        <span class="badge bg-warning">Searching...</span>
+                    </div>
+                </div>
+                
+                <!-- Chat messages area -->
+                <div class="card-body p-0">
+                    <div class="status-bar searching text-center" id="status-bar">Searching for a match...</div>
+                    <div class="chat-box" id="chat-log-container">
+                        <div class="welcome-message text-center p-4">
+                            <h5>Welcome to Text Chat Test</h5>
+                            <p>You'll be matched with someone to chat anonymously.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat input area -->
+                    <div class="input-group p-3 bg-light border-top">
+                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled>
+                        <button class="btn btn-primary" id="send-button" disabled>
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -13,17 +13,11 @@ class TextChatCore {    constructor(widgetId, elements, options = {}) {
         this.isConnected = false;
         this.partnerSocketId = null;
         this.partnerName = null;
-        this.delayedMatchmakingTimeout = null;
-        this.matchFound = false;
-        this.hasReceivedPartnerTopics = false;
-        this.hasSentSmartHello = false;
         this.userTopics = [];
 
         // Expose public methods for external access
         window.textChatWidgets = window.textChatWidgets || {};
         window.textChatWidgets[widgetId] = {
-            startChat: () => this.startChat(),
-            endChat: () => this.endChat(),
             sendMessage: (message) => this.sendTextMessage(message),
             isConnected: () => this.isConnected,
             setupConnection: (data) => this.setupConnection(data)
@@ -36,21 +30,16 @@ class TextChatCore {    constructor(widgetId, elements, options = {}) {
         console.log(`TextChatCore initializing for widget: ${this.widgetId}`);
         this.setupEventListeners();
         this.setupWebRTCIntegration();
-        this.userTopics = this.getTopicsFromURL();
-    }    setupEventListeners() {
-        // Start button (if controls are showing)
-        if (this.options.showControls && this.elements.startButton) {
-            this.elements.startButton.addEventListener('click', () => this.startChat());
-        }
-        
-        // End button (if controls are showing)
-        if (this.options.showControls && this.elements.endButton) {
-            this.elements.endButton.addEventListener('click', () => this.endChat());
-        }
-        
+    }
+
+    setupEventListeners() {
+        // Enable send button and message input when connected
+        this.elements.sendButton.disabled = true;
+        this.elements.messageInput.disabled = true;
+
         // Send button
         this.elements.sendButton.addEventListener('click', () => this.sendMessage());
-        
+
         // Enter key on message input
         this.elements.messageInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
@@ -61,17 +50,17 @@ class TextChatCore {    constructor(widgetId, elements, options = {}) {
     }
 
     setupWebRTCIntegration() {
-        // Listen for match-found events
         if (window.socket) {
+            // Listen for match-found events
             window.socket.on('match-found', (data) => {
                 console.log(`TextChatCore ${this.widgetId}: Match found`);
-                this.matchFound = true;
-                this.handleMatchFound(data);
-                
-                if (this.delayedMatchmakingTimeout) {
-                    clearTimeout(this.delayedMatchmakingTimeout);
-                    this.delayedMatchmakingTimeout = null;
-                }
+                this.partnerSocketId = data.matchedSocketId;
+                this.partnerName = this.getRandomPartnerName();
+                this.updateStatus(`Connected to ${this.partnerName}`, 'bi-check-circle-fill');
+
+                // Enable UI elements
+                this.elements.messageInput.disabled = false;
+                this.elements.sendButton.disabled = false;
             });
 
             // Listen for signal events
@@ -80,137 +69,20 @@ class TextChatCore {    constructor(widgetId, elements, options = {}) {
                     this.handleSignal(data);
                 }
             });
-        }
-    }    async startChat() {
-        console.log(`TextChatCore ${this.widgetId}: Starting chat`);
-        
-        // Reset state
-        this.matchFound = false;
-        if (this.delayedMatchmakingTimeout) {
-            clearTimeout(this.delayedMatchmakingTimeout);
-            this.delayedMatchmakingTimeout = null;
-        }        
-        // Update UI with spinner
-        this.updateStatus('Looking for a chat partner...', null, true);
-        this.elements.statusMessage.classList.add('searching');
-        
-        // Only update button state if controls are showing
-        if (this.options.showControls && this.elements.startButton) {
-            this.elements.startButton.disabled = true;
-        }
 
-        try {
-            // Join matchmaking queue
-            const response = await fetch('/api/matchmaking/join-queue', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    socketId: window.socket.id, 
-                    mode: 'text',
-                    topics: this.userTopics 
-                })
+            // Handle connection close
+            window.socket.on('disconnect', () => {
+                console.log(`TextChatCore ${this.widgetId}: Connection closed`);
+                this.partnerSocketId = null;
+                this.partnerName = null;
+                this.updateStatus('Disconnected', 'bi-x-circle-fill');
+
+                // Disable UI elements
+                this.elements.messageInput.disabled = true;
+                this.elements.sendButton.disabled = true;
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to join matchmaking queue');
-            }
-
-            console.log(`TextChatCore ${this.widgetId}: Successfully joined matchmaking queue`);
-
-            // Set up delayed matchmaking
-            this.delayedMatchmakingTimeout = setTimeout(async () => {
-                if (this.matchFound) {
-                    console.log('Match already found, skipping delayed matchmaking');
-                    return;
-                }
-
-                try {
-                    const delayedResponse = await fetch('/api/matchmaking/delayed-matchmaking', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ socketId: window.socket.id, topics: this.userTopics })
-                    });
-
-                    if (!delayedResponse.ok) {
-                        throw new Error('Failed to perform delayed matchmaking');
-                    }
-
-                    console.log('Successfully called delayed matchmaking');
-                } catch (error) {
-                    console.error('Error during delayed matchmaking:', error);
-                    this.updateStatus(`Error: ${error.message}`, 'bi-exclamation-triangle');
-                    this.elements.startButton.disabled = false;
-                    this.elements.statusMessage.classList.remove('searching');
-                }
-            }, 10000);
-        } catch (error) {
-            console.error('Error joining matchmaking queue:', error);
-            this.updateStatus(`Error: ${error.message}`, 'bi-exclamation-triangle');
-            this.elements.startButton.disabled = false;
-            this.elements.statusMessage.classList.remove('searching');
         }
-    }    endChat() {
-        console.log(`TextChatCore ${this.widgetId}: Ending chat`);
-        
-        // Reset UI state - only update buttons if controls are showing
-        if (this.options.showControls) {
-            if (this.elements.startButton) this.elements.startButton.disabled = false;
-            if (this.elements.endButton) this.elements.endButton.disabled = true;
-        }
-        
-        this.elements.statusMessage.innerHTML = '';
-        this.elements.statusMessage.classList.remove('searching', 'connected');
-        
-        // Reset chat box
-        this.elements.chatBox.innerHTML = `
-            <div class="welcome-message text-center p-4">
-                <div class="mb-3">
-                    <i class="bi bi-chat-text fs-1" style="color: var(--primary);"></i>
-                </div>
-                <h5>Welcome to FreeYap Text Chat!</h5>
-                <p class="text-muted">No messages yet. Start the conversation!</p>
-            </div>
-        `;
-        
-        // Disable message input
-        this.elements.messageInput.disabled = true;
-        this.elements.sendButton.disabled = true;
-        
-        // Destroy the WebRTC connection
-        if (this.peer) {
-            this.peer.destroy();
-            this.peer = null;
-        }
-
-        // Reset state
-        this.isConnected = false;
-        this.partnerSocketId = null;
-        this.partnerName = null;
-        this.hasReceivedPartnerTopics = false;
-        this.hasSentSmartHello = false;
-
-        // Emit reset event for other modules
-        this.emit('chatEnded');
-    }    handleMatchFound(data) {
-        console.log(`TextChatCore ${this.widgetId}: Handling match found`, data);
-        
-        this.partnerSocketId = data.matchedSocketId;
-        this.partnerName = this.getRandomPartnerName();
-        
-        // Emit match found event for other modules
-        this.emit('matchFound', { partnerName: this.partnerName });
-
-        // Initialize WebRTC peer connection
-        if (!this.peer) {
-            this.peer = new SimplePeer({ 
-                initiator: data.isInitiator, 
-                trickle: true 
-            });
-            this.setupPeer();
-        }
-    }
-      // Setup connection from external call (e.g., voice/video chat match)
-    setupConnection(data) {
+    }    setupConnection(data) {
         console.log(`TextChatCore ${this.widgetId}: Setting up connection from external source`, data);
         
         // Set partner socket ID
@@ -704,9 +576,6 @@ class TextChatCore {    constructor(widgetId, elements, options = {}) {
     destroy() {
         if (this.peer) {
             this.peer.destroy();
-        }
-        if (this.delayedMatchmakingTimeout) {
-            clearTimeout(this.delayedMatchmakingTimeout);
         }
         console.log(`TextChatCore ${this.widgetId} destroyed`);
     }
