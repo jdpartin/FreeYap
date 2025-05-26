@@ -3,14 +3,14 @@
  * Instantiates and connects the various text chat modules
  */
 
-class TextChatWidget {
-    constructor(widgetId, options = {}) {
+class TextChatWidget {    constructor(widgetId, options = {}) {
         this.widgetId = widgetId;
         this.options = {
             showTopics: options.showTopics !== false,
             enableEmoji: options.enableEmoji !== false,
             enableGif: options.enableGif !== false,
             enableVoiceRecording: options.enableVoiceRecording || false,
+            showControls: options.showControls !== false,
             ...options
         };
 

@@ -174,10 +174,8 @@ class TextChatWidget {
         if (this.delayedMatchmakingTimeout) {
             clearTimeout(this.delayedMatchmakingTimeout);
             this.delayedMatchmakingTimeout = null;
-        }
-
-        // Update UI
-        this.updateStatus('Looking for a chat partner...', 'bi-hourglass-split');
+        }        // Update UI with spinner
+        this.updateStatus('Looking for a chat partner...', null, true);
         this.elements.statusMessage.classList.add('searching');
         this.elements.startButton.disabled = true;
 
@@ -269,19 +267,19 @@ class TextChatWidget {
         if (this.peer) {
             this.peer.destroy();
             this.peer = null;
-        }
-
-        // Reset state
+        }        // Reset state
         this.isConnected = false;
         this.partnerSocketId = null;
         this.partnerName = null;
         this.hasReceivedPartnerTopics = false;
         this.hasSentSmartHello = false;
 
+        // Reset chat session title
+        this.resetChatSessionTitle();
+        
         // Reset topics display
         if (this.options.showTopics) {
             this.elements.partnerTopicsList.innerHTML = '<div class="topics-empty">Waiting for partner...</div>';
-            this.resetChatSessionTitle();
         }
     }
 
@@ -346,9 +344,7 @@ class TextChatWidget {
                 this.peer.send(JSON.stringify(topicsMessage));
                 console.log('Sent topics to partner:', this.userTopics);
             }
-        });
-
-        // Handle incoming data
+        });        // Handle incoming data
         this.peer.on('data', (data) => {
             try {
                 const message = JSON.parse(data.toString());
@@ -413,9 +409,7 @@ class TextChatWidget {
         } catch (error) {
             console.error('Error sending message:', error);
         }
-    }
-
-    appendMessage(sender, message) {
+    }    appendMessage(sender, message) {
         // Remove welcome message if it exists
         const welcomeMessage = this.elements.chatBox.querySelector('.welcome-message');
         if (welcomeMessage) {
@@ -428,22 +422,39 @@ class TextChatWidget {
         const now = new Date();
         const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        messageElement.innerHTML = `
-            <div class="message ${sender === 'You' ? 'message-sent' : 'message-received'}">
-                <div class="message-content">${this.escapeHtml(message)}</div>
-                <div class="message-meta">
-                    <span class="message-time">${timeString}</span>
-                    ${sender === 'You' ? '<i class="bi bi-check2-all"></i>' : ''}
+        // Check if message is a GIF
+        if (message.startsWith('[GIF:') && message.endsWith(']')) {
+            const gifUrl = message.substring(5, message.length - 1);
+            
+            messageElement.innerHTML = `
+                <div class="message ${sender === 'You' ? 'message-sent' : 'message-received'}">
+                    <div class="message-content"><img src="${gifUrl}" alt="GIF" style="max-width: 100%; border-radius: 8px;"></div>
+                    <div class="message-meta">
+                        <span class="message-time">${timeString}</span>
+                        ${sender === 'You' ? '<i class="bi bi-check2-all"></i>' : ''}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            messageElement.innerHTML = `
+                <div class="message ${sender === 'You' ? 'message-sent' : 'message-received'}">
+                    <div class="message-content">${this.escapeHtml(message)}</div>
+                    <div class="message-meta">
+                        <span class="message-time">${timeString}</span>
+                        ${sender === 'You' ? '<i class="bi bi-check2-all"></i>' : ''}
+                    </div>
+                </div>
+            `;
+        }
         
         this.elements.chatBox.appendChild(messageElement);
         this.elements.chatBox.scrollTop = this.elements.chatBox.scrollHeight;
-    }
-
-    updateStatus(status, iconClass = 'bi-info-circle') {
-        this.elements.statusMessage.innerHTML = `<i class="${iconClass} me-2"></i>${status}`;
+    }updateStatus(status, iconClass = 'bi-info-circle', showSpinner = false) {
+        if (showSpinner) {
+            this.elements.statusMessage.innerHTML = `<span class="spinner"></span>${status}`;
+        } else {
+            this.elements.statusMessage.innerHTML = `<i class="${iconClass} me-2"></i>${status}`;
+        }
     }
 
     // Helper methods
@@ -593,42 +604,371 @@ class TextChatWidget {
             };
             this.peer.send(JSON.stringify(fallbackMessage));
         }
-    }
-
-    setupEmojiPanel() {
-        // Basic emoji setup - can be expanded
+    }    setupEmojiPanel() {
+        // Enhanced emoji setup with categories
         const emojiContainer = this.elements.widget.querySelector(`#${this.widgetId}-emoji-smileys`);
         if (emojiContainer) {
-            const basicEmojis = ['😊', '😂', '🤔', '👍', '👎', '❤️', '😍', '😢', '😡', '🙄', '😎', '🤗', '😴', '🤯', '🎉'];
-            basicEmojis.forEach(emoji => {
-                const emojiSpan = document.createElement('span');
-                emojiSpan.textContent = emoji;
-                emojiSpan.className = 'emoji-item';
-                emojiSpan.style.cursor = 'pointer';
-                emojiSpan.style.fontSize = '1.5rem';
-                emojiSpan.style.margin = '0.25rem';
-                emojiSpan.style.display = 'inline-block';
-                emojiSpan.addEventListener('click', () => {
-                    this.elements.messageInput.value += emoji;
-                    this.elements.emojiGifPanel.classList.add('d-none');
-                    this.elements.messageInput.focus();
+            // Make sure the container has grid display
+            emojiContainer.style.display = 'grid';
+            emojiContainer.style.gridTemplateColumns = 'repeat(5, 1fr)';
+            emojiContainer.style.gap = '8px';
+            
+            // Define comprehensive emoji categories
+            const emojiCategories = {
+                smileys: [
+                    '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', '😋', '😎', '😍', '😘', 
+                    '🥰', '😗', '😙', '😚', '🙂', '🤗', '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', 
+                    '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '😌', '😛', '😜', '😝', '🤤', 
+                    '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️', '🙁', '😖', '😞', '😟', '😤', '😢', 
+                    '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', 
+                    '🥴', '😠', '😡', '🤬', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '😇', '🥳', '🥺', '🤠',
+                    '🤡', '🤥', '🤫', '🤭', '🧐', '🤓', '😈', '👿', '👹', '👺', '💀', '☠️', '👻', '👽', 
+                    '👾', '🤖', '💩', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'
+                ],
+                people: [
+                    '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', 
+                    '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', 
+                    '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', 
+                    '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄', '💋', '🩸', '👶', '👧', '🧒', 
+                    '👦', '👩', '🧑', '👨', '👩‍🦱', '🧑‍🦱', '👨‍🦱', '👩‍🦰', '🧑‍🦰', '👨‍🦰', '👱‍♀️', 
+                    '👱', '👱‍♂️', '👩‍🦳', '🧑‍🦳', '👨‍🦳', '👩‍🦲', '🧑‍🦲', '👨‍🦲', '🧔', '🧔‍♀️', 
+                    '🧔‍♂️', '👵', '🧓', '👴', '👲', '👳‍♀️', '👳', '👳‍♂️', '🧕', '👮‍♀️', '👮', '👮‍♂️', 
+                    '👷‍♀️', '👷', '👷‍♂️', '💂‍♀️', '💂', '💂‍♂️', '🕵️‍♀️', '🕵️', '🕵️‍♂️', '👩‍⚕️', 
+                    '🧑‍⚕️', '👨‍⚕️', '👩‍🌾', '🧑‍🌾', '👨‍🌾', '👩‍🍳', '🧑‍🍳', '👨‍🍳', '👩‍🎓', 
+                    '🧑‍🎓', '👨‍🎓', '👩‍🎤', '🧑‍🎤', '👨‍🎤', '👩‍🏫', '🧑‍🏫', '👨‍🏫', '👩‍🏭', 
+                    '🧑‍🏭', '👨‍🏭', '👩‍💻', '🧑‍💻', '👨‍💻', '👩‍💼', '🧑‍💼', '👨‍💼', '👩‍🔧', 
+                    '🧑‍🔧', '👨‍🔧', '👩‍🔬', '🧑‍🔬', '👨‍🔬', '👩‍🎨', '🧑‍🎨', '👨‍🎨', '👩‍🚒', 
+                    '🧑‍🚒', '👨‍🚒', '👩‍✈️', '🧑‍✈️', '👨‍✈️', '👩‍🚀', '🧑‍🚀', '👨‍🚀', '👩‍⚖️', 
+                    '🧑‍⚖️', '👨‍⚖️', '👰‍♀️', '👰', '👰‍♂️', '🤵‍♀️', '🤵', '🤵‍♂️', '👸', '🤴', 
+                    '🥷', '🦸‍♀️', '🦸', '🦸‍♂️', '🦹‍♀️', '🦹', '🦹‍♂️', '🤶', '🧑‍🎄', '🎅', 
+                    '🧙‍♀️', '🧙', '🧙‍♂️', '🧝‍♀️', '🧝', '🧝‍♂️', '🧛‍♀️', '🧛', '🧛‍♂️', 
+                    '🧟‍♀️', '🧟', '🧟‍♂️', '🧞‍♀️', '🧞', '🧞‍♂️', '🧜‍♀️', '🧜', '🧜‍♂️', 
+                    '🧚‍♀️', '🧚', '🧚‍♂️', '👼', '🤰', '🤱', '👩‍🍼', '🧑‍🍼', '👨‍🍼', 
+                    '🙇‍♀️', '🙇', '🙇‍♂️', '💁‍♀️', '💁', '💁‍♂️', '🙅‍♀️', '🙅', '🙅‍♂️', 
+                    '🙆‍♀️', '🙆', '🙆‍♂️', '🙋‍♀️', '🙋', '🙋‍♂️', '🧏‍♀️', '🧏', '🧏‍♂️', 
+                    '🤦‍♀️', '🤦', '🤦‍♂️', '🤷‍♀️', '🤷', '🤷‍♂️', '🙎‍♀️', '🙎', '🙎‍♂️', 
+                    '🙍‍♀️', '🙍', '🙍‍♂️', '💇‍♀️', '💇', '💇‍♂️', '💆‍♀️', '💆', '💆‍♂️', 
+                    '🧖‍♀️', '🧖', '🧖‍♂️', '💅', '🤳', '💃', '🕺', '👯‍♀️', '👯', '👯‍♂️'
+                ],
+                animals: [
+                    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐻‍❄️', '🐨', '🐯', '🦁', '🐮', '🐷', 
+                    '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', 
+                    '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🪱', '🐛', '🦋', '🐌', '🐞', '🐜', 
+                    '🪰', '🪲', '🪳', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', 
+                    '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', 
+                    '🦓', '🦍', '🦧', '🦣', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🦬', '🐃', '🐂', 
+                    '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', 
+                    '🐈‍⬛', '🪶', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', 
+                    '🦡', '🦫', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔'
+                ],
+                food: [
+                    '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', 
+                    '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🫑', '🌽', '🥕', '🫒', '🧄', 
+                    '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', 
+                    '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍔', '🍟', '🍕', '🫓', '🥪', '🥙', '🧆', '🌮', 
+                    '🌯', '🫔', '🥗', '🥘', '🫕', '🥫', '🍝', '🍜', '🍲', '🍛', '🍱', '🥟', '🦪', '🍤', 
+                    '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', 
+                    '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '☕', 
+                    '🫖', '🍵', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🧉', '🧊', '🥄', '🍴', 
+                    '🍽️', '🥣', '🥡', '🥢', '🧂'
+                ],
+                activities: [
+                    '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', 
+                    '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', 
+                    '🛼', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂', '🏋️‍♀️', '🏋️', '🏋️‍♂️', '🤼‍♀️', '🤼', 
+                    '🤼‍♂️', '🤸‍♀️', '🤸', '🤸‍♂️', '⛹️‍♀️', '⛹️', '⛹️‍♂️', '🤺', '🤾‍♀️', '🤾', 
+                    '🤾‍♂️', '🏌️‍♀️', '🏌️', '🏌️‍♂️', '🏇', '🧘‍♀️', '🧘', '🧘‍♂️', '🏄‍♀️', '🏄', 
+                    '🏄‍♂️', '🏊‍♀️', '🏊', '🏊‍♂️', '🤽‍♀️', '🤽', '🤽‍♂️', '🚣‍♀️', '🚣', '🚣‍♂️', 
+                    '🧗‍♀️', '🧗', '🧗‍♂️', '🚵‍♀️', '🚵', '🚵‍♂️', '🚴‍♀️', '🚴', '🚴‍♂️', '🏆', 
+                    '🥇', '🥈', '🥉', '🏅', '🎖️', '🏵️', '🎗️', '🎫', '🎟️', '🎪', '🤹‍♀️', '🤹', 
+                    '🤹‍♂️', '🎭', '🩰', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', 
+                    '🪗', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩'
+                ],
+                travel: [
+                    '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', 
+                    '🏍️', '🛵', '🚲', '🛴', '🛹', '🛼', '🚁', '✈️', '🛫', '🛬', '🪂', '💺', '🚀', '🛸', 
+                    '🚉', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚝', '🚃', '🚋', '🚎', 
+                    '🚌', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🎢', '🎡', '🎠', '🏗️', '🌁', '🗼', '🏭', 
+                    '⛽', '🚧', '🚦', '🚥', '🗺️', '🗿', '🗽', '⛪', '🕌', '🛕', '🕍', '⛩️', '🕋', '⛲', 
+                    '⛱️', '🏖️', '🏝️', '🏞️', '🌋', '⛰️', '🏔️', '🗻', '🏕️', '⛺', '🛖', '🏠', '🏡', 
+                    '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', 
+                    '🏩', '💒', '🏛️', '⛪', '🕌', '🕍', '🛕', '🕋', '⛩️', '🛤️', '🛣️', '🗾', '🏞️', 
+                    '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'
+                ],
+                objects: [
+                    '⌚', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💽', '💾', 
+                    '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', 
+                    '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', 
+                    '🔋', '🪫', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', 
+                    '💷', '🪙', '💰', '💳', '💎', '⚖️', '🪜', '🧰', '🪛', '🔧', '🔨', '⚒️', '🛠️', 
+                    '⛏️', '🪚', '🔩', '⚙️', '🪤', '🧱', '⛓️', '🧲', '🔫', '💣', '🧨', '🪓', '🔪', 
+                    '🗡️', '⚔️', '🛡️', '🚬', '⚰️', '🪦', '⚱️', '🏺', '🔮', '📿', '🧿', '🪬', '💈', 
+                    '⚗️', '🔭', '🔬', '🕳️', '🩹', '🩺', '🩻', '🪶', '💊', '💉', '🩸', '🧬', '🦠', 
+                    '🧫', '🧪', '🌡️', '🪝', '🧹', '🪠', '🧺', '🧻', '🚽', '🚰', '🚿', '🛁', '🛀', 
+                    '🧼', '🪥', '🪒', '🧽', '🪣', '🧴', '🛎️', '🔑', '🗝️', '🚪', '🪑', '🛋️', '🛏️', 
+                    '🛌', '🧸', '🪆', '🖼️', '🪞', '🪟', '🛍️', '🛒', '🎁', '🎈', '🎏', '🎀', '🪄', 
+                    '🎊', '🎉', '🎎', '🏮', '🎐', '🪩', '🧧', '✉️', '📩', '📨', '📧', '💌', '📥', 
+                    '📤', '📦', '🏷️', '🪧', '📪', '📫', '📬', '📭', '📮', '📯', '📜', '📃', '📄', 
+                    '📑', '🧾', '📊', '📈', '📉', '🗒️', '🗓️', '📆', '📅', '🗑️', '📇', '🗃️', '🗳️', 
+                    '🗄️', '📋', '📁', '📂', '🗂️', '🗞️', '📰', '📓', '📔', '📒', '📕', '📗', '📘', 
+                    '📙', '📚', '📖', '🔖', '🧷', '🔗', '📎', '🖇️', '📐', '📏', '🧮', '📌', '📍', 
+                    '✂️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📝', '✏️', '🔍', '🔎', '🔏', '🔐', '🔒', 
+                    '🔓'
+                ],
+                symbols: [
+                    '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❤️‍🔥', '❤️‍🩹', '❣️', 
+                    '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', 
+                    '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', 
+                    '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', 
+                    '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', 
+                    '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', 
+                    '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', 
+                    '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', 
+                    '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🛗', 
+                    '🈳', '🈂️', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼', '⚧️', '🚻', '🚮', '🎦', 
+                    '📶', '🈁', '🔣', 'ℹ️', '🔤', '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', 
+                    '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', 
+                    '#️⃣', '*️⃣', '⏏️', '▶️', '⏸️', '⏯️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', 
+                    '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️', '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', 
+                    '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔀', '🔁', '🔂', '🔄', '🔃', '🎵', '🎶', '➕', 
+                    '➖', '➗', '✖️', '🟰', '♾️', '💲', '💱', '™️', '©️', '®️', '〰️', '➰', '➿', 
+                    '🔚', '🔙', '🔛', '🔝', '🔜', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', 
+                    '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🔸', '🔹', '🔶', '🔷', '🔳', '🔲', '▪️', 
+                    '▫️', '◾', '◽', '◼️', '◻️', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '⬛', '⬜', 
+                    '🟫', '🔈', '🔇', '🔉', '🔊', '🔔', '🔕', '📣', '📢', '👁️‍🗨️', '💬', '💭', 
+                    '🗯️', '♠️', '♣️', '♥️', '♦️', '🃏', '🎴', '🀄', '🕐', '🕑', '🕒', '🕓', '🕔', 
+                    '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛', '🕜', '🕝', '🕞', '🕟', '🕠', '🕡', 
+                    '🕢', '🕣', '🕤', '🕥', '🕦', '🕧'
+                ]
+            };
+            
+            // Create emoji category buttons
+            const categoryContainer = document.createElement('div');
+            categoryContainer.className = 'emoji-categories mb-2';
+            
+            const categories = [
+                {id: 'smileys', title: 'Smileys & Emotion', icon: '😊'},
+                {id: 'people', title: 'People & Body', icon: '👋'},
+                {id: 'animals', title: 'Animals & Nature', icon: '🐶'},
+                {id: 'food', title: 'Food & Drink', icon: '🍕'},
+                {id: 'activities', title: 'Activities', icon: '⚽'},
+                {id: 'travel', title: 'Travel & Places', icon: '🚗'},
+                {id: 'objects', title: 'Objects', icon: '💎'},
+                {id: 'symbols', title: 'Symbols', icon: '❤️'}
+            ];
+            
+            categories.forEach((cat, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-sm btn-outline-secondary' + (index === 0 ? ' active' : '');
+                btn.setAttribute('data-category', cat.id);
+                btn.setAttribute('title', cat.title);
+                btn.textContent = cat.icon;
+                btn.addEventListener('click', () => {
+                    // Update active state
+                    categoryContainer.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Load emojis for this category
+                    this.populateEmojis(cat.id, emojiContainer, emojiCategories);
                 });
-                emojiContainer.appendChild(emojiSpan);
+                categoryContainer.appendChild(btn);
             });
+            
+            // Insert category buttons before the emoji grid
+            emojiContainer.parentNode.insertBefore(categoryContainer, emojiContainer);
+            
+            // Initialize with smileys category
+            this.populateEmojis('smileys', emojiContainer, emojiCategories);
         }
     }
-
-    setupGifPanel() {
-        // Basic GIF setup - placeholder for future implementation
+    
+    // Function to populate emoji container with a specific category
+    populateEmojis(category, container, emojiCategories) {
+        const emojis = emojiCategories[category] || emojiCategories.smileys;
+        container.innerHTML = '';
+        
+        emojis.forEach(emoji => {
+            const emojiBtn = document.createElement('button');
+            emojiBtn.className = 'emoji-item';
+            emojiBtn.textContent = emoji;
+            emojiBtn.title = emoji;
+            emojiBtn.addEventListener('click', () => {
+                this.elements.messageInput.value += emoji;
+                this.elements.emojiGifPanel.classList.add('d-none');
+                this.elements.messageInput.focus();
+            });
+            container.appendChild(emojiBtn);
+        });
+    }setupGifPanel() {
+        // Comprehensive GIF setup based on the textChat.ejs implementation
         const gifSearch = this.elements.widget.querySelector(`#${this.widgetId}-gifSearch`);
         const gifResults = this.elements.widget.querySelector(`#${this.widgetId}-gifResults`);
         
         if (gifSearch && gifResults) {
-            gifSearch.addEventListener('input', (e) => {
-                // Placeholder for GIF search functionality
-                gifResults.innerHTML = '<div class="text-center p-3 text-muted">GIF search coming soon!</div>';
+            // Make sure the results container has grid style
+            gifResults.style.display = 'grid';
+            gifResults.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            gifResults.style.gap = '10px';
+            
+            // Add GIF category buttons
+            const gifCategories = ['trending', 'funny', 'happy', 'love', 'excited', 'thumbs up', 'dancing', 'celebration'];
+            const categoryContainer = document.createElement('div');
+            categoryContainer.className = 'gif-categories';
+            
+            gifCategories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'gif-category-btn';
+                btn.textContent = category;
+                btn.addEventListener('click', () => {
+                    if (category === 'trending') {
+                        this.loadTrendingGifs(gifResults);
+                    } else {
+                        this.searchGifs(category, gifResults);
+                    }
+                    // Update search input
+                    gifSearch.value = category === 'trending' ? '' : category;
+                });
+                categoryContainer.appendChild(btn);
             });
+            
+            // Insert category container before the gifResults element
+            gifSearch.parentNode.insertBefore(categoryContainer, gifResults);
+            
+            // Debounce function to limit API calls
+            const debounce = (func, delay) => {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            };
+            
+            // Add search functionality
+            gifSearch.addEventListener('input', debounce((e) => {
+                const searchTerm = e.target.value.trim();
+                if (searchTerm.length > 2) {
+                    this.searchGifs(searchTerm, gifResults);
+                }
+            }, 500));
+            
+            // Load trending GIFs by default
+            this.loadTrendingGifs(gifResults);
         }
+    }
+    
+    // Function to search GIFs using Giphy API
+    searchGifs(query, gifResults) {
+        // Display loading state
+        gifResults.innerHTML = '<div class="text-center p-3" style="grid-column: 1 / -1;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        // Use Giphy API (you should replace this with your own API key for production)
+        const apiKey = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65'; // Public demo key
+        const url = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=20&offset=0&rating=pg&lang=en`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(gif => {
+                        const gifUrl = gif.images.fixed_height_small.url;
+                        const fullGifUrl = gif.images.fixed_height.url;
+                        const title = gif.title || 'GIF';
+                        html += `<div class="gif-item">
+                                   <img src="${gifUrl}" alt="${title}" title="${title}" data-gif-url="${fullGifUrl}">
+                                 </div>`;
+                    });
+                } else {
+                    html = '<div class="text-center p-3 text-muted" style="grid-column: 1 / -1;">No GIFs found for this search</div>';
+                }
+                
+                gifResults.innerHTML = html;
+                
+                // Add click handlers to GIFs
+                gifResults.querySelectorAll('.gif-item img').forEach(img => {
+                    img.addEventListener('click', () => {
+                        const gifUrl = img.getAttribute('data-gif-url');
+                        this.sendGif(gifUrl);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching GIFs:', error);
+                gifResults.innerHTML = '<div class="text-center p-3 text-muted" style="grid-column: 1 / -1;">Unable to load GIFs. Please try again later.</div>';
+            });
+    }
+    
+    // Function to load trending GIFs
+    loadTrendingGifs(gifResults) {
+        const apiKey = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65';
+        const url = `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=20&rating=pg`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(gif => {
+                        const gifUrl = gif.images.fixed_height_small.url;
+                        const fullGifUrl = gif.images.fixed_height.url;
+                        const title = gif.title || 'Trending GIF';
+                        html += `<div class="gif-item">
+                                   <img src="${gifUrl}" alt="${title}" title="${title}" data-gif-url="${fullGifUrl}">
+                                 </div>`;
+                    });
+                } else {
+                    // Fallback to hardcoded GIFs
+                    const fallbackGifs = [
+                        'https://media.giphy.com/media/13CoXDiaCcCoyk/giphy.gif',
+                        'https://media.giphy.com/media/xUPGcg1IJEKGCI6r5e/giphy.gif',
+                        'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
+                        'https://media.giphy.com/media/10bxTLrpJNS0PC/giphy.gif'
+                    ];
+                    
+                    fallbackGifs.forEach(url => {
+                        html += `<div class="gif-item"><img src="${url}" alt="GIF" data-gif-url="${url}"></div>`;
+                    });
+                }
+                
+                gifResults.innerHTML = html;
+                
+                // Add click handlers
+                gifResults.querySelectorAll('.gif-item img').forEach(img => {
+                    img.addEventListener('click', () => {
+                        const gifUrl = img.getAttribute('data-gif-url');
+                        this.sendGif(gifUrl);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading trending GIFs:', error);
+                gifResults.innerHTML = '<div class="text-center p-3 text-muted" style="grid-column: 1 / -1;">Unable to load GIFs. Please try again later.</div>';
+            });
+    }
+    
+    // Function to send a GIF
+    sendGif(gifUrl) {
+        if (!this.peer || !this.isConnected) {
+            return;
+        }
+            
+        const gifMessage = `[GIF:${gifUrl}]`;
+        this.peer.send(JSON.stringify({
+            type: 'message',
+            content: gifMessage
+        }));
+        
+        // Hide the emoji/gif panel
+        if (this.elements.emojiGifPanel) {
+            this.elements.emojiGifPanel.classList.add('d-none');
+        }
+        
+        // Display the GIF in chat
+        this.appendMessage('You', gifMessage);
     }
 
     escapeHtml(text) {

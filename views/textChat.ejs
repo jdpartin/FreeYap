@@ -15,7 +15,8 @@
           <div class="topics-list" id="user-topics-list">
             <div class="topics-empty">No topics selected</div>
           </div>
-        </div>        <div class="topics-section partner-topics">
+        </div>        
+        <div class="topics-section partner-topics">
           <div class="topics-title">
             <i class="fas fa-users"></i>
             <span id="partner-topics-header">Partner's Topics</span>
@@ -24,7 +25,9 @@
             <div class="topics-empty">Waiting for partner...</div>
           </div>
         </div>
-      </div>      <div class="card shadow-sm chat-card">        <!-- Chat header with controls -->
+      </div>      
+      <div class="card shadow-sm chat-card">        
+        <!-- Chat header with controls -->
         <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: var(--primary);">
           <span id="chat-session-title">
             <i class="bi bi-chat-dots-fill me-2"></i>Chat Session
@@ -43,7 +46,8 @@
         </div>
         
         <!-- Chat messages area -->
-        <div class="card-body p-0">          <div class="chat-box" id="chatBox">
+        <div class="card-body p-0">          
+          <div class="chat-box" id="chatBox">
             <div class="welcome-message text-center p-4">
               <div class="mb-3">
                 <i class="bi bi-chat-text fs-1" style="color: var(--primary);"></i>
@@ -56,13 +60,71 @@
           <!-- Status message -->
         <div id="statusMessage" class="text-center bg-light border-top border-bottom status-bar"></div>
           <!-- Message input area -->        <div class="card-footer p-2">
-          <div class="input-group">            <button class="btn btn-outline-secondary emoji-button me-2" id="emojiButton" disabled>
+          <div class="input-group position-relative">
+            <button class="btn btn-outline-secondary emoji-button me-2" id="emojiButton">
               <i class="bi bi-emoji-smile"></i>
             </button>
+            <!-- Emoji and GIF Panel - Moved inside input group for proper positioning -->
+            <div class="emoji-gif-panel mt-2 d-none" id="emojiGifPanel">
+              <ul class="nav nav-tabs" id="emojiGifTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="emojis-tab" data-bs-toggle="tab" data-bs-target="#emojis" type="button" role="tab" aria-controls="emojis" aria-selected="true">Emojis</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="gifs-tab" data-bs-toggle="tab" data-bs-target="#gifs" type="button" role="tab" aria-controls="gifs" aria-selected="false">GIFs</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab" aria-controls="media" aria-selected="false">Media</button>
+                </li>
+              </ul>
+              <div class="tab-content p-2" id="emojiGifTabContent">
+                <div class="tab-pane fade show active" id="emojis" role="tabpanel" aria-labelledby="emojis-tab">
+                  <!-- Emoji Categories -->
+                  <div class="emoji-categories mb-2">
+                    <button class="btn btn-sm btn-outline-secondary active" data-category="smileys" title="Smileys & Emotion">😊</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="people" title="People & Body">👋</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="animals" title="Animals & Nature">🐶</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="food" title="Food & Drink">🍕</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="activities" title="Activities">⚽</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="travel" title="Travel & Places">🚗</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="objects" title="Objects">💎</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-category="symbols" title="Symbols">❤️</button>
+                  </div>
+                  <div class="emoji-container" id="emojiContainer">
+                    <!-- Emojis will be populated by JavaScript -->
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="gifs" role="tabpanel" aria-labelledby="gifs-tab">
+                  <div class="gif-search mb-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="Search GIFs..." id="gifSearchInput">
+                  </div>
+                  <div class="gif-container" id="gifContainer">
+                    <!-- GIFs will be loaded here -->
+                    <div class="text-center py-3 text-muted">
+                      <i class="bi bi-search me-2"></i>Search for GIFs
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">
+                  <div class="media-options">
+                    <button class="btn btn-sm btn-outline-secondary mb-2 w-100" id="uploadImageBtn">
+                      <i class="bi bi-image me-2"></i>Upload Image
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary mb-2 w-100" id="uploadVideoBtn">
+                      <i class="bi bi-film me-2"></i>Upload Video
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary mb-2 w-100" id="uploadFileBtn">
+                      <i class="bi bi-file-earmark me-2"></i>Upload File
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
             <input type="text" class="form-control" placeholder="Type your message here..." id="messageInput" disabled>
             <button class="btn" id="sendButton" style="background-color: var(--primary); color: white;" disabled>
               <i class="bi bi-send-fill"></i>
-            </button>          </div>
+            </button>
+          </div>
               <!-- Utility UI Panels -->
             <!-- Each panel will be shown based on the selected utility -->
             
@@ -249,53 +311,12 @@
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             <input type="file" id="videoInput" accept="video/*" style="display: none;">
           </div>
-          
+
           <!-- Emoji and GIF Panel -->
           <div class="emoji-gif-panel mt-2 d-none" id="emojiGifPanel">            <ul class="nav nav-tabs" id="emojiGifTabs" role="tablist">
               <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="emojis-tab" data-bs-toggle="tab" data-bs-target="#emojis" type="button" role="tab" aria-controls="emojis" aria-selected="true">Emojis</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="gifs-tab" data-bs-toggle="tab" data-bs-target="#gifs" type="button" role="tab" aria-controls="gifs" aria-selected="false">GIFs</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab" aria-controls="media" aria-selected="false">Media</button>
-              </li>
-            </ul><div class="tab-content p-2" id="emojiGifTabContent">
-              <div class="tab-pane fade show active" id="emojis" role="tabpanel" aria-labelledby="emojis-tab">
-                <!-- Emoji Categories -->
-                <div class="emoji-categories mb-2">
-                  <button class="btn btn-sm btn-outline-secondary active" data-category="smileys" title="Smileys & Emotion">😊</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="people" title="People & Body">👋</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="animals" title="Animals & Nature">🐶</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="food" title="Food & Drink">🍕</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="activities" title="Activities">⚽</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="travel" title="Travel & Places">🚗</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="objects" title="Objects">💎</button>
-                  <button class="btn btn-sm btn-outline-secondary" data-category="symbols" title="Symbols">❤️</button>
-                </div>
-                <div class="emoji-container" id="emojiContainer">
-                  <!-- Emojis will be populated by JavaScript -->
-                </div>
-              </div>              <div class="tab-pane fade" id="gifs" role="tabpanel" aria-labelledby="gifs-tab">
-                <div class="gif-search mb-2">
-                  <input type="text" class="form-control" id="gifSearchInput" placeholder="Search GIFs...">
-                </div>
-                <div class="gif-container" id="gifResults">
-                  <div class="text-center p-3 text-muted">
-                    Search for GIFs to display here
-                  </div>
-                </div>
-              </div>              <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">
-                <div class="media-options-container p-2">
-                  <div class="utilities-grid">
-                    <!-- Media Section -->
-                    <button class="utility-item" id="attachmentOption" title="Attach Files">
-                      <div class="utility-icon">
-                        <i class="bi bi-paperclip"></i>
-                      </div>
-                      <span>Files</span>
-                    </button>
+              </li><!-- The emoji panel has been relocated to the input group for proper positioning -->                <!-- Content moved to the emoji panel in the input group -->
                     <button class="utility-item" id="photoOption" title="Take Photo">
                       <div class="utility-icon">
                         <i class="bi bi-camera-fill"></i>
@@ -393,7 +414,8 @@
       const statusMessage = document.getElementById('statusMessage');
       const chatBox = document.getElementById('chatBox');
       const messageInput = document.getElementById('messageInput');
-      const sendButton = document.getElementById('sendButton');      const emojiButton = document.getElementById('emojiButton');
+      const sendButton = document.getElementById('sendButton');      
+      const emojiButton = document.getElementById('emojiButton');
       const emojiGifPanel = document.getElementById('emojiGifPanel');
       const emojiContainer = document.getElementById('emojiContainer');
       const gifSearchInput = document.getElementById('gifSearchInput');
@@ -646,12 +668,15 @@
       globalThis.chatInput = messageInput;
       globalThis.chatSendButton = sendButton;
       globalThis.chatMessages = chatBox;
-      
-      // Update UI status with icons
-      function updateStatus(status, iconClass = 'bi-info-circle')
+        // Update UI status with icons or spinner
+      function updateStatus(status, iconClass = 'bi-info-circle', showSpinner = false)
       {
-          statusMessage.innerHTML = `<i class="${iconClass} me-2"></i>${status}`;
-      }      // Variable to track delayed matchmaking timeout
+          if (showSpinner) {
+              statusMessage.innerHTML = `<span class="spinner"></span>${status}`;
+          } else {
+              statusMessage.innerHTML = `<i class="${iconClass} me-2"></i>${status}`;
+          }
+      }// Variable to track delayed matchmaking timeout
       let delayedMatchmakingTimeout = null;
       let matchFound = false;
 
@@ -684,10 +709,8 @@
           if (delayedMatchmakingTimeout) {
               clearTimeout(delayedMatchmakingTimeout);
               delayedMatchmakingTimeout = null;
-          }
-
-          // Update status and disable button
-          updateStatus('Looking for a chat partner...', 'bi-hourglass-split');
+          }          // Update status with spinner and disable button
+          updateStatus('Looking for a chat partner...', null, true);
           statusMessage.classList.add('searching');
           startButton.disabled = true;
 
@@ -772,7 +795,9 @@
       endButton.addEventListener('click', () =>
       {
           endCurrentChat();
-      });      // Function to end the current chat session
+      });      
+      
+      // Function to end the current chat session
       function endCurrentChat()
       {
           // Reset UI state
@@ -783,13 +808,26 @@
           
           // Reset chat box
           chatBox.innerHTML = `
-            <div class="welcome-message text-center p-4">              <div class="mb-3">
+            <div class="welcome-message text-center p-4">             
+              <div class="mb-3">
                 <i class="bi bi-chat-text fs-1" style="color: var(--primary);"></i>
               </div>
               <h5>Welcome to FreeYap Text Chat!</h5>
               <p class="text-muted">No messages yet. Start the conversation!</p>
             </div>
           `;
+
+          document.getElementById('chatSessionTitle').innerHTML = `
+            <i class="bi bi-chat-dots-fill me-2"></i>Chat Session
+              <i class="bi bi-info-circle ms-2 chat-info-icon" 
+                title="This is a randomly generated name to help you connect personally while staying anonymous" 
+                style="cursor: help; display: none;"></i>`;
+
+          document.getElementById('partner-topics-list').innerHTML = `
+              <div class="topics-empty">Waiting for partner...</div>
+            `;
+
+          document.getElementById('partner-topics-header').innerHTML = "Partner's Topics";
           
           // Disable message input
           messageInput.disabled = true;
@@ -836,10 +874,17 @@
               messageInput.value = ''; // Clear input after sending
           }
       }      // Handle emoji button click to show/hide emoji panel
-      emojiButton.addEventListener('click', () => 
-      {
-          emojiGifPanel.classList.toggle('d-none');
-      });
+      if (emojiButton && emojiGifPanel) {
+          emojiButton.addEventListener('click', () => 
+          {
+              emojiGifPanel.classList.toggle('d-none');
+          });
+      } else {
+          console.error('Emoji elements not found:', { 
+              emojiButton: !!emojiButton, 
+              emojiGifPanel: !!emojiGifPanel 
+          });
+      }
         // Setup utility item click handlers
       document.querySelectorAll('.utility-item').forEach(item => 
       {

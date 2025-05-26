@@ -92,6 +92,10 @@ app.get('/semantic-similarity', (req: Request, res: Response) => {
   res.render('semanticSimilarity', { title: 'Semantic Similarity Tester' });
 });
 
+app.get('/modular-text-chat-demo', (req: Request, res: Response) => {
+  res.render('modularTextChatDemo', { title: 'Modular Text Chat Demo' });
+});
+
 server.listen(PORT, () => {
   console.log(`FreeYap server running at http://localhost:${PORT}`);
 });

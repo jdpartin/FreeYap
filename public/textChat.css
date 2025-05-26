@@ -44,6 +44,17 @@
   color: #155724;
 }
 
+/* Input area button styles */
+.emoji-button {
+  padding: 0.375rem 0.75rem;
+  min-width: 44px;
+}
+
+#sendButton, [id$="-sendButton"] {
+  padding: 0.375rem 0.75rem;
+  min-width: 44px;
+}
+
 /* Message styles */
 .message-container {
   margin-bottom: 1rem;
@@ -108,21 +119,31 @@
   color: #6c757d;
 }
 
-/* Chat controls animations */
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 1;
+/* Chat controls spinner */
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-.searching {
-  animation: pulse 1.5s infinite;
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spinner 0.8s linear infinite;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  transform-origin: center center;
+  /* Isolate the spinner animation to prevent affecting adjacent text */
+  transform-box: fill-box;
+  will-change: transform;
+}
+
+.searching .spinner {
+  display: inline-block;
 }
 
 /* Message input area */
@@ -142,7 +163,7 @@
   bottom: 100%;
   left: 0;
   width: 380px;
-  z-index: 1000;
+  z-index: 1050; /* Increased z-index to ensure it appears above other elements */
   border: 1px solid rgba(0, 0, 0, 0.125);
   border-radius: 0.75rem;
   background-color: white;
@@ -150,6 +171,7 @@
   overflow: hidden;
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(10px);
+  display: block; /* Ensure it's visible when not having d-none class */
 }
 
 .emoji-gif-panel .nav-tabs {
@@ -234,16 +256,17 @@
 }
 
 /* Enhanced Emoji and GIF grid */
-.emoji-container {
+.emoji-container, .emoji-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
   padding: 12px;
+  margin-top: 8px;
 }
 
 .gif-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   padding: 12px;
 }
@@ -263,6 +286,7 @@
   min-width: 36px;
   min-height: 36px;
   position: relative;
+  text-align: center;
 }
 
 .emoji-item:hover {
@@ -274,13 +298,6 @@
 
 .emoji-item:active {
   transform: scale(1.1);
-}
-
-.gif-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  padding: 10px;
 }
 
 .gif-item {
@@ -332,6 +349,12 @@
   border-bottom: 1px solid #e9ecef;
   background-color: #f8f9fa;
   flex-wrap: wrap;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .gif-category-btn {

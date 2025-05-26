@@ -3,8 +3,7 @@
  * Handles basic chat operations, WebRTC connection, and message handling
  */
 
-class TextChatCore {
-    constructor(widgetId, elements, options = {}) {
+class TextChatCore {    constructor(widgetId, elements, options = {}) {
         this.widgetId = widgetId;
         this.elements = elements;
         this.options = options;
@@ -20,6 +19,16 @@ class TextChatCore {
         this.hasSentSmartHello = false;
         this.userTopics = [];
 
+        // Expose public methods for external access
+        window.textChatWidgets = window.textChatWidgets || {};
+        window.textChatWidgets[widgetId] = {
+            startChat: () => this.startChat(),
+            endChat: () => this.endChat(),
+            sendMessage: (message) => this.sendTextMessage(message),
+            isConnected: () => this.isConnected,
+            setupConnection: (data) => this.setupConnection(data)
+        };
+
         this.init();
     }
 
@@ -28,14 +37,16 @@ class TextChatCore {
         this.setupEventListeners();
         this.setupWebRTCIntegration();
         this.userTopics = this.getTopicsFromURL();
-    }
-
-    setupEventListeners() {
-        // Start button
-        this.elements.startButton.addEventListener('click', () => this.startChat());
+    }    setupEventListeners() {
+        // Start button (if controls are showing)
+        if (this.options.showControls && this.elements.startButton) {
+            this.elements.startButton.addEventListener('click', () => this.startChat());
+        }
         
-        // End button
-        this.elements.endButton.addEventListener('click', () => this.endChat());
+        // End button (if controls are showing)
+        if (this.options.showControls && this.elements.endButton) {
+            this.elements.endButton.addEventListener('click', () => this.endChat());
+        }
         
         // Send button
         this.elements.sendButton.addEventListener('click', () => this.sendMessage());
@@ -70,9 +81,7 @@ class TextChatCore {
                 }
             });
         }
-    }
-
-    async startChat() {
+    }    async startChat() {
         console.log(`TextChatCore ${this.widgetId}: Starting chat`);
         
         // Reset state
@@ -80,12 +89,15 @@ class TextChatCore {
         if (this.delayedMatchmakingTimeout) {
             clearTimeout(this.delayedMatchmakingTimeout);
             this.delayedMatchmakingTimeout = null;
-        }
-
-        // Update UI
-        this.updateStatus('Looking for a chat partner...', 'bi-hourglass-split');
+        }        
+        // Update UI with spinner
+        this.updateStatus('Looking for a chat partner...', null, true);
         this.elements.statusMessage.classList.add('searching');
-        this.elements.startButton.disabled = true;
+        
+        // Only update button state if controls are showing
+        if (this.options.showControls && this.elements.startButton) {
+            this.elements.startButton.disabled = true;
+        }
 
         try {
             // Join matchmaking queue
@@ -137,14 +149,15 @@ class TextChatCore {
             this.elements.startButton.disabled = false;
             this.elements.statusMessage.classList.remove('searching');
         }
-    }
-
-    endChat() {
+    }    endChat() {
         console.log(`TextChatCore ${this.widgetId}: Ending chat`);
         
-        // Reset UI state
-        this.elements.startButton.disabled = false;
-        this.elements.endButton.disabled = true;
+        // Reset UI state - only update buttons if controls are showing
+        if (this.options.showControls) {
+            if (this.elements.startButton) this.elements.startButton.disabled = false;
+            if (this.elements.endButton) this.elements.endButton.disabled = true;
+        }
+        
         this.elements.statusMessage.innerHTML = '';
         this.elements.statusMessage.classList.remove('searching', 'connected');
         
@@ -178,9 +191,7 @@ class TextChatCore {
 
         // Emit reset event for other modules
         this.emit('chatEnded');
-    }
-
-    handleMatchFound(data) {
+    }    handleMatchFound(data) {
         console.log(`TextChatCore ${this.widgetId}: Handling match found`, data);
         
         this.partnerSocketId = data.matchedSocketId;
@@ -198,8 +209,181 @@ class TextChatCore {
             this.setupPeer();
         }
     }
-
-    setupPeer() {
+      // Setup connection from external call (e.g., voice/video chat match)
+    setupConnection(data) {
+        console.log(`TextChatCore ${this.widgetId}: Setting up connection from external source`, data);
+        
+        // Set partner socket ID
+        this.partnerSocketId = data.partnerSocketId;
+        
+        // Generate a random name for the partner
+        this.partnerName = window.getPartnerName ? window.getPartnerName() : this.getRandomPartnerName();
+        
+        // Update status
+        this.updateStatus('Connected to chat partner', 'bi-check-circle-fill', true);
+        
+        // Check if we should use an existing peer from the main connection
+        if (data.useExistingPeer && data.sharedPeer) {
+            console.log(`TextChatCore ${this.widgetId}: Using shared peer connection`);
+            
+            // Clean up any existing peer that's not the shared peer
+            if (this.peer && this.peer !== data.sharedPeer) {
+                this.peer.destroy();
+                this.peer = null;
+            }
+            
+            // Use the shared peer
+            this.peer = data.sharedPeer;
+            this.isConnected = true;
+            this.isSharedConnection = true; // Mark that we're using a shared connection
+            
+            // No need to set up signal handlers - the main connection handles that
+            // But we do need to set up our own data and connection handlers
+            
+            // Handle already established connection
+            if (this.peer.connected) {
+                console.log(`TextChatCore ${this.widgetId}: Shared peer is already connected`);
+                this.handleConnected();
+                
+                // Mark our text chat as "secondary" on this shared peer
+                this.peer._hasTextChatHandler = true;
+            }
+            
+            // Still register our own data handler but with special handling for shared peer
+            this.setupDataHandlerForSharedPeer(this.peer);
+        } 
+        // Initialize WebRTC peer connection if no shared peer and we don't have one already
+        else if (!this.peer) {
+            console.log(`TextChatCore ${this.widgetId}: Creating new peer connection`);
+            this.peer = new SimplePeer({ 
+                initiator: data.isInitiator, 
+                trickle: true 
+            });
+            // Mark messages from this peer as text-chat only
+            const originalSignal = this.peer.signal.bind(this.peer);
+            this.peer.signal = function(data) {
+                if (data && data.type && (data.type === 'offer' || data.type === 'answer')) {
+                    data._textchatOnly = true; // Add marker for the text-chat-only connection
+                }
+                return originalSignal(data);
+            };
+            this.setupPeer();
+        }
+        
+        // Enable UI for chat
+        this.elements.messageInput.disabled = false;
+        this.elements.sendButton.disabled = false;
+        
+        if (this.elements.emojiButton) {
+            this.elements.emojiButton.disabled = false;
+        }
+        
+        if (this.options.showControls) {
+            if (this.elements.startButton) this.elements.startButton.disabled = true;
+            if (this.elements.endButton) this.elements.endButton.disabled = false;
+        }
+    }
+    
+    // Special data handler for shared peer to avoid conflicts with main handler
+    setupDataHandlerForSharedPeer(peer) {
+        if (!peer || peer._textChatDataHandlerInstalled) {
+            return; // Already has a handler or invalid peer
+        }
+        
+        peer._textChatDataHandlerInstalled = true;
+        
+        // Use the existing data event but filter for text chat messages
+        const originalDataHandler = peer.listeners('data')[0]; // Store original handler if it exists
+        
+        peer.removeAllListeners('data'); // Remove all data handlers
+        
+        // Add our combined handler that processes messages and then passes to original
+        peer.on('data', (data) => {
+            try {
+                const messageStr = data.toString();
+                const message = JSON.parse(messageStr);
+                
+                // Handle text chat specific messages
+                if (message.type === 'topics') {
+                    console.log(`TextChatCore ${this.widgetId}: Received partner topics:`, message.topics);
+                    this.hasReceivedPartnerTopics = true;
+                    
+                    // Emit topics received event
+                    this.emit('topicsReceived', message.topics);
+                    
+                    // Don't send smart hello from text chat widget when using shared peer
+                    // Main connection will handle that
+                } else if (message.type === 'message') {
+                    console.log(`TextChatCore ${this.widgetId}: Received message:`, message.content);
+                    this.displayMessage(this.partnerName || 'Partner', message.content);
+                    
+                    // Emit message received event
+                    this.emit('messageReceived', {
+                        sender: this.partnerName || 'Partner',
+                        content: message.content
+                    });
+                }
+                
+                // Also pass to original handler if it exists (for non-text-chat handlers)
+                if (originalDataHandler) {
+                    originalDataHandler(data);
+                }
+            } catch (error) {
+                // If it's not JSON or there's an error, make sure original handler gets it
+                if (originalDataHandler) {
+                    originalDataHandler(data);
+                } else {
+                    // If no original handler, treat as plain text message
+                    console.log(`TextChatCore ${this.widgetId}: Received non-JSON message:`, data.toString());
+                    this.displayMessage(this.partnerName || 'Partner', data.toString());
+                }
+            }
+        });
+    }
+    
+    // Handle when peer is connected
+    handleConnected() {
+        // Update status
+        this.updateStatus('Connected! Chat session started.', 'bi-check-circle-fill');
+        this.elements.statusMessage.classList.remove('searching');
+        this.elements.statusMessage.classList.add('connected');
+        
+        // Emit connection established event
+        this.emit('connected');
+    }
+    
+    // Setup data handler for peer
+    setupDataHandler(peer) {
+        peer.on('data', (data) => {
+            try {
+                const message = JSON.parse(data.toString());
+                
+                if (message.type === 'topics') {
+                    console.log('Received partner topics:', message.topics);
+                    this.hasReceivedPartnerTopics = true;
+                    
+                    // Emit topics received event
+                    this.emit('topicsReceived', message.topics);
+                    
+                    // Don't send smart hello from text chat widget when using shared peer
+                    // Main connection will handle that
+                } else if (message.type === 'message') {
+                    console.log('Received message:', message.content);
+                    this.displayMessage(this.partnerName || 'Partner', message.content);
+                    
+                    // Emit message received event
+                    this.emit('messageReceived', {
+                        sender: this.partnerName || 'Partner',
+                        content: message.content
+                    });
+                }
+            } catch (error) {
+                // If it's not JSON, treat as plain text message
+                console.log('Received non-JSON message:', data.toString());
+                this.displayMessage(this.partnerName || 'Partner', data.toString());
+            }
+        });
+    }    setupPeer() {
         if (!this.peer) return;
 
         // Handle signaling
@@ -211,33 +395,66 @@ class TextChatCore {
                 });
             }
         });
-
+        
         // Handle connection established
         this.peer.on('connect', () => {
             console.log(`TextChatCore ${this.widgetId}: Peer connection established`);
             this.isConnected = true;
             
-            // Enable UI for active chat
-            this.elements.endButton.disabled = false;
-            this.elements.messageInput.disabled = false;
-            this.elements.sendButton.disabled = false;
+            this.handleConnected();
             
-            // Update status
-            this.updateStatus('Connected! Chat session started.', 'bi-check-circle-fill');
-            this.elements.statusMessage.classList.remove('searching');
-            this.elements.statusMessage.classList.add('connected');
+            // Send topics if available and if this is our own peer 
+            // (not a shared one from WebRTCClient)
+            if (!this.peer._textChatConfigured && this.userTopics && this.userTopics.length > 0) {
+                try {
+                    const topicsMessage = {
+                        type: 'topics',
+                        topics: this.userTopics
+                    };
+                    this.peer.send(JSON.stringify(topicsMessage));
+                    console.log('Sent topics to partner:', this.userTopics);
+                } catch (err) {
+                    console.error('Error sending topics:', err);
+                    // Retry after a delay
+                    setTimeout(() => {
+                        if (this.peer && !this.peer.destroyed && this.peer.connected) {
+                            try {
+                                const topicsMessage = {
+                                    type: 'topics',
+                                    topics: this.userTopics
+                                };
+                                this.peer.send(JSON.stringify(topicsMessage));
+                                console.log('Retry: Sent topics to partner:', this.userTopics);
+                            } catch (retryErr) {
+                                console.error('Failed to send topics after retry:', retryErr);
+                            }
+                        }
+                    }, 1000);
+                }
+            }
+        });
+        
+        // Set up the data handler
+        this.setupDataHandler(this.peer);
+        
+        // Handle peer errors
+        this.peer.on('error', (err) => {
+            console.error(`TextChatCore ${this.widgetId}: Peer connection error:`, err);
             
-            // Emit connection established event
-            this.emit('connected');
+            // Only handle errors if this is our own peer (not shared)
+            if (!this.peer._textChatConfigured) {
+                this.emit('error', err);
+            }
+        });
+        
+        // Handle peer close
+        this.peer.on('close', () => {
+            console.log(`TextChatCore ${this.widgetId}: Peer connection closed`);
             
-            // Send topics if available
-            if (this.userTopics && this.userTopics.length > 0) {
-                const topicsMessage = {
-                    type: 'topics',
-                    topics: this.userTopics
-                };
-                this.peer.send(JSON.stringify(topicsMessage));
-                console.log('Sent topics to partner:', this.userTopics);
+            // Only handle close if this is our own peer (not shared)
+            if (!this.peer._textChatConfigured) {
+                this.isConnected = false;
+                this.emit('disconnected');
             }
         });
 
@@ -355,13 +572,13 @@ class TextChatCore {
         
         this.elements.chatBox.appendChild(messageElement);
         this.elements.chatBox.scrollTop = this.elements.chatBox.scrollHeight;
-    }
-
-    updateStatus(status, iconClass = 'bi-info-circle') {
-        this.elements.statusMessage.innerHTML = `<i class="${iconClass} me-2"></i>${status}`;
-    }
-
-    // Helper methods
+    }    updateStatus(status, iconClass = 'bi-info-circle', showSpinner = false) {
+        if (showSpinner) {
+            this.elements.statusMessage.innerHTML = `<span class="spinner"></span>${status}`;
+        } else {
+            this.elements.statusMessage.innerHTML = `<i class="${iconClass} me-2"></i>${status}`;
+        }
+    }    // Helper methods
 
     getTopicsFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -374,6 +591,20 @@ class TextChatCore {
             }
         }
         return [];
+    }
+    
+    // Generate a random partner name for the chat
+    getRandomPartnerName() {
+        // List of gender-neutral names from diverse backgrounds
+        const genderNeutralNames = [
+            'Alex', 'Jordan', 'Taylor', 'Casey', 'Riley', 'Morgan', 'Sage', 'Quinn', 
+            'Cameron', 'Drew', 'Jamie', 'Kai', 'Logan', 'Nova', 'Parker', 'River', 
+            'Sky', 'Tate', 'Val', 'Winter', 'Ari', 'Jae', 'Lin', 'Nour', 'Sami',
+            'Dana', 'Indigo', 'Jesse', 'Rami', 'Rowan', 'Shay', 'Blake', 'Charlie'
+        ];
+        
+        const randomIndex = Math.floor(Math.random() * genderNeutralNames.length);
+        return genderNeutralNames[randomIndex];
     }
 
     getRandomPartnerName() {

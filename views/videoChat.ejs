@@ -48,29 +48,18 @@
       </div>
 
       <div id="statusMessage" class="alert text-center" style="background-color: rgba(255, 77, 109, 0.1); color: var(--primary);"></div>
-    </div>
-
-    <!-- Chat sidebar -->
-    <div class="col-md-4">
-      <div class="chat-sidebar">        <div class="card shadow-sm">          <div class="card-header text-white" style="background-color: var(--primary);">
-            <span id="chat-session-title">
-              <i class="bi bi-chat-dots-fill"></i> Chat
-              <i class="bi bi-info-circle ms-2 chat-info-icon" 
-                 title="This is a randomly generated name to help you connect personally while staying anonymous" 
-                 style="cursor: help; display: none;"></i>
-            </span>
-          </div>
-          <div class="card-body chat-messages" id="chat-messages">
-            <p class="text-muted">No messages yet. Start the conversation!</p>
-          </div>
-          <div class="card-footer p-2">
-            <div class="input-group">
-              <input type="text" class="form-control" placeholder="Type here..." id="chat-input">              <button class="btn" id="chat-send" style="background-color: var(--primary); color: white;">
-                <i class="bi bi-send-fill"></i>
-              </button>
-            </div>
-          </div>
-        </div>
+    </div>    <!-- Chat sidebar with modular text chat component -->
+    <div class="col-md-4">      <div class="chat-sidebar">
+        <%- include('components/modularTextChat', { 
+          id: 'video-text-chat',
+          showTopics: false, // Topics already shown in video chat area
+          enableEmoji: true,
+          enableGif: true,
+          enableVoiceRecording: false,
+          showControls: false, // Hide chat controls since video page has its own
+          customClasses: 'video-chat-sidebar',
+          containerHeight: '70vh'
+        }) %>
       </div>
     </div>
   </div>
@@ -91,10 +80,12 @@
   let delayedMatchmakingTimeout = null;
   let matchFound = false;
 
-  // Wait for WebRTCClient.js to load and use its socket connection
+  // Wait for WebRTCClient.js to load and use its socket connection  
+  // 
   document.addEventListener('DOMContentLoaded', async function() {
       // Disable start button initially until permissions are granted
       const startButton = document.getElementById('startButton');
+      const endButton = document.getElementById('endButton');
       startButton.disabled = true;
       startButton.textContent = 'Requesting Permissions...';
 
@@ -119,8 +110,31 @@
               statusMessage.textContent = 'Video and audio permissions are required for video chat. Please refresh and allow permissions.';
           }
       }
-
-      // Use the socket from WebRTCClient.js instead of creating a new one
+      
+      // Set up end button event listener
+      endButton.addEventListener('click', function() {
+          // Call the WebRTC cleanup function
+          if (typeof cleanupPeerConnection === 'function') {
+              cleanupPeerConnection();
+          }
+          
+          // End the text chat if the widget is available
+          if (window.textChatWidgets && window.textChatWidgets['video-text-chat']) {
+              console.log('Ending modular text chat for video chat');
+              window.textChatWidgets['video-text-chat'].endChat();
+          }
+          
+          // Reset UI
+          startButton.disabled = false;
+          endButton.disabled = true;
+          
+          // Reset status message
+          const statusMessage = document.getElementById('statusMessage');
+          if (statusMessage) {
+              statusMessage.className = 'alert text-center';
+              statusMessage.textContent = 'Call ended. Click "Start Looking" to find a new partner.';
+          }
+      });      // Use the socket from WebRTCClient.js instead of creating a new one
       if (typeof socket !== 'undefined') {
           // Listen for match-found event to abort delayed matchmaking
           socket.on('match-found', () => {
@@ -131,11 +145,18 @@
                   delayedMatchmakingTimeout = null;
                   console.log('Delayed matchmaking timeout cleared');
               }
+              
+              /* 
+               * Don't auto-start text chat - let the main matchmaking 
+               * handle connections and then notify the text widget
+               */
           });
       } else {
           console.error('Socket not available from WebRTCClient.js');
       }
-  });  document.getElementById('startButton').addEventListener('click', async () =>
+  });  
+  
+  document.getElementById('startButton').addEventListener('click', async () =>
   {
       console.log('Start button clicked, joining matchmaking queue...');
 
@@ -228,5 +249,64 @@
           // Re-enable the start button
           startButton.disabled = false;
       }
+  });  // Extend the original WebRTCClient's setupPeer function
+  document.addEventListener('DOMContentLoaded', function() {
+      const originalSetupPeer = window.setupPeer || function() {};
+      
+      // Override the setupPeer function
+      window.setupPeer = function(p, toSocketId) {
+          originalSetupPeer(p, toSocketId);
+          
+          // Setup additional features for video chat
+          p.on('connect', () => {
+              console.log('Video chat peer connection established');
+              
+              // Enable the end button and disable the start button
+              const endButton = document.getElementById('endButton');
+              const startButton = document.getElementById('startButton');
+              if (endButton) endButton.disabled = false;
+              if (startButton) startButton.disabled = true;
+              
+              // Update status
+              const statusMessage = document.getElementById('statusMessage');
+              if (statusMessage) {
+                  statusMessage.className = 'alert alert-success text-center';
+                  statusMessage.textContent = 'Video chat connected! You can now communicate with your partner.';
+              }
+              
+              // Configure text chat only after WebRTC connection is fully established
+              setTimeout(() => {
+                  // Store flag in a data attribute to prevent multiple setups
+                  const alreadySetup = p._textChatConfigured === true;
+                  
+                  if (!alreadySetup) {
+                      p._textChatConfigured = true;
+                      console.log('First connection - configuring text chat widget');
+                      
+                      // Configure text chat widget with established WebRTC connection
+                      if (window.textChatWidgets && window.textChatWidgets['video-text-chat'] && partnerSocketId) {
+                          console.log('Configuring video text chat widget with established WebRTC connection');
+                          try {
+                              window.textChatWidgets['video-text-chat'].setupConnection({
+                                  partnerSocketId: partnerSocketId,
+                                  isInitiator: isInitiator,
+                                  useExistingPeer: true,     // Flag to indicate we want to use the main peer
+                                  sharedPeer: p,             // Pass the actual peer object for direct use
+                                  isSharedConnection: true   // Flag to indicate this is a shared connection
+                              });
+                          } catch (err) {
+                              console.error('Error setting up video text chat widget:', err);
+                              // If there was an error, mark the peer as not configured so we can try again
+                              p._textChatConfigured = false;
+                          }
+                      }
+                  } else {
+                      console.log('Text chat widget already configured, skipping setup');
+                  }
+              }, 100); // Small delay to ensure the WebRTC connection is fully ready
+          });
+          
+          return p;
+      };
   });
 </script>

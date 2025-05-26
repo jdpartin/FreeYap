@@ -103,19 +103,202 @@ socket.on('signal', ({ fromSocketId, data }) =>
         partnerSocketId = fromSocketId;
     }
 
+    // Check if peer exists and is not destroyed
     if (!peer)
     {
         // If we receive a signal but don't have a peer, we must be the non-initiator
+        console.log('Creating new peer as non-initiator to handle incoming signal');
         peer = new SimplePeer({ 
             initiator: false, 
+            trickle: true
+            // Don't add stream immediately to avoid potential SDP conflicts
+        });
+        
+        setupPeer(peer, fromSocketId);
+        
+        // Add the stream after a short delay
+        setTimeout(() => {
+            if (localStream && peer && !peer.destroyed) {
+                console.log('Adding media stream to new non-initiator peer');
+                try {
+                    peer.addStream(localStream);
+                } catch (streamErr) {
+                    console.error('Error adding stream to non-initiator peer:', streamErr);
+                }
+            }
+        }, 100);
+    }
+    else if (peer.destroyed) {
+        console.log('Peer was destroyed, creating new peer to handle signal');
+        
+        // Change the initiator role if we've seen this error before
+        const shouldSwitchInitiator = window._hadSdpOrderIssue === true;
+        
+        peer = new SimplePeer({ 
+            initiator: shouldSwitchInitiator ? !isInitiator : false, 
             trickle: true,
-            stream: localStream
+            // Don't add stream immediately to avoid SDP conflicts
+            // stream: localStream,
+            
+            // Add SDP transform to handle potential m-line order issues
+            sdpTransform: (sdp) => {
+                // Just log and return unchanged for now
+                if (window._hadSdpOrderIssue) {
+                    console.log('Applying SDP transform due to previous m-line issues');
+                }
+                return sdp;
+            }
         });
         setupPeer(peer, fromSocketId);
+        
+        // Add stream after a short delay
+        setTimeout(() => {
+            if (localStream && peer && !peer.destroyed) {
+                console.log('Adding media stream to reconstructed peer');
+                try {
+                    peer.addStream(localStream);
+                } catch (streamErr) {
+                    console.error('Error adding stream to reconstructed peer:', streamErr);
+                }
+            }
+        }, 100);
     }
 
-    peer.signal(data);
+    // Ensure this is a safe signal we can process
+    if (data && data._textchatOnly && peer && !peer._textChatConfigured) {
+        console.warn('Received text-chat-only signal but main connection not configured for it. Skipping.');
+        return;
+    }
+
+    // Only signal if peer exists and is not destroyed
+    if (peer && !peer.destroyed) {
+        try {
+            // Check if this is SDP data that might have ordering issues
+            if (data && data.type && (data.type === 'offer' || data.type === 'answer')) {
+                console.log(`Received ${data.type} from partner`);
+                
+                // If we've had m-line issues before, apply special handling
+                if (window._hadSdpOrderIssue) {
+                    console.log('Using careful signaling due to previous m-line issues');
+                    
+                    // Add a delay before signaling to ensure proper processing
+                    setTimeout(() => {
+                        try {
+                            peer.signal(data);
+                        } catch (delayedErr) {
+                            console.error('Error in delayed signaling:', delayedErr);
+                            // Critical failure - destroy and recreate with opposite role
+                            handleSignalError(delayedErr, fromSocketId, data);
+                        }
+                    }, 100); // Increased delay for more reliability
+                } else {
+                    // Standard signaling with minimal safety delay
+                    setTimeout(() => {
+                        try {
+                            peer.signal(data);
+                        } catch (err) {
+                            console.error('Error in standard signaling:', err);
+                            handleSignalError(err, fromSocketId, data);
+                        }
+                    }, 10); // Small delay to avoid race conditions
+                }
+            } else {
+                // For ICE candidates and other non-SDP signals
+                peer.signal(data);
+            }
+        } catch (err) {
+            console.error('Error while signaling:', err);
+            handleSignalError(err, fromSocketId, data);
+        }
+    } else {
+        console.warn('Cannot signal: peer is null or destroyed');
+    }
 });
+
+// Helper function to handle signal errors
+function handleSignalError(err, fromSocketId, data) {
+    // Log detailed error information
+    console.error('WebRTC signaling error details:', {
+        message: err.message,
+        stack: err.stack,
+        dataType: data?.type || 'unknown'
+    });
+    
+    // If there was an error with the SDP format, try to recreate the connection
+    if (err.message && (
+        err.message.includes('order of m-lines') || 
+        err.message.includes('Failed to set remote') ||
+        err.message.includes('setRemoteDescription')
+    )) {
+        // Mark that we've had this specific issue
+        window._hadSdpOrderIssue = true;
+        console.warn('SDP format issue detected, recreating peer connection with role reversal');
+        
+        // Clean up first
+        if (peer) {
+            // Save the text chat configured flag if it exists
+            const wasTextChatConfigured = peer._textChatConfigured || false;
+            
+            peer.destroy();
+            peer = null;
+        }
+        
+        // Wait a bit before recreating the connection
+        setTimeout(() => {
+            // Create new peer with opposite initiator value and no stream initially
+            console.log('Creating recovery peer with initiator value:', !isInitiator);
+            peer = new SimplePeer({ 
+                initiator: !isInitiator, 
+                trickle: true,
+                // Add SDP transform to try to fix the m-line issue
+                sdpTransform: (sdp) => {
+                    // Log the original SDP for debugging
+                    console.log('Applying SDP transform due to previous m-line issues');
+                    
+                    // No actual modification yet, just return as-is
+                    return sdp;
+                }
+            });
+            
+            // Flag this as a recovery peer
+            peer._isRecoveryPeer = true;
+            
+            setupPeer(peer, fromSocketId);
+            
+            // Add stream after setup with a small delay to avoid race conditions
+            setTimeout(() => {
+                if (localStream && peer && !peer.destroyed) {
+                    console.log('Adding media stream to recovery peer');
+                    try {
+                        peer.addStream(localStream);
+                    } catch (streamErr) {
+                        console.error('Error adding stream to recovery peer:', streamErr);
+                    }
+                }
+            }, 200);
+            
+            // Update UI to show recovery attempt
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.className = 'alert alert-warning text-center';
+                statusMessage.textContent = 'Connection issue detected. Attempting to reconnect...';
+            }
+            
+            // If multiple retries fail, suggest refreshing the page
+            if (window._recoveryAttempts) {
+                window._recoveryAttempts++;
+                if (window._recoveryAttempts > 3) {
+                    console.warn('Multiple recovery attempts failed');
+                    if (statusMessage) {
+                        statusMessage.textContent = 'Connection issues persist. You may need to refresh the page.';
+                    }
+                }
+            } else {
+                window._recoveryAttempts = 1;
+            }
+        }, 500); // Increased delay for more reliability
+    }
+}
 
 // Add match-found event to establish WebRTC connection
 socket.on('match-found', ({ socketId, matchedSocketId, isInitiator: serverIsInitiator }) =>
@@ -133,18 +316,48 @@ socket.on('match-found', ({ socketId, matchedSocketId, isInitiator: serverIsInit
     // Update the UI with the partner name
     updatePartnerSectionHeader();
     updateChatSessionTitle();
-
+    
+    // Initialize modular text chat widgets is handled by the specific page
+    // Implementation of setupConnection is managed by each page's specific setup
+    // to prevent event listener duplication and race conditions
+    
+    // Reset any previous recovery attempt tracking
+    window._recoveryAttempts = 0;
+    window._hadSdpOrderIssue = false;
+    
     // Initialize WebRTC connection
-    if (!peer)
+    if (!peer || peer.destroyed)
     {
+        console.log('Creating new SimplePeer connection as initiator:', isInitiator);
+        
+        // For recovering from SDP issues, we may need to delay adding the stream
+        const shouldDelayAddingStream = window._hadSdpOrderIssue === true;
+        
         peer = new SimplePeer({ 
             initiator: isInitiator, 
             trickle: true,
-            stream: localStream // Add local stream if available
+            stream: shouldDelayAddingStream ? null : localStream // Only add stream immediately if no previous issues
         });
-        setupPeer(peer, matchedSocketId);        // If we don't have local stream yet, add it when we get it
-        if (!localStream)
+        
+        setupPeer(peer, matchedSocketId);
+        
+        // If we delayed adding the stream, add it after a short delay
+        if (shouldDelayAddingStream && localStream) {
+            setTimeout(() => {
+                if (peer && !peer.destroyed) {
+                    console.log('Adding media stream after delay');
+                    try {
+                        peer.addStream(localStream);
+                    } catch (err) {
+                        console.error('Error adding delayed stream:', err);
+                    }
+                }
+            }, 200);
+        }
+        // If we don't have local stream yet, add it when we get it
+        else if (!localStream)
         {
+            console.log('No local stream yet, initializing media stream...');
             initializeMediaStream().catch(err =>
             {
                 console.error('Error initializing media stream in match-found:', err);
@@ -153,7 +366,31 @@ socket.on('match-found', ({ socketId, matchedSocketId, isInitiator: serverIsInit
     }
     else
     {
-        console.warn('Peer already exists, skipping initialization.');
+        console.warn('Peer already exists, checking if it needs to be reset.');
+        
+        // Check if the peer is in a good state before reusing
+        if (!peer.connected && peer.channelReady === false) {
+            console.log('Existing peer is in an inconsistent state, recreating it');
+            
+            // Clean up and create new peer
+            peer.destroy();
+            
+            peer = new SimplePeer({ 
+                initiator: isInitiator, 
+                trickle: true,
+                stream: localStream
+            });
+            setupPeer(peer, matchedSocketId);
+        } else {
+            // Peer exists and seems to be in a good state
+            console.log('Reusing existing peer connection');
+            
+            // Check if we need to refresh the signal path
+            if (peer._lastSignalPartner !== matchedSocketId) {
+                peer._lastSignalPartner = matchedSocketId;
+                console.log('Updating peer signaling partner');
+            }
+        }
     }
 });
 
@@ -170,7 +407,9 @@ function setupPeer(peer, toSocketId = null)
             // Use the first sender as the partner
             console.log("Waiting to receive partner's socket ID...");
         }
-    });    peer.on('connect', () =>
+    });
+    
+    peer.on('connect', () =>
     {
         console.log('Peer connection established!');
         
@@ -179,28 +418,92 @@ function setupPeer(peer, toSocketId = null)
         
         // Send topics immediately when connection is established
         if (userTopics && userTopics.length > 0) {
-            const topicsMessage = {
-                type: 'topics',
-                topics: userTopics
-            };
-            peer.send(JSON.stringify(topicsMessage));
-            console.log('Sent topics to partner:', userTopics);
+            try {
+                const topicsMessage = {
+                    type: 'topics',
+                    topics: userTopics
+                };
+                peer.send(JSON.stringify(topicsMessage));
+                console.log('Sent topics to partner:', userTopics);
+            } catch (err) {
+                console.error('Error sending topics:', err);
+                // If we can't send, the connection might not be fully established
+                setTimeout(() => {
+                    try {
+                        if (peer && !peer.destroyed) {
+                            const topicsMessage = {
+                                type: 'topics',
+                                topics: userTopics
+                            };
+                            peer.send(JSON.stringify(topicsMessage));
+                            console.log('Retry: Sent topics to partner:', userTopics);
+                        }
+                    } catch (retryErr) {
+                        console.error('Failed to send topics after retry:', retryErr);
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Configure text chat widget after WebRTC connection is established
+        if (!peer._textChatConfigured) {
+            peer._textChatConfigured = true;
+            
+            const currentPath = window.location.pathname;
+            let textChatWidgetId = null;
+            
+            if (currentPath.includes('voiceChat')) {
+                textChatWidgetId = 'voice-text-chat';
+            } else if (currentPath.includes('videoChat')) {
+                textChatWidgetId = 'video-text-chat';
+            }
+            
+            if (textChatWidgetId && window.textChatWidgets && window.textChatWidgets[textChatWidgetId]) {
+                console.log(`Configuring ${textChatWidgetId} widget with established WebRTC connection`);
+                try {
+                    // Add small delay to ensure connection is fully established first
+                    setTimeout(() => {
+                        if (peer && !peer.destroyed && peer.connected) {
+                            window.textChatWidgets[textChatWidgetId].setupConnection({
+                                partnerSocketId: partnerSocketId,
+                                isInitiator: isInitiator,
+                                useExistingPeer: true,
+                                sharedPeer: peer, // Pass the actual peer object
+                                isRecoveryConnection: peer._isRecoveryPeer || false
+                            });
+                            console.log(`Successfully configured ${textChatWidgetId} widget with main WebRTC connection`);
+                        } else {
+                            console.warn(`Cannot configure text chat: peer is ${peer ? (peer.destroyed ? 'destroyed' : 'disconnected') : 'null'}`);
+                        }
+                    }, 100);
+                } catch (err) {
+                    console.error(`Error configuring ${textChatWidgetId} widget:`, err);
+                }
+            } else {
+                console.log('Text chat widget not found or not ready yet');
+            }
+        } else {
+            console.log('Text chat widget already configured, skipping setup');
         }
         
         // Don't send hello message immediately - wait for similarity calculation
         // But set a fallback timeout in case topic exchange fails
         setTimeout(() => {
-            if (!hasSentSmartHello) {
+            if (!hasSentSmartHello && peer && !peer.destroyed && peer.connected) {
                 console.log('Fallback: sending hello message after timeout');
                 const fallbackMessage = {
                     type: 'message',
                     content: "Hey there! Great to connect with someone new. How's it going? 😊"
                 };
-                peer.send(JSON.stringify(fallbackMessage));
-                hasSentSmartHello = true;
+                try {
+                    peer.send(JSON.stringify(fallbackMessage));
+                    hasSentSmartHello = true;
+                } catch (err) {
+                    console.error('Error sending fallback hello message:', err);
+                }
             }
         }, 5000); // 5 second fallback
-    });    peer.on('data', data =>
+    });peer.on('data', data =>
     {
         try {
             const message = JSON.parse(data.toString());
@@ -225,31 +528,119 @@ function setupPeer(peer, toSocketId = null)
             console.log('Received message:', data.toString());
             appendMessage(partnerName || 'Partner', data.toString());
         }
-    });
-
-    peer.on('error', err =>
+    });    peer.on('error', err =>
     {
         console.error('Peer error:', err);
+        
+        // Check if the error is recoverable
+        if (err.message && (
+            err.message.includes('ICE connection failed') || 
+            err.message.includes('signaling state') || 
+            err.message.includes('connection closed') ||
+            err.message.includes('cannot signal after peer is destroyed')
+        )) {
+            console.warn('Attempting to recover from WebRTC error...');
+            
+            // Notify user of the connection issue
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.className = 'alert alert-warning text-center';
+                statusMessage.textContent = 'Connection issue detected. Attempting to reconnect...';
+            }
+            
+            // Wait briefly then attempt reconnection
+            setTimeout(() => {
+                if (peer.destroyed) {
+                    console.log('Creating new peer connection after error');
+                    // If we have partner socket ID, create new connection
+                    if (partnerSocketId) {
+                        peer = new SimplePeer({ 
+                            initiator: true, 
+                            trickle: true,
+                            stream: localStream
+                        });
+                        setupPeer(peer, partnerSocketId);
+                    }
+                }
+            }, 2000);
+        }
     });
 
     peer.on('close', () =>
     {
         console.log('Peer connection closed');
-    });
-
-    // Handle remote stream
+        
+        // Check if this was an expected or unexpected close
+        if (partnerSocketId) {
+            console.log('Connection closed while partner was connected');
+            
+            // Update UI to reflect disconnection
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.className = 'alert alert-info text-center';
+                statusMessage.textContent = 'Connection closed. Your partner disconnected.';
+            }
+            
+            // Enable start button if it exists
+            const startButton = document.getElementById('startButton');
+            if (startButton) {
+                startButton.disabled = false;
+            }
+        }
+    });    // Handle remote stream
     peer.on('stream', remoteStream =>
     {
         console.log('Received remote stream');
 
-        const remoteVideo = document.getElementById('remoteVideo');
-        if (remoteVideo)
-        {
-            remoteVideo.srcObject = remoteStream;
-        }
-        else
-        {
-            console.error('Remote video element not found');
+        try {
+            const remoteVideo = document.getElementById('remoteVideo');
+            if (remoteVideo) {
+                remoteVideo.srcObject = remoteStream;
+                
+                // Handle audio-only streams (voice chat) that use the video element
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('voiceChat')) {
+                    // For voice chat, hide video element if there's no video track
+                    const hasVideoTrack = remoteStream.getVideoTracks().length > 0;
+                    remoteVideo.style.display = hasVideoTrack ? 'block' : 'none';
+                }
+                
+                // Handle autoplay issues
+                remoteVideo.play().catch(err => {
+                    console.warn('Autoplay prevented. User interaction required:', err);
+                    
+                    // Show message to user that they need to interact with page
+                    const statusMessage = document.getElementById('statusMessage');
+                    if (statusMessage) {
+                        statusMessage.className = 'alert alert-warning text-center';
+                        statusMessage.textContent = 'Please click anywhere on the page to start audio/video.';
+                        
+                        // Add one-time click handler to play media
+                        document.body.addEventListener('click', function playMediaOnce() {
+                            remoteVideo.play();
+                            document.body.removeEventListener('click', playMediaOnce);
+                            
+                            // Update status message
+                            if (statusMessage) {
+                                statusMessage.className = 'alert alert-success text-center';
+                                statusMessage.textContent = 'Connection successful! You can now communicate with your partner.';
+                            }
+                        }, { once: true });
+                    }
+                });
+            } else {
+                // For audio-only on pages without video element
+                console.log('Remote video element not found, creating audio element');
+                
+                // Create audio element for voice-only chat if needed
+                const remoteAudio = document.createElement('audio');
+                remoteAudio.id = 'remoteAudio';
+                remoteAudio.autoplay = true;
+                remoteAudio.srcObject = remoteStream;
+                document.body.appendChild(remoteAudio);
+            }
+        } catch (err) {
+            console.error('Error handling remote stream:', err);
         }
     });
 }
@@ -308,6 +699,9 @@ const chatSendButton = document.getElementById('chat-send');
 const chatMessages = document.getElementById('chat-messages');
 const toggleCameraButton = document.getElementById('toggle-camera');
 const toggleMicButton = document.getElementById('toggle-mic');
+
+// Flag to track if elements are available
+const hasTextChatElements = chatInput && chatSendButton && chatMessages;
 
 let isCameraOn = true;
 let isMicOn = true;
@@ -377,59 +771,88 @@ document.addEventListener('DOMContentLoaded', function() {
     displayUserTopics(userTopics);
 });
 
-// Handle text chat send
-chatSendButton.addEventListener('click', () =>
-{
-    const message = chatInput.value.trim();
-    if (message && peer)
+// Handle text chat send - only attach listener if element exists
+if (chatSendButton && chatInput && chatMessages) {
+    chatSendButton.addEventListener('click', () =>
     {
-        const messageData = {
-            type: 'message',
-            content: message
-        };
-        peer.send(JSON.stringify(messageData));
-        appendMessage('You', message);
-        chatInput.value = '';
-    }
-});
+        const message = chatInput.value.trim();
+        if (message && peer)
+        {
+            const messageData = {
+                type: 'message',
+                content: message
+            };
+            peer.send(JSON.stringify(messageData));
+            appendMessage('You', message);
+            chatInput.value = '';
+        }    });
+}
 
 // Append message to chat
 function appendMessage(sender, message)
 {
-    const messageElement = document.createElement('div');
-    messageElement.textContent = `${sender}: ${message}`;
-    chatMessages.appendChild(messageElement);
+    // Check if chatMessages element exists
+    if (!chatMessages) {
+        console.warn('Chat messages container not found, cannot append message');
+        return;
+    }
+    
+    try {
+        const messageElement = document.createElement('div');
+        messageElement.className = sender === 'You' ? 'message-outgoing' : 'message-incoming';
+        
+        // Add timestamp
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageElement.innerHTML = `
+            <div class="message-header">
+                <span class="message-sender">${sender}</span>
+                <span class="message-time">${timeString}</span>
+            </div>
+            <div class="message-content">${message}</div>
+        `;
+        
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (err) {
+        console.error('Error appending message:', err);
+    }
 }
 
 // Toggle camera
-toggleCameraButton.addEventListener('click', () =>
-{
-    if (localStream)
+if (toggleCameraButton) {
+    toggleCameraButton.addEventListener('click', () =>
     {
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack)
+        if (localStream)
         {
-            isCameraOn = !isCameraOn;
-            videoTrack.enabled = isCameraOn;
-            toggleCameraButton.textContent = isCameraOn ? 'Turn Camera Off' : 'Turn Camera On';
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack)
+            {
+                isCameraOn = !isCameraOn;
+                videoTrack.enabled = isCameraOn;
+                toggleCameraButton.textContent = isCameraOn ? 'Turn Camera Off' : 'Turn Camera On';
+            }
         }
-    }
-});
+    });
+}
 
 // Toggle microphone
-toggleMicButton.addEventListener('click', () =>
-{
-    if (localStream)
+if (toggleMicButton) {
+    toggleMicButton.addEventListener('click', () =>
     {
-        const audioTrack = localStream.getAudioTracks()[0];
-        if (audioTrack)
+        if (localStream)
         {
-            isMicOn = !isMicOn;
-            audioTrack.enabled = isMicOn;
-            toggleMicButton.textContent = isMicOn ? 'Turn Mic Off' : 'Turn Mic On';
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack)
+            {
+                isMicOn = !isMicOn;
+                audioTrack.enabled = isMicOn;
+                toggleMicButton.textContent = isMicOn ? 'Turn Mic Off' : 'Turn Mic On';
+            }
         }
-    }
-});
+    });
+}
 
 // Function to display user's topics
 function displayUserTopics(topics) {

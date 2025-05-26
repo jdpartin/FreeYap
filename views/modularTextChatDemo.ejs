@@ -1,0 +1,39 @@
+<!-- Modular Text Chat Demo Page -->
+<div class="container py-4">
+  
+  <div class="row">
+    <div class="col-md-12">
+      <!-- Include the modular text chat component -->
+      <%- include('components/modularTextChat', { 
+        id: 'demo-chat',
+        showTopics: true,
+        enableEmoji: true,
+        enableGif: true,
+        enableVoiceRecording: false,
+        containerHeight: '60vh'
+      }) %>
+    </div>  </div>
+</div>
+
+<!-- Required scripts for the chat functionality -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-peer/simplepeer.min.js"></script>
+
+<!-- Initialize Socket.IO connection -->
+<script>
+  // Initialize Socket.IO connection
+  window.socket = io();
+
+  // Add some basic Socket.IO connection status handling
+  window.socket.on('connect', () => {
+    console.log('Socket connected, ID:', window.socket.id);
+  });
+
+  window.socket.on('disconnect', () => {
+    console.log('Socket disconnected');
+  });
+
+  window.socket.on('error', (error) => {
+    console.error('Socket error:', error);
+  });
+</script>

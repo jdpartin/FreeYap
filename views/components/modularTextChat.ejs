@@ -1,30 +1,36 @@
-<!-- Text Chat Widget Component -->
+<!-- Modular Text Chat Component -->
 <!-- 
-  This is a modular text chat widget that can be embedded in any page.
+  This is a fully modular text chat component that can be embedded in any page.
   
   Usage:
-  <%- include('components/textChatWidget', { 
-    widgetId: 'unique-id', 
-    showTopics: true,
-    enableEmoji: true,
-    enableGif: true,
-    enableVoiceRecording: false,
-    customClasses: 'additional-css-classes'
-  }) %>
+  Include this component in any page with:
+  
+  <%# 
+    include('components/modularTextChat', { 
+      id: 'unique-id', 
+      showTopics: true,
+      enableEmoji: true,
+      enableGif: true,
+      enableVoiceRecording: false,
+      customClasses: 'additional-css-classes',
+      containerHeight: '70vh'
+    })
+  %>
 -->
 
 <%
   // Set default values for parameters
-  const widgetId = locals.widgetId || 'text-chat-widget';
+  const id = locals.id || 'modular-text-chat';
   const showTopics = locals.showTopics !== false; // default true
   const enableEmoji = locals.enableEmoji !== false; // default true
   const enableGif = locals.enableGif !== false; // default true
   const enableVoiceRecording = locals.enableVoiceRecording || false; // default false
+  const showControls = locals.showControls !== false; // default true
   const customClasses = locals.customClasses || '';
   const containerHeight = locals.containerHeight || '70vh';
 %>
 
-<div class="text-chat-widget <%= customClasses %>" id="<%= widgetId %>" data-widget-id="<%= widgetId %>">
+<div class="modular-text-chat <%= customClasses %>" id="<%= id %>" data-chat-id="<%= id %>">
   <!-- Include text chat specific styles -->
   <link href="/textChat.css" rel="stylesheet">
   <link href="/textChatMedia.css" rel="stylesheet">
@@ -38,16 +44,16 @@
           <i class="fas fa-user"></i>
           Your Topics
         </div>
-        <div class="topics-list" id="<%= widgetId %>-user-topics-list">
+        <div class="topics-list" id="<%= id %>-user-topics-list">
           <div class="topics-empty">No topics selected</div>
         </div>
       </div>
       <div class="topics-section partner-topics">
         <div class="topics-title">
           <i class="fas fa-users"></i>
-          <span id="<%= widgetId %>-partner-topics-header">Partner's Topics</span>
+          <span id="<%= id %>-partner-topics-header">Partner's Topics</span>
         </div>
-        <div class="topics-list" id="<%= widgetId %>-partner-topics-list">
+        <div class="topics-list" id="<%= id %>-partner-topics-list">
           <div class="topics-empty">Waiting for partner...</div>
         </div>
       </div>
@@ -58,25 +64,26 @@
     <div class="card shadow-sm chat-card" style="height: <%= containerHeight %>;">
       <!-- Chat header with controls -->
       <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: var(--primary);">
-        <span id="<%= widgetId %>-chat-session-title">
+        <span id="<%= id %>-chat-session-title">
           <i class="bi bi-chat-dots-fill me-2"></i>Chat Session
           <i class="bi bi-info-circle ms-2 chat-info-icon" 
              title="This is a randomly generated name to help you connect personally while staying anonymous" 
              style="cursor: help; display: none;"></i>
-        </span>
+        </span>        <% if (showControls) { %>
         <div class="chat-controls">
-          <button id="<%= widgetId %>-startButton" class="btn btn-sm btn-light me-1">
+          <button id="<%= id %>-startButton" class="btn btn-sm btn-light me-1">
             <i class="bi bi-play-fill"></i> Start
           </button>
-          <button id="<%= widgetId %>-endButton" class="btn btn-sm btn-danger" disabled>
+          <button id="<%= id %>-endButton" class="btn btn-sm btn-danger" disabled>
             <i class="bi bi-x-lg"></i> End
           </button>
         </div>
+        <% } %>
       </div>
       
       <!-- Chat messages area -->
       <div class="card-body p-0">
-        <div class="chat-box" id="<%= widgetId %>-chatBox">
+        <div class="chat-box" id="<%= id %>-chatBox">
           <div class="welcome-message text-center p-4">
             <div class="mb-3">
               <i class="bi bi-chat-text fs-1" style="color: var(--primary);"></i>
@@ -88,58 +95,59 @@
       </div>
 
       <!-- Status message -->
-      <div id="<%= widgetId %>-statusMessage" class="text-center bg-light border-top border-bottom status-bar"></div>
+      <div id="<%= id %>-statusMessage" class="text-center bg-light border-top border-bottom status-bar"></div>
 
       <!-- Message input area -->
       <div class="card-footer p-2">
         <div class="input-group">
           <% if (enableEmoji) { %>
-          <button class="btn btn-outline-secondary emoji-button me-2" id="<%= widgetId %>-emojiButton" disabled style="min-width: 44px;">
+          <button class="btn btn-outline-secondary emoji-button me-2" id="<%= id %>-emojiButton" disabled>
             <i class="bi bi-emoji-smile"></i>
           </button>
           <% } %>
-          <input type="text" class="form-control" placeholder="Type your message here..." id="<%= widgetId %>-messageInput" disabled>
-          <button class="btn" id="<%= widgetId %>-sendButton" style="background-color: var(--primary); color: white; min-width: 44px;" disabled>
+          <input type="text" class="form-control" placeholder="Type your message here..." id="<%= id %>-messageInput" disabled>
+          <button class="btn" id="<%= id %>-sendButton" style="background-color: var(--primary); color: white;" disabled>
             <i class="bi bi-send-fill"></i>
           </button>
         </div>
 
         <% if (enableEmoji || enableGif) { %>
         <!-- Emoji and GIF Panel -->
-        <div class="emoji-gif-panel d-none" id="<%= widgetId %>-emojiGifPanel">
-          <ul class="nav nav-tabs" id="<%= widgetId %>-emojiGifTabs">
+        <div class="emoji-gif-panel d-none" id="<%= id %>-emojiGifPanel">
+          <ul class="nav nav-tabs" id="<%= id %>-emojiGifTabs">
             <% if (enableEmoji) { %>
             <li class="nav-item">
-              <button class="nav-link active" id="<%= widgetId %>-emoji-tab" data-bs-toggle="tab" data-bs-target="#<%= widgetId %>-emoji-pane">
+              <button class="nav-link active" id="<%= id %>-emoji-tab" data-bs-toggle="tab" data-bs-target="#<%= id %>-emoji-pane">
                 <i class="bi bi-emoji-smile"></i> Emoji
               </button>
             </li>
             <% } %>
             <% if (enableGif) { %>
             <li class="nav-item">
-              <button class="nav-link" id="<%= widgetId %>-gif-tab" data-bs-toggle="tab" data-bs-target="#<%= widgetId %>-gif-pane">
+              <button class="nav-link" id="<%= id %>-gif-tab" data-bs-toggle="tab" data-bs-target="#<%= id %>-gif-pane">
                 <i class="bi bi-filetype-gif"></i> GIF
               </button>
             </li>
             <% } %>
           </ul>
-          <div class="tab-content" id="<%= widgetId %>-emojiGifTabContent">
-            <% if (enableEmoji) { %>            <div class="tab-pane fade show active" id="<%= widgetId %>-emoji-pane">
+          <div class="tab-content" id="<%= id %>-emojiGifTabContent">
+            <% if (enableEmoji) { %>
+            <div class="tab-pane fade show active" id="<%= id %>-emoji-pane">
               <div class="emoji-categories p-3">
                 <div class="emoji-category">
                   <h6>Smileys & Emotion</h6>
-                  <div class="emoji-grid" id="<%= widgetId %>-emoji-smileys">
-                    <!-- Emoji will be populated by JavaScript in a grid layout -->
+                  <div class="emoji-grid" id="<%= id %>-emoji-smileys">
+                    <!-- Emoji will be populated by JavaScript -->
                   </div>
                 </div>
               </div>
             </div>
             <% } %>
             <% if (enableGif) { %>
-            <div class="tab-pane fade" id="<%= widgetId %>-gif-pane">
+            <div class="tab-pane fade" id="<%= id %>-gif-pane">
               <div class="gif-search p-3">
-                <input type="text" class="form-control mb-3" placeholder="Search GIFs..." id="<%= widgetId %>-gifSearch">
-                <div class="gif-results" id="<%= widgetId %>-gifResults">
+                <input type="text" class="form-control mb-3" placeholder="Search GIFs..." id="<%= id %>-gifSearch">
+                <div class="gif-results" id="<%= id %>-gifResults">
                   <!-- GIFs will be populated by JavaScript -->
                 </div>
               </div>
@@ -151,14 +159,14 @@
 
         <% if (enableVoiceRecording) { %>
         <!-- Voice Recording UI -->
-        <div class="utility-panel voice-recorder-ui d-none" id="<%= widgetId %>-voiceRecorderUI">
+        <div class="utility-panel voice-recorder-ui d-none" id="<%= id %>-voiceRecorderUI">
           <div class="panel-header">
             <h6><i class="bi bi-mic-fill me-2"></i>Voice Recording</h6>
             <button class="btn-close btn-sm" aria-label="Close"></button>
           </div>
           <div class="voice-recorder-container text-center">
-            <div class="voice-recorder-timer mb-2" id="<%= widgetId %>-voiceTimer">00:00</div>
-            <div class="voice-recorder-visualizer mb-3" id="<%= widgetId %>-voiceVisualizer">
+            <div class="voice-recorder-timer mb-2" id="<%= id %>-voiceTimer">00:00</div>
+            <div class="voice-recorder-visualizer mb-3" id="<%= id %>-voiceVisualizer">
               <div class="visualizer-bar"></div>
               <div class="visualizer-bar"></div>
               <div class="visualizer-bar"></div>
@@ -166,16 +174,16 @@
               <div class="visualizer-bar"></div>
             </div>
             <div class="voice-recorder-controls">
-              <button class="btn btn-danger btn-circle me-2" id="<%= widgetId %>-voiceRecordButton">
+              <button class="btn btn-danger btn-circle me-2" id="<%= id %>-voiceRecordButton">
                 <i class="bi bi-mic-fill"></i>
               </button>
-              <button class="btn btn-secondary btn-circle me-2 d-none" id="<%= widgetId %>-voiceStopButton">
+              <button class="btn btn-secondary btn-circle me-2 d-none" id="<%= id %>-voiceStopButton">
                 <i class="bi bi-stop-fill"></i>
               </button>
-              <button class="btn btn-success btn-circle me-2 d-none" id="<%= widgetId %>-voiceSendButton">
+              <button class="btn btn-success btn-circle me-2 d-none" id="<%= id %>-voiceSendButton">
                 <i class="bi bi-send-fill"></i>
               </button>
-              <button class="btn btn-outline-secondary btn-circle" id="<%= widgetId %>-voiceCancelButton">
+              <button class="btn btn-outline-secondary btn-circle" id="<%= id %>-voiceCancelButton">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
@@ -200,12 +208,27 @@
 <script src="/js/textChat/textChatMedia.js"></script>
 <script src="/js/textChat/textChatInit.js"></script>
 <script>
-  // Set widget configuration as a global variable
-  window.textChatWidgetConfig = window.textChatWidgetConfig || {};
-  window.textChatWidgetConfig['<%= widgetId %>'] = {
+  // Set up the modular text chat configuration
+  window.textChatWidgetConfig = window.textChatWidgetConfig || {};  window.textChatWidgetConfig['<%= id %>'] = {
     showTopics: <%= showTopics %>,
     enableEmoji: <%= enableEmoji %>,
     enableGif: <%= enableGif %>,
-    enableVoiceRecording: <%= enableVoiceRecording %>
+    enableVoiceRecording: <%= enableVoiceRecording %>,
+    showControls: <%= showControls %>
   };
+  
+  // Initialize the text chat after all resources load
+  document.addEventListener('DOMContentLoaded', () => {
+    // Make sure dependencies are loaded
+    if (typeof TextChatWidget === 'undefined') {
+      console.error('TextChatWidget class not found. Make sure all required scripts are loaded.');
+      return;
+    }
+    
+    // Initialize the modular text chat
+    const chatConfig = window.textChatWidgetConfig['<%= id %>'];
+    if (chatConfig) {
+      new TextChatWidget('<%= id %>', chatConfig);
+    }
+  });
 </script>
