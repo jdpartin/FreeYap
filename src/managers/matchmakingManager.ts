@@ -58,7 +58,7 @@ class MatchmakingManager
                 // Map snake_case to camelCase
                 const mappedUser = {
                     socketId: queuedUser.socket_id,
-                    topics: queuedUser.topics,
+                    topics: topics,
                     insertedAt: queuedUser.inserted_at
                 };
 
@@ -134,9 +134,15 @@ class MatchmakingManager
 
             const bestMatch = await this.getBestTopicMatch(socketId, topics, mode);
 
-            if (bestMatch && bestMatch.length > 0)
+            if (bestMatch && bestMatch.length > 0 && bestMatch[0].socket_id != null)
             {
                 const mappedMatch = this.mapToCamelCase(bestMatch[0]);
+
+                if (!mappedMatch.socketId)
+                {
+                    throw new Error('Matched user socket ID is required to trigger a connection.');
+                }
+
                 await this.#triggerConnection(socketId, mappedMatch.socketId);
                 return;
             }
@@ -148,7 +154,7 @@ class MatchmakingManager
             if (result && result.length > 0)
             {
                 const delayedMatchSocketId = result[0].get_oldest_delayed_term_user;
-                
+
                 if (delayedMatchSocketId)
                 {
                     await this.#triggerConnection(socketId, delayedMatchSocketId);
@@ -158,7 +164,9 @@ class MatchmakingManager
         }
 
         await this.#addToQueue(socketId, topics, mode);
-    }    static async getBestTopicMatch(socketId: string, topics: string[], mode: string): Promise<UserQueueInfo[]>
+    }    
+    
+    static async getBestTopicMatch(socketId: string, topics: string[], mode: string): Promise<UserQueueInfo[]>
     {
         const matchingTopics = await this.#getMatchingTopics(topics, mode);
 
@@ -205,9 +213,15 @@ class MatchmakingManager
     static async #triggerConnection(socketId: string, matchedSocketId: string): Promise<void>
     {
         try
-        {            console.log(`Triggering connection between ${socketId} and ${matchedSocketId}`);
+        {
+            if (!socketId || !matchedSocketId)
+            {
+                throw new Error('Both socket IDs are required to trigger a connection.');
+            }
 
-            // delete both from queue - await these since they're now async
+            console.log(`Triggering connection between ${socketId} and ${matchedSocketId}`);
+
+            // delete both from queue
             await this.#removeFromQueue(socketId);
             await this.#removeFromQueue(matchedSocketId);
 
@@ -255,28 +269,42 @@ class MatchmakingManager
     {
         if (topics && topics.length > 0)
         {
-            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: UserQueueInfo[] | null }[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: string | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
                 const randomTopicUser = randomTopicResult[0].get_oldest_random_topic_user;
+
                 if (randomTopicUser.length > 0)
                 {
-                    const mappedUser = this.mapToCamelCase(randomTopicUser[0]);
-                    await this.#triggerConnection(socketId, mappedUser.socketId);
+                    const mappedUserSocketId = randomTopicUser[0];
+
+                    if (!socketId || !mappedUserSocketId)
+                    {
+                        throw new Error('Both socket IDs are required to trigger a connection.');
+                    }
+
+                    await this.#triggerConnection(socketId, mappedUserSocketId);
                     return true;
                 }
             }
             
-            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', {mode})) as { get_oldest_topic_user: UserQueueInfo[] | null }[];
+            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', {mode})) as { get_oldest_topic_user: string | null }[];
 
             if (mismatchedTopicResult && mismatchedTopicResult.length > 0 && mismatchedTopicResult[0].get_oldest_topic_user)
             {
                 const mismatchedTopicUser = mismatchedTopicResult[0].get_oldest_topic_user;
+
                 if (mismatchedTopicUser.length > 0)
                 {
-                    const mappedUser = this.mapToCamelCase(mismatchedTopicUser[0]);
-                    await this.#triggerConnection(socketId, mappedUser.socketId);
+                    const mappedUserSocketId = mismatchedTopicUser[0];
+
+                    if (!socketId || !mappedUserSocketId)
+                    {
+                        throw new Error('Both socket IDs are required to trigger a connection.');
+                    }
+
+                    await this.#triggerConnection(socketId, mappedUserSocketId);
                     return true;
                 }
             }
@@ -288,6 +316,11 @@ class MatchmakingManager
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
                 const matchedSocketId = randomTopicResult[0].get_oldest_random_topic_user;
+
+                if (!matchedSocketId)
+                {
+                    return false;
+                }
                 
                 await this.#triggerConnection(socketId, matchedSocketId);
                 return true;
@@ -299,6 +332,12 @@ class MatchmakingManager
     
     static async #removeFromQueue(socketId: string): Promise<void>
     {
+
+        if (!socketId)
+        {
+            throw new Error('Socket ID is required to remove from queue.');
+        }
+
         db.executeStoredProcedure('remove_from_queue', { socketId });
         db.deleteVectorsBySocketId('topics_collection', socketId);
     }

@@ -8,6 +8,12 @@ router.post('/join-queue', async (req: Request, res: Response) =>
     try
     {
         const { socketId, mode, topics = [] } = req.body;
+
+        if (!socketId || !mode)
+        {
+            res.status(400).json({ error: 'socketId and mode are required' });
+            return;
+        }
         
         await MatchmakingManager.JoinQueue(socketId, topics, mode);
         res.status(200).json({ message: 'User added to queue' });
@@ -24,6 +30,13 @@ router.post('/leave-queue', async (req: Request, res: Response) =>
     try
     {
         const { socketId } = req.body;
+
+        if (!socketId)
+        {
+            res.status(400).json({ error: 'socketId is required' });
+            return;
+        }
+
         await MatchmakingManager.LeaveQueue(socketId);
         res.status(200).send('User removed from queue');
     }
@@ -39,6 +52,12 @@ router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
     try
     {
         const { socketId, mode, topics = [] } = req.body;
+
+        if (!socketId || !mode)
+        {
+            res.status(400).json({ error: 'socketId and mode are required' });
+            return;
+        }
         
         const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, mode);
         
