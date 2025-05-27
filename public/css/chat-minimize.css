@@ -1,0 +1,65 @@
+/* Chat minimize/maximize related styles */
+
+/* Styles for the minimized chat bubble */
+.chat-bubble {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.chat-bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Chat notification badge */
+.chat-notification-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 12px;
+    padding: 3px 6px;
+}
+
+/* Animation for new messages */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.new-message-animation {
+    animation: pulse 0.5s ease-in-out 2;
+}
+
+/* Transition effects for minimizing/maximizing */
+.chat-card {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.chat-card.minimizing {
+    transform: scale(0.8);
+    opacity: 0;
+}
+
+/* Position adjustment for the containing elements when minimized */
+.text-chat-container.minimized {
+    display: none;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+}

@@ -1,40 +1,338 @@
 <link href="/css/text-chat-widget.css" rel="stylesheet">
+<link href="/css/chat-minimize.css" rel="stylesheet">
 
-<script src="/js/modules/textChat.js"></script>
-
-<div class="container py-4">
+<div class="container text-chat-container p-0">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-12">
             <div class="card shadow-sm chat-card">
+
                 <!-- Chat header with controls -->
                 <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: var(--primary);">
                     <span id="chat-session-title">
-                        <i class="bi bi-chat-dots-fill me-2"></i>Text Chat Test
+                        <image src="/images/logo_white.png" style="height:23px;"> FreeYap.com
                     </span>
-                    <div class="status-indicator" id="connection-status">
-                        <span class="badge bg-warning">Searching...</span>
-                    </div>
+                <!--
+                    <span class="chat-controls">
+                        <button id="minimize-chat-btn" class="btn btn-sm text-white" title="Minimize chat">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+                    </span>
+                -->
                 </div>
                 
                 <!-- Chat messages area -->
                 <div class="card-body p-0">
-                    <div class="status-bar searching text-center" id="status-bar">Searching for a match...</div>
                     <div class="chat-box" id="chat-log-container">
                         <div class="welcome-message text-center p-4">
-                            <h5>Welcome to Text Chat Test</h5>
-                            <p>You'll be matched with someone to chat anonymously.</p>
+                            <h5>Welcome to FreeYap!</h5>
+                            <p>You can chat here once you're connected to a partner.</p>
                         </div>
                     </div>
-                    
-                    <!-- Chat input area -->
-                    <div class="input-group p-3 bg-light border-top">
-                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled>
-                        <button class="btn btn-primary" id="send-button" disabled>
-                            <i class="bi bi-send-fill"></i>
-                        </button>
+                      <!-- Chat input area -->                    <div class="input-group p-3 bg-light border-top" style="position: relative;">
+
+                        <!-- Emoji Button -->
+                        <div class="input-group-prepend">
+                            <button class="btn btn-secondary" id="emoji-button" style="background-color: var(--primary); border-radius: 4px 0 0 4px;">
+                                <i class="bi bi-emoji-smile"></i>
+                            </button>
+                        </div><!-- Custom Popup with Tabs -->                        <div id="custom-popup" style="position: absolute; bottom: 60px; left: 0; right: 0; display: none; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); height: 300px;">
+                            <!-- Tab Headers -->
+                            <div class="tab-headers" style="display: flex; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
+                                <button class="tab-btn active" data-tab="emojis" style="flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: 18px; border-radius: 8px 0 0 0;" title="Emojis">
+                                    <i class="bi bi-emoji-smile"></i>
+                                </button>
+                                <button class="tab-btn" data-tab="gifs" style="flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: 18px;" title="GIFs">
+                                    <i class="bi bi-film"></i>
+                                </button>
+                                <button class="tab-btn" data-tab="stickers" style="flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: 18px;" title="Stickers">
+                                    <i class="bi bi-sticky"></i>
+                                </button>
+                                <button class="tab-btn" data-tab="utilities" style="flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: 18px; border-radius: 0 8px 0 0;" title="Utilities">
+                                    <i class="bi bi-tools"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Tab Content -->
+                            <div class="tab-content" style="height: calc(100% - 45px); overflow: hidden;">
+                                <!-- Emojis Tab -->
+                                <div id="emojis-tab" class="tab-pane active" style="height: 100%; display: block;">
+                                    <div id="emoji-picker-container" style="height: 100%; overflow: auto;"></div>
+                                </div>                                <!-- GIFs Tab -->
+                                <div id="gifs-tab" class="tab-pane" style="height: 100%; display: none; padding: 20px; text-align: center;">
+                                    <p style="color: #666; margin-top: 50px;">GIFs coming soon!</p>
+                                </div>
+                                  <!-- Stickers Tab -->
+                                <div id="stickers-tab" class="tab-pane" style="height: 100%; display: none; padding: 20px; text-align: center;">
+                                    <p style="color: #666; margin-top: 50px;">Stickers coming soon!</p>
+                                </div>
+                                
+                                <!-- Utilities Tab -->
+                                <div id="utilities-tab" class="tab-pane" style="height: 100%; display: none; padding: 15px; text-align: center; overflow-y: auto;">
+                                    <div class="utilities-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">                                        <div class="utility-item" data-utility="photo" style="cursor: pointer; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <i class="bi bi-camera" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                                            <span style="font-size: 12px;">Take Photo</span>
+                                        </div>
+                                        <div class="utility-item" data-utility="video" style="cursor: pointer; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <i class="bi bi-camera-video" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                                            <span style="font-size: 12px;">Record Video</span>
+                                        </div>
+                                        <div class="utility-item" data-utility="audio" style="cursor: pointer; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <i class="bi bi-mic" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                                            <span style="font-size: 12px;">Record Audio</span>
+                                        </div>
+                                        <div class="utility-item" data-utility="upload" style="cursor: pointer; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <i class="bi bi-upload" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                                            <span style="font-size: 12px;">Upload File</span>
+                                        </div>
+                                        <div class="utility-item" data-utility="poll" style="cursor: pointer; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <i class="bi bi-bar-chart" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                                            <span style="font-size: 12px;">Create Poll</span>
+                                        </div>
+                                        <div class="utility-item" data-utility="whiteboard" style="cursor: pointer; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <i class="bi bi-pencil-square" style="font-size: 24px; color: var(--primary); margin-bottom: 8px;"></i>
+                                            <span style="font-size: 12px;">Whiteboard</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled>
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" id="send-button" disabled style="border-radius: 0 4px 4px 0;">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
                     </div>
+
                 </div>
-            </div>
-        </div>
+            </div>        </div>    
     </div>
 </div>
+
+<!-- Chat bubble for minimized state - Initially in the DOM but will be moved to body when minimized -->
+<div id="chat-bubble" class="chat-bubble shadow d-none">
+    <i class="bi bi-chat-dots-fill"></i>
+    <span class="badge bg-danger chat-notification-badge d-none">0</span>
+</div>
+
+<script src="/js/widgets/textChatWidget.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
+
+
+<script>    
+    document.addEventListener('DOMContentLoaded', function () {
+        const emojiButton = document.getElementById('emoji-button');
+        const chatInput = document.getElementById('chat-input');
+        const customPopup = document.getElementById('custom-popup');
+        const emojiPickerContainer = document.getElementById('emoji-picker-container');        // Get references to minimize-related elements        
+        //const minimizeButton = document.getElementById('minimize-chat-btn');
+        const chatBubble = document.getElementById('chat-bubble');        const chatCard = document.querySelector('.chat-card');
+        const container = document.querySelector('.text-chat-container');
+        let unreadCount = 0;
+        
+        let emojiPicker = null;        // Initialize emoji picker only when first opened
+        function initializeEmojiPicker() {
+            if (!emojiPicker) {
+                emojiPicker = document.createElement('emoji-picker');
+                emojiPicker.style.width = '100%';
+                emojiPicker.style.height = '100%';
+                emojiPicker.style.border = 'none';
+                emojiPickerContainer.appendChild(emojiPicker);
+
+                // Add the selected emoji to the chat input
+                emojiPicker.addEventListener('emoji-click', (event) => {
+                    console.log('Emoji selected:', event.detail.emoji.unicode);
+                    chatInput.value += event.detail.emoji.unicode;
+                    customPopup.style.display = 'none'; // Hide popup after selection
+                });
+            }        }
+
+        // Toggle the custom popup when the button is clicked
+        emojiButton.addEventListener('click', () => {
+            console.log('Emoji button clicked');
+            if (customPopup.style.display === 'none' || customPopup.style.display === '') {
+                customPopup.style.display = 'block';
+                initializeEmojiPicker(); // Initialize only when opened
+            } else {
+                customPopup.style.display = 'none';
+            }
+        });
+
+        // Tab switching functionality
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and panes
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => {
+                    pane.style.display = 'none';
+                    pane.classList.remove('active');
+                });
+                
+                // Add active class to clicked button and corresponding pane
+                button.classList.add('active');
+                const targetPane = document.getElementById(targetTab + '-tab');
+                if (targetPane) {
+                    targetPane.style.display = 'block';
+                    targetPane.classList.add('active');
+                }
+
+                // Initialize emoji picker when emojis tab is selected
+                if (targetTab === 'emojis') {
+                    initializeEmojiPicker();
+                }
+            });
+        });        // Set up utilities functionality
+        const utilityItems = document.querySelectorAll('.utility-item');
+        
+        utilityItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const utilityType = item.getAttribute('data-utility');
+                console.log('Utility selected:', utilityType);
+                
+                // Placeholder functionality - show an alert for now
+                alert(`${utilityType.charAt(0).toUpperCase() + utilityType.slice(1)} feature will be implemented soon!`);
+                
+                // Close the popup after selection (optional)
+                // customPopup.style.display = 'none';
+            });
+        });
+          // Add active tab styling and emoji picker styling
+        const style = document.createElement('style');
+        style.textContent = `
+            .tab-btn.active {
+                background-color: var(--primary) !important;
+                color: white !important;
+            }
+            .tab-btn:hover {
+                background-color: #e9ecef;
+            }
+            .tab-btn.active:hover {
+                background-color: var(--primary-dark, #c82333) !important;
+            }
+            .utility-item:hover {
+                background-color: #fff5f5;
+                border-color: var(--primary);
+            }
+            /* Override emoji picker background */
+            emoji-picker {
+                --background: white !important;
+                --border-color: #e9ecef !important;
+                background: white !important;
+            }
+            emoji-picker::part(wrapper) {
+                background: white !important;
+            }
+            /* Remove unwanted margins between input group elements */
+            .input-group-prepend,
+            .input-group-append {
+                display: flex;
+            }
+            .input-group-prepend .btn,
+            .input-group-append .btn {
+                position: relative;
+                z-index: 2;
+            }
+            #chat-input {
+                border-radius: 0;
+            }
+        `;        
+        
+        document.head.appendChild(style);        // Minimize chat feature
+        
+        /*
+        minimizeButton.addEventListener('click', () => {
+            console.log('Minimize button clicked');
+            // Add animation class
+            chatCard.classList.add('minimizing');
+            
+            // After animation completes, hide the chat and show the bubble
+            setTimeout(() => {
+                container.classList.add('minimized');
+                document.body.appendChild(chatBubble); // Move to body to ensure visibility
+                chatBubble.classList.remove('d-none');
+                chatCard.classList.remove('minimizing');
+                
+                // Dispatch a custom event that the combined view can listen for
+                document.dispatchEvent(new CustomEvent('textChatMinimized'));
+                
+                // Add this to debug
+                console.log('Chat minimized, bubble should be visible');
+            }, 300);
+        });
+
+        */
+        
+        // Maximize chat when bubble is clicked
+        chatBubble.addEventListener('click', () => {
+            console.log('Chat bubble clicked');
+            // Show the chat and hide the bubble
+            container.classList.remove('minimized');
+            chatBubble.classList.add('d-none');
+            
+            // Move bubble back to original container if needed
+            if (chatBubble.parentNode === document.body) {
+                container.appendChild(chatBubble);
+            }
+            
+            // Reset notification count
+            resetNotificationCount();
+            
+            // Dispatch a custom event that the combined view can listen for
+            document.dispatchEvent(new CustomEvent('textChatMaximized'));
+        });
+        
+        // Function to handle incoming messages when minimized
+        function handleIncomingMessageWhenMinimized() {
+            if (container.classList.contains('minimized')) {
+                // Increment unread count
+                unreadCount++;
+                
+                // Update the notification badge
+                const badge = chatBubble.querySelector('.chat-notification-badge');
+                badge.textContent = unreadCount;
+                badge.classList.remove('d-none');
+                
+                // Optional: Add animation to the bubble to draw attention
+                chatBubble.classList.add('new-message-animation');
+                setTimeout(() => {
+                    chatBubble.classList.remove('new-message-animation');
+                }, 1000);
+            }
+        }
+        
+        // Function to reset notification count
+        function resetNotificationCount() {
+            unreadCount = 0;
+            const badge = chatBubble.querySelector('.chat-notification-badge');
+            badge.textContent = '0';
+            badge.classList.add('d-none');
+        }
+        
+        // Observe the chat log for new messages
+        const chatLogObserver = new MutationObserver((mutations) => {
+            // Check if any new messages were added
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Check if the added node is a chat message that's incoming
+                    for (const node of mutation.addedNodes) {
+                        if (node.classList && node.classList.contains('chat-message') && 
+                            node.classList.contains('received')) {
+                            handleIncomingMessageWhenMinimized();
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Start observing the chat log container
+        chatLogObserver.observe(document.getElementById('chat-log-container'), {
+            childList: true,
+            subtree: true
+        });
+    });
+</script>

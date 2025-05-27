@@ -1,3 +1,7 @@
+:root {
+    --primary-red: #ff0000; /* Define the primary red color */
+}
+
 /* Text Chat Specific Styles */
 
 .chat-card {
@@ -53,6 +57,11 @@
 #sendButton, [id$="-sendButton"] {
   padding: 0.375rem 0.75rem;
   min-width: 44px;
+}
+
+#send-button {
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
 }
 
 /* Message styles */

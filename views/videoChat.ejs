@@ -1,312 +1,35 @@
-<div class="container py-4">
-  <div class="row">
-    <!-- Main video display area -->
-    <div class="col-md-8">
-      <!-- Topics Display -->
-      <div class="topics-display">
-        <div class="topics-section user-topics">
-          <div class="topics-title">
-            <i class="fas fa-user"></i>
-            Your Topics
-          </div>
-          <div class="topics-list" id="user-topics-list">
-            <div class="topics-empty">No topics selected</div>
-          </div>
-        </div>        <div class="topics-section partner-topics">
-          <div class="topics-title">
-            <i class="fas fa-users"></i>
-            <span id="partner-topics-header">Partner's Topics</span>
-          </div>
-          <div class="topics-list" id="partner-topics-list">
-            <div class="topics-empty">Waiting for partner...</div>
-          </div>
+<div class="container my-0 p-0">
+    <div class="row g-0">
+        <div class="col-md-8 pe-1">
+            <%- include('./components/topics-widget') %>
+            <%- include('./components/video-chat-widget') %>
         </div>
-      </div>
-
-      <div class="video-container bg-light rounded shadow-sm p-2 mb-3">
-        <div class="position-relative">
-          <video id="remoteVideo" autoplay class="w-100 rounded main-video-feed"></video>
-          <div class="local-video-wrapper">
-            <video id="localVideo" autoplay muted class="rounded shadow-sm"></video>
-          </div>
+        <div class="col-md-4 ps-1">
+            <%- include('./components/text-chat-widget') %>
         </div>
-      </div>
-
-      <!-- Video controls -->
-      <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">        <button id="startButton" class="btn" style="background-color: var(--primary); color: white;">
-          <i class="bi bi-play-fill"></i> Start Looking
-        </button>
-        <button id="endButton" class="btn btn-danger" disabled>
-          <i class="bi bi-telephone-x-fill"></i> End Call
-        </button>
-        <button id="toggle-mic" class="btn btn-outline-secondary">
-          <i class="bi bi-mic-fill"></i> Turn Mic Off
-        </button>
-        <button id="toggle-camera" class="btn btn-outline-secondary">
-          <i class="bi bi-camera-video-fill"></i> Turn Camera Off
-        </button>
-      </div>
-
-      <div id="statusMessage" class="alert text-center" style="background-color: rgba(255, 77, 109, 0.1); color: var(--primary);"></div>
-    </div>    <!-- Chat sidebar with modular text chat component -->
-    <div class="col-md-4">      <div class="chat-sidebar">
-        <%- include('components/modularTextChat', { 
-          id: 'video-text-chat',
-          showTopics: false, // Topics already shown in video chat area
-          enableEmoji: true,
-          enableGif: true,
-          enableVoiceRecording: false,
-          showControls: false, // Hide chat controls since video page has its own
-          customClasses: 'video-chat-sidebar',
-          containerHeight: '70vh'
-        }) %>
-      </div>
     </div>
-  </div>
 </div>
-
-<!-- Include the Socket.IO client library -->
-<script src="/socket.io/socket.io.js"></script>
-
-<!-- Include WebRTCClient.js -->
-<script src="/WebRTCClient.js"></script>
-
-<!-- Include the SimplePeer library via CDN -->
-<script src="https://cdn.jsdelivr.net/npm/simple-peer/simplepeer.min.js"></script>
-
-<!-- Add functionality to call matchmaking API endpoints -->
+<%- include('./components/webrtc-prerequisites') %>
 <script>
-  // Variable to track delayed matchmaking timeout
-  let delayedMatchmakingTimeout = null;
-  let matchFound = false;
+    const chatMode = 'text';
 
-  // Wait for WebRTCClient.js to load and use its socket connection  
-  // 
-  document.addEventListener('DOMContentLoaded', async function() {
-      // Disable start button initially until permissions are granted
-      const startButton = document.getElementById('startButton');
-      const endButton = document.getElementById('endButton');
-      startButton.disabled = true;
-      startButton.textContent = 'Requesting Permissions...';
+    document.addEventListener('DOMContentLoaded', async () =>
+    {
+        const connectionManager = new WebRTCConnectionManager();
 
-      try {
-          // Request video and audio permissions immediately for video chat
-          console.log('Video chat page - requesting video and audio permissions on load...');
-          await initializeMediaStream({ video: true, audio: true });
-          
-          // Permissions granted - enable start button
-          startButton.disabled = false;
-          startButton.innerHTML = '<i class="bi bi-play-fill"></i> Start Looking';
-          console.log('Video and audio permissions granted - start button enabled');
-      } catch (error) {
-          console.error('Failed to get video/audio permissions:', error);
-          startButton.disabled = true;
-          startButton.textContent = 'Permissions Required';
-          
-          // Show error message to user
-          const statusMessage = document.getElementById('statusMessage');
-          if (statusMessage) {
-              statusMessage.className = 'alert alert-danger text-center';
-              statusMessage.textContent = 'Video and audio permissions are required for video chat. Please refresh and allow permissions.';
-          }
-      }
-      
-      // Set up end button event listener
-      endButton.addEventListener('click', function() {
-          // Call the WebRTC cleanup function
-          if (typeof cleanupPeerConnection === 'function') {
-              cleanupPeerConnection();
-          }
-          
-          // End the text chat if the widget is available
-          if (window.textChatWidgets && window.textChatWidgets['video-text-chat']) {
-              console.log('Ending modular text chat for video chat');
-              window.textChatWidgets['video-text-chat'].endChat();
-          }
-          
-          // Reset UI
-          startButton.disabled = false;
-          endButton.disabled = true;
-          
-          // Reset status message
-          const statusMessage = document.getElementById('statusMessage');
-          if (statusMessage) {
-              statusMessage.className = 'alert text-center';
-              statusMessage.textContent = 'Call ended. Click "Start Looking" to find a new partner.';
-          }
-      });      // Use the socket from WebRTCClient.js instead of creating a new one
-      if (typeof socket !== 'undefined') {
-          // Listen for match-found event to abort delayed matchmaking
-          socket.on('match-found', () => {
-              console.log('Match found! Aborting delayed matchmaking...');
-              matchFound = true;
-              if (delayedMatchmakingTimeout) {
-                  clearTimeout(delayedMatchmakingTimeout);
-                  delayedMatchmakingTimeout = null;
-                  console.log('Delayed matchmaking timeout cleared');
-              }
-              
-              /* 
-               * Don't auto-start text chat - let the main matchmaking 
-               * handle connections and then notify the text widget
-               */
-          });
-      } else {
-          console.error('Socket not available from WebRTCClient.js');
-      }
-  });  
-  
-  document.getElementById('startButton').addEventListener('click', async () =>
-  {
-      console.log('Start button clicked, joining matchmaking queue...');
+        const topicsWidget = new TopicsWidget(connectionManager);
+        const videoChatWidget = new VideoChatWidget(connectionManager);
+        const textChatWidget = new TextChatWidget(connectionManager);
 
-      // Reset match state
-      matchFound = false;
-      if (delayedMatchmakingTimeout) {
-          clearTimeout(delayedMatchmakingTimeout);
-          delayedMatchmakingTimeout = null;
-      }
+        let mediaInitializationSucceeded = await videoChatWidget.MediaInitialization;
 
-      // Disable the start button to prevent multiple clicks
-      const startButton = document.getElementById('startButton');
-      startButton.disabled = true;
-
-      try {
-          // Media stream already initialized on page load, just verify it exists
-          if (!localStream) {
-              throw new Error('Media stream not available. Please refresh the page.');
-          }
-          
-          // Extract topics from URL query parameters
-          const urlParams = new URLSearchParams(window.location.search);
-          const topicsParam = urlParams.get('topics');
-          let topics = [];
-          if (topicsParam) {
-              try {
-                  topics = JSON.parse(decodeURIComponent(topicsParam));
-                  console.log('Extracted topics from URL:', topics);
-              } catch (e) {
-                  console.error('Error parsing topics from URL:', e);
-              }
-          }
-
-          // Call the join-queue endpoint
-          const response = await fetch('/api/matchmaking/join-queue', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                mode: 'video',
-                socketId: mySocketId, 
-                topics: topics
-              })
-          });
-
-          if (!response.ok)
-          {
-              throw new Error('Failed to join matchmaking queue');
-          }
-
-          console.log('Successfully joined matchmaking queue');
-
-          // Wait for 10 seconds before calling delayed matchmaking          
-          delayedMatchmakingTimeout = setTimeout(async () =>
-          {
-              // Check if match was already found
-              if (matchFound) {
-                  console.log('Match already found, skipping delayed matchmaking');
-                  return;
-              }
-
-              console.log('10 seconds passed, calling delayed matchmaking...');
-
-              try
-              {
-                  const delayedResponse = await fetch('/api/matchmaking/delayed-matchmaking', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ socketId: mySocketId, topics: topics })
-                  });
-
-                  if (!delayedResponse.ok)
-                  {
-                      throw new Error('Failed to perform delayed matchmaking');
-                  }
-
-                  console.log('Successfully called delayed matchmaking');
-              }
-              catch (error)
-              {
-                  console.error('Error during delayed matchmaking:', error);
-              }
-          }, 10000);
-      }
-      catch (error)
-      {
-          console.error('Error joining matchmaking queue:', error);
-      }
-      finally
-      {
-          // Re-enable the start button
-          startButton.disabled = false;
-      }
-  });  // Extend the original WebRTCClient's setupPeer function
-  document.addEventListener('DOMContentLoaded', function() {
-      const originalSetupPeer = window.setupPeer || function() {};
-      
-      // Override the setupPeer function
-      window.setupPeer = function(p, toSocketId) {
-          originalSetupPeer(p, toSocketId);
-          
-          // Setup additional features for video chat
-          p.on('connect', () => {
-              console.log('Video chat peer connection established');
-              
-              // Enable the end button and disable the start button
-              const endButton = document.getElementById('endButton');
-              const startButton = document.getElementById('startButton');
-              if (endButton) endButton.disabled = false;
-              if (startButton) startButton.disabled = true;
-              
-              // Update status
-              const statusMessage = document.getElementById('statusMessage');
-              if (statusMessage) {
-                  statusMessage.className = 'alert alert-success text-center';
-                  statusMessage.textContent = 'Video chat connected! You can now communicate with your partner.';
-              }
-              
-              // Configure text chat only after WebRTC connection is fully established
-              setTimeout(() => {
-                  // Store flag in a data attribute to prevent multiple setups
-                  const alreadySetup = p._textChatConfigured === true;
-                  
-                  if (!alreadySetup) {
-                      p._textChatConfigured = true;
-                      console.log('First connection - configuring text chat widget');
-                      
-                      // Configure text chat widget with established WebRTC connection
-                      if (window.textChatWidgets && window.textChatWidgets['video-text-chat'] && partnerSocketId) {
-                          console.log('Configuring video text chat widget with established WebRTC connection');
-                          try {
-                              window.textChatWidgets['video-text-chat'].setupConnection({
-                                  partnerSocketId: partnerSocketId,
-                                  isInitiator: isInitiator,
-                                  useExistingPeer: true,     // Flag to indicate we want to use the main peer
-                                  sharedPeer: p,             // Pass the actual peer object for direct use
-                                  isSharedConnection: true   // Flag to indicate this is a shared connection
-                              });
-                          } catch (err) {
-                              console.error('Error setting up video text chat widget:', err);
-                              // If there was an error, mark the peer as not configured so we can try again
-                              p._textChatConfigured = false;
-                          }
-                      }
-                  } else {
-                      console.log('Text chat widget already configured, skipping setup');
-                  }
-              }, 100); // Small delay to ensure the WebRTC connection is fully ready
-          });
-          
-          return p;
-      };
-  });
+        if (mediaInitializationSucceeded)
+        {
+            connectionManager.StartMatchmaking(chatMode);
+        }
+        else
+        {
+            window.alert("Camera and/or audio permissions denied. Please change your browser settings and refresh the page.");
+        }
+    });
 </script>

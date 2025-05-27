@@ -1,51 +1,371 @@
+/* Import root variables */
+@import url('/styles.css');
+
+/* Define the primary red color matching the text chat widget */
+:root {
+    --primary-red: #ff0000; /* Same as text chat widget */
+}
+
+/* Simplified styling for video chat widget */
 #video-container {
-    margin: 20px auto;
-    max-width: 1200px;
+    margin: 0 auto;
+    max-width: 800px;
+    background: #fff; /* Solid white background */
+    border: 1px solid #ccc; /* Simple border */
+    border-radius: 8px;
+    padding: 0; /* Removed padding */
+    background: linear-gradient(135deg, #f0f0f0, #ffffff);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: none; /* Disable shadow transition */
+    display: flex;
+    flex-direction: column;
 }
 
-#video-controls {
-    margin-bottom: 15px;
-}
-
-.btn {
-    padding: 8px 16px;
-    margin-right: 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+#video-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 #videos {
     display: flex;
+    gap: 10px;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 20px;
+    padding: 10px 10px 0 10px; /* Keep some padding just for the videos section */
 }
 
 .video-wrapper {
     flex: 1;
-    min-width: 320px;
-    text-align: center;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 video {
     width: 100%;
-    max-width: 640px;
     height: auto;
-    background-color: #222;
-    border: 1px solid #444;
 }
 
-#connection-status {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
+#bottom-controls-bar {
+    width: 100%;
+    padding: 0 10px; /* Add padding to the controls bar */
+    margin-top: 10px;
 }
+
+/* Removed duplicate .red-bar class */
+
+#video-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+}
+
+#layout-controls {
+    display: flex;
+    gap: 10px;
+    margin-left: auto; /* Pushes the layout controls to the right */
+}
+
+/* Video effects styles */
+#video-effects {
+    display: flex;
+    gap: 10px;
+    margin-left: 10px; /* Add some margin on the left */
+}
+
+.effect-btn {
+    background: none;
+    border: none;
+    width: auto;
+    height: auto;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.effect-btn:hover {
+    color: #f8d7da; /* Light red on hover */
+}
+
+.effect-btn.active {
+    color: #f8d7da; /* Light red for active state */
+}
+
+.layout-btn {
+    background: none;
+    border: none;
+    width: auto;
+    height: auto;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.layout-btn.active {
+    color: #f8d7da; /* Light red for active state */
+}
+
+.layout-btn:hover {
+    color: #f8d7da; /* Light red on hover */
+}
+
+/* Control button styles - Primary red color */
+.control-btn {
+    background-color: var(--primary-red); /* Use the same red as text chat widget */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.control-btn:hover {
+    background-color: #a71d2a; /* Darker red on hover */
+    transform: scale(1.1);
+}
+
+.control-btn i {
+    font-size: 18px;
+}
+
+/* White section for video controls */
+.white-section {
+    background-color: transparent;
+    border-top: none;
+}
+
+/* Bottom bar styles */
+#bottom-bar {
+    background-color: var(--primary-red); /* Matches the top bar of the text chat widget */
+    color: white;
+    padding: 10px;
+    width: 100%;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin-top: auto; /* Push to bottom of container */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Detached PiP mode - Fixed to window */
+.pip-detached {
+    position: fixed !important;
+    z-index: 9999 !important; /* Ensure it's above all content */
+    transition: all 0.3s ease !important;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Controls for detached mode */
+.pip-controls {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 5px;
+    z-index: 11;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Show controls on hover */
+.local-wrapper:hover .pip-controls,
+.pip-detached:hover .pip-controls {
+    opacity: 1;
+}
+
+.pip-control-btn {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.pip-control-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Detached video styling */
+.pip-detached video {
+    width: 100%;
+    height: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #video-container {
+        padding: 0; /* Removed padding */
+    }
+
+    #top-controls-bar {
+        flex-direction: column;
+        align-items: center; /* Center controls on smaller screens */
+        gap: 8px;
+    }
+      #layout-controls {
+        /* Allow layout controls to wrap if needed */
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .layout-default #videos {
+        flex-direction: column;
+    }
+    
+    .video-wrapper {
+        width: 100% !important; /* Full width for stacked videos */
+        margin-bottom: 10px;
+    }
+      .layout-pip .local-wrapper {
+        width: 35%; /* Slightly larger PiP on mobile */
+        bottom: 5px;
+        right: 5px;
+        height: auto;
+    }
+
+    .control-btn, .layout-btn {
+        width: 32px;
+        height: 32px;
+    }
+    .control-btn i, .layout-btn i {
+        font-size: 14px;
+    }
+
+    #videos {
+        flex-direction: column;
+    }
+
+    #bottom-controls-bar {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* Enhanced video chat widget styles - MINIMALIST REFINED */
+
+/* Layout transitions */
+.layout-transition {
+    transition: all 0.3s ease-in-out !important; /* Smoother transition */
+}
+
+/* Control tooltips - Refined */
+.control-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #343a40;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.control-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: #343a40 transparent transparent transparent;
+}
+
+.control-btn:hover .control-tooltip,
+.layout-btn:hover .control-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+
+/* PiP layout is the only additional layout */
+.layout-pip #videos {
+    position: relative;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.layout-pip .remote-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.layout-pip .local-wrapper {
+    position: absolute;
+    width: 25%; /* Small size */
+    height: auto;
+    right: 10px;
+    bottom: 10px;    z-index: 10; /* Above the remote video */
+    cursor: move; /* Indicate it's draggable */
+    transition: width 0.3s ease; /* Only transition width property, not opacity */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    /* Make sure local video maintains aspect ratio */
+    aspect-ratio: 16/9;
+    /* Always fully opaque, no transparency */
+    opacity: 1;
+}
+
+.layout-pip .local-wrapper.minimized {
+    width: 15%;
+}
+
+.layout-pip .minimize-pip {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 11;
+}
+
+.layout-pip .local-wrapper:hover .minimize-pip {
+    opacity: 1;
+}
+
+/* Only default and PiP layouts are supported */
+
+/* Ensure FontAwesome is correctly referenced if used via CSS */
+/* This is usually handled by the <link> tag in HTML, but good to keep in mind */
