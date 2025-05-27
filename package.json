@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "postinstall": "npm install @types/express @types/express-ejs-layouts @types/body-parser @types/node @types/socket.io @types/uuid"
   },
   "keywords": [],
   "author": "",
