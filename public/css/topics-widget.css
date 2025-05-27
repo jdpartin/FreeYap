@@ -78,3 +78,38 @@
     70% { transform: scale(1.05); }
     100% { transform: scale(1); opacity: 1; }
 }
+
+/* Similarity indicator styles */
+.similarity-indicator {
+    font-size: 10px;
+    margin-left: 5px;
+    opacity: 0.8;
+    font-weight: bold;
+}
+
+/* Similarity-based styling */
+.topic-bubble.similarity-very-high {
+    border-left-color: #28a745;
+    border-left-width: 4px;
+}
+
+.topic-bubble.similarity-high {
+    border-left-color: #17a2b8;
+    border-left-width: 4px;
+}
+
+.topic-bubble.similarity-medium {
+    border-left-color: #ffc107;
+    border-left-width: 4px;
+}
+
+.topic-bubble.similarity-low {
+    border-left-color: #dc3545;
+    border-left-width: 4px;
+}
+
+.topic-bubble.similarity-very-low {
+    border-left-color: #6c757d;
+    border-left-width: 4px;
+    opacity: 0.8;
+}

@@ -77,7 +77,9 @@ router.post('/bulk-embeddings', async (req: Request, res: Response) =>
                 error: 'No valid topics provided' 
             });
             return;
-        }        console.log(`Getting bulk embeddings for ${cleanTopics.length} topics`);
+        }        
+        
+        console.log(`Getting bulk embeddings for ${cleanTopics.length} topics`);
 
         // Use the new bulk embeddings method from MatchmakingManager
         const bulkResults = await MatchmakingManager.getBulkEmbeddings(cleanTopics);
@@ -140,7 +142,9 @@ router.post('/compare-similarity', async (req: Request, res: Response) =>
 {
     try
     {
-        const { word1, word2 } = req.body;        if (!word1 || !word2) 
+        const { word1, word2 } = req.body;
+
+        if (!word1 || !word2) 
         {
             res.status(400);
             res.json({ 
