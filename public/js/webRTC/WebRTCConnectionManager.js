@@ -1,56 +1,42 @@
 class WebRTCConnectionManager
 {
+    //#region Constructor
+
+
     constructor()
     {
-        this.socket = io();
+        this.eventTarget = new EventTarget();// EventTarget for custom events
+
         this.peer = null;
+        this.chatMode = null;
         this.partnerSocketId = null;
-        this.eventTarget = new EventTarget();
+        this.socket = null;
+
+        window.webRTCConnectionManager = this;
+
         this.matchmakingAPIClient = new MatchmakingAPIClient();
-
-        this.socket.on('connect', async () => {
-            
-        });
-
-        this.socket.on('signal', ({ fromSocketId, data }) =>
-        {
-            console.log('Received signal from ' + fromSocketId);
-
-            if (this.peer && this.partnerSocketId && fromSocketId === this.partnerSocketId)
-            {
-                this.peer.signal(data);
-            }
-            else if (this.peer && fromSocketId !== this.partnerSocketId)
-            {
-                console.warn(`Ignoring signal from non-matching peer: ${fromSocketId}`);
-            }
-            else if (!this.peer)
-            {
-                this.partnerSocketId = fromSocketId;
-                this.#createNonInitiatorPeer();
-                
-                this.peer.signal(data);
-            }
-        });
-
-        this.socket.on('match-found', ({ isInitiator, matchedSocketId }) => {
-            if (isInitiator)
-            {
-                this.#connectToPeer(matchedSocketId);
-            }
-            else
-            {
-                this.partnerSocketId = matchedSocketId;
-                this.#createNonInitiatorPeer();
-            }
-        });
-
-        this.initialization = this.#initialize();
+        this.initialization = this.#connectToSocket();
     }
+
+
+    //#endregion
+
+    //#region Public Methods
+
 
     GetPeer()
     {
         return this.peer;
+    }
+
+    CloseConnection()
+    {
+        
+    }
+
+    async StartMatchmaking(chatMode)
+    {
+        this.#startMatchmaking(chatMode);
     }
 
     on(eventName, callback)
@@ -63,28 +49,25 @@ class WebRTCConnectionManager
         this.eventTarget.removeEventListener(eventName, callback);
     }
 
-    CloseConnection()
+
+    //#endregion
+
+    //#region Private Methods
+
+    //#region Events
+
+
+    #raiseEvent(eventName)
     {
-        if (this.peer)
-        {
-            console.log('Closing peer connection');
-            this.peer.destroy();
-            this.peer = null;
-        }
-        
-        this.partnerSocketId = null;
+        const event = new Event(eventName);
+        this.eventTarget.dispatchEvent(event);
     }
 
-    async StartMatchmaking(chatMode)
-    {
-        await this.initialization;
 
-        let topics = this.#getTopicsFromURL();
+    //#endregion
 
-        this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, topics);
+    //#region Matchmaking
 
-        this.#delayedMatchmakingRoutine(chatMode, topics);
-    }
 
     #getTopicsFromURL()
     {
@@ -94,18 +77,24 @@ class WebRTCConnectionManager
         
         if (topicsParam)
         {
-            try
-            {
-                topics = JSON.parse(decodeURIComponent(topicsParam));
-                console.log('Extracted topics from URL:', topics);
-            }
-            catch (e)
-            {
-                console.error('Error parsing topics from URL:', e);
-            }
+            topics = JSON.parse(decodeURIComponent(topicsParam));
+            console.log('Extracted topics from URL:', topics);
         }
 
         return topics;
+    }
+
+    async #startMatchmaking(chatMode)
+    {
+        await this.initialization;
+
+        this.chatMode = chatMode;
+
+        let topics = this.#getTopicsFromURL();
+
+        this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, topics);
+
+        this.#delayedMatchmakingRoutine(chatMode, topics);
     }
 
     async #delayedMatchmakingRoutine(chatMode, topics = [])
@@ -119,45 +108,90 @@ class WebRTCConnectionManager
         }
     }
 
-    async #initialize()
+
+    //#endregion
+
+    //#region Socket Connection (Server Communication)
+
+
+    async #connectToSocket()
     {
         return new Promise((resolve) =>
         {
-            this.socket.on('connect', async () =>
+            this.socket = io();
+
+            this.socket.on('connect', () =>
             {
-                resolve(); // Resolve the promise when the 'connect' event is received
+                this.#setupSocketListeners();
+                this.#raiseEvent('socketConnected');
+                resolve();
             });
         });
     }
 
-    #createNonInitiatorPeer()
+    #setupSocketListeners()
     {
-        this.peer = new SimplePeer({
-            initiator: false,
-            trickle: true
-        });
-        
-        this.#setupPeerEventListeners();
-    }
-    
-    #setupPeerEventListeners()
-    {
-        this.peer.on('signal', (data) => {
-            this.socket.emit('signal', { toSocketId: this.partnerSocketId, data });
+        this.socket.on('signal', ({ fromSocketId, data }) =>
+        {
+            this.#handleSignal(fromSocketId, data);
         });
 
-        this.peer.on('connect', () => {
-            this.eventTarget.dispatchEvent(new Event('connectionReady')); // Notify other modules
+        this.socket.on('match-found', ({ isInitiator, matchedSocketId }) => {
+            this.#handleMatchFound(isInitiator, matchedSocketId);
         });
 
-        this.peer.on('error', (err) => {
-            console.error('Peer error:', err);
-        });
-
-        this.peer.on('close', () => {
-            this.eventTarget.dispatchEvent(new Event('connectionClosed')); // Notify other modules
+        this.socket.on('close', () => {
+            this.#handleSocketClose();
         });
     }
+
+    #handleSignal(fromSocketId, data)
+    {
+        if (!this.peer)
+        {
+            this.partnerSocketId = fromSocketId;
+            this.#createNonInitiatorPeer();
+            this.peer.signal(data);
+        }
+        else if (fromSocketId === this.partnerSocketId)
+        {
+            this.peer.signal(data);
+        }
+    }
+
+    #handleMatchFound(isInitiator, matchedSocketId)
+    {
+        if (isInitiator)
+        {
+            this.#connectToPeer(matchedSocketId);
+        }
+        else
+        {
+            this.partnerSocketId = matchedSocketId;
+            this.#createNonInitiatorPeer();
+        }
+
+        this.#raiseEvent('matchFound');
+    }
+
+    #handleSocketClose()
+    {
+        if (this.peer == null)
+        {
+            // always connect to the server if no peer connection exists
+            // then call matchmaking again
+        }
+        else
+        {
+            // do nothing if a peer connection exists
+        }
+    }
+
+
+    //#endregion
+
+    //#region Peer Connection (WebRTC)
+
 
     #connectToPeer(partnerSocketId)
     {
@@ -169,5 +203,67 @@ class WebRTCConnectionManager
         });
         
         this.#setupPeerEventListeners();
+        this.#raiseEvent('peerCreated');
     }
+
+    #createNonInitiatorPeer()
+    {
+        this.peer = new SimplePeer({
+            initiator: false,
+            trickle: true
+        });
+        
+        this.#setupPeerEventListeners();
+        this.#raiseEvent('peerCreated');
+    }
+
+    #setupPeerEventListeners()
+    {
+        this.peer.on('signal', (data) => {
+            this.#handlePeerSignal(data)
+        });
+
+        this.peer.on('connect', () => {
+            this.#handlePeerConnect();
+        });
+
+        this.peer.on('error', (err) => {
+            this.#handlePeerError(err);
+        });
+
+        this.peer.on('close', () => {
+            this.#handlePeerClose();
+        });
+    }
+
+    #handlePeerSignal(data)
+    {
+        this.socket.emit('signal', { toSocketId: this.partnerSocketId, data });
+    }
+
+    #handlePeerConnect()
+    {
+        this.socket.disconnect();// Disconnect from the socket server once the peer connection is established
+        this.#raiseEvent('connectionReady');
+    }
+
+    #handlePeerError(err)
+    {
+        console.error('Peer error:', err);
+        this.#raiseEvent('connectionError');
+    }
+
+    #handlePeerClose()
+    {
+        this.#raiseEvent('connectionClosed');
+        this.peer = null
+        this.initialization = this.#connectToSocket();
+        this.StartMatchmaking(this.chatMode);
+    }
+
+
+    //#endregion
+
+    //#endregion
+
 }
