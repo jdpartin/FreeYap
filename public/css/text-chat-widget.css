@@ -166,6 +166,10 @@
   background-color: #f8f9fa;
 }
 
+.emoji-button {
+  border: none;
+}
+
 /* Enhanced Emoji and GIF panel styles */
 .emoji-gif-panel {
   position: absolute;

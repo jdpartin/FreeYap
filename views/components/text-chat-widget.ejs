@@ -28,14 +28,16 @@
                             <p>You can chat here once you're connected to a partner.</p>
                         </div>
                     </div>
-                      <!-- Chat input area -->                    <div class="input-group p-3 bg-light border-top" style="position: relative;">
+                      <!-- Chat input area -->                    
+                       <div class="input-group p-3 bg-light border-top" style="position: relative;">
 
                         <!-- Emoji Button -->
                         <div class="input-group-prepend">
-                            <button class="btn btn-secondary" id="emoji-button" style="background-color: var(--primary); border-radius: 4px 0 0 4px;">
+                            <button class="btn btn-secondary" id="emoji-button" style="background-color: var(--primary); border-radius: 4px 0 0 4px; border:none !important;" disabled>
                                 <i class="bi bi-emoji-smile"></i>
                             </button>
-                        </div><!-- Custom Popup with Tabs -->                        <div id="custom-popup" style="position: absolute; bottom: 60px; left: 0; right: 0; display: none; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); height: 300px;">
+                        </div><!-- Custom Popup with Tabs -->                        
+                            <div id="custom-popup" style="position: absolute; bottom: 60px; left: 0; right: 0; display: none; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); height: 300px;">
                             <!-- Tab Headers -->
                             <div class="tab-headers" style="display: flex; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
                                 <button class="tab-btn active" data-tab="emojis" style="flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; font-size: 18px; border-radius: 8px 0 0 0;" title="Emojis">
@@ -95,9 +97,10 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled>
+                        </div>                        
+                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled>
                         <div class="input-group-append">
-                            <button class="btn btn-primary" id="send-button" disabled style="border-radius: 0 4px 4px 0;">
+                            <button class="btn btn-primary" id="send-button" disabled style="border-radius: 0 4px 4px 0;background: var(--primary) !important;">
                                 <i class="bi bi-send-fill"></i>
                             </button>
                         </div>
@@ -140,11 +143,12 @@
 
                 // Add the selected emoji to the chat input
                 emojiPicker.addEventListener('emoji-click', (event) => {
-                    console.log('Emoji selected:', event.detail.emoji.unicode);
+                    //console.log('Emoji selected:', event.detail.emoji.unicode);
                     chatInput.value += event.detail.emoji.unicode;
-                    customPopup.style.display = 'none'; // Hide popup after selection
+                    //customPopup.style.display = 'none'; // Hide popup after selection
                 });
-            }        }
+            }        
+        }
 
         // Toggle the custom popup when the button is clicked
         emojiButton.addEventListener('click', () => {
@@ -333,6 +337,17 @@
         chatLogObserver.observe(document.getElementById('chat-log-container'), {
             childList: true,
             subtree: true
+        });
+        
+        // Add event listener for Enter key to send message
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); // Prevent newline in the input
+                const sendButton = document.getElementById('send-button');
+                if (!sendButton.disabled) {
+                    sendButton.click(); // Trigger the send button click
+                }
+            }
         });
     });
 </script>

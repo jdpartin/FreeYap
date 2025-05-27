@@ -1,9 +1,10 @@
-
 .topics-container {
     background-color: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 12px; /* Updated from 8px to 12px */
     padding: 15px;
     margin-bottom: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.125); /* Added border */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Added box-shadow */
 }
 
 .user-topics, .partner-topics {

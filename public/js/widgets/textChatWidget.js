@@ -9,6 +9,7 @@ class TextChatWidget
 
         this.statusBar = document.getElementById('status-bar');
         this.connectionStatus = document.getElementById('connection-status');
+        this.emojiButton = document.getElementById('emoji-button');
         this.chatInput = document.getElementById('chat-input');
         this.sendButton = document.getElementById('send-button');
         this.chatLogContainer = document.getElementById('chat-log-container');
@@ -130,6 +131,7 @@ class TextChatWidget
 
         this.chatInput.disabled = false;
         this.sendButton.disabled = false;
+        this.emojiButton.disabled = false;
 
         this.chatLogContainer.innerHTML =   `<div class="welcome-message text-center p-4">
                                                 <h5>You're Connected!</h5>
@@ -143,6 +145,7 @@ class TextChatWidget
     {
         this.chatInput.disabled = true;
         this.sendButton.disabled = true;
+        this.emojiButton.disabled = true;
 
         this.chatLogContainer.innerHTML =   `<div class="welcome-message text-center p-4">
                                                 <h5>Welcome to FreeYap!</h5>
