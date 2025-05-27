@@ -42,8 +42,6 @@ class VoiceChatWidget
                 audio: true
             });
 
-            
-            
             return true;
         }
         catch (error)

@@ -1,0 +1,101 @@
+<link href="/css/report-widget.css" rel="stylesheet">
+
+<!-- Report Button -->
+<button id="vibe-check-button" class="btn btn-danger btn-sm report-btn" title="Report illegal content or underage users" style="background-color: var(--primary); border-color: var(--primary);">
+    <i class="fas fa-exclamation-triangle"></i> Report Illegal Use
+</button>
+
+<!-- Report Form -->
+<div id="vibe-check-form" class="report-form hidden">
+    <div class="card shadow-sm">        <div class="card-header text-white" style="background-color: var(--primary);">
+            <h6 class="mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                Report Illegal Content
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="warning-intro mb-3">
+                <p class="text-muted mb-2">
+                    <i class="fas fa-exclamation-circle text-danger me-1"></i>
+                    <strong>Important:</strong> Only use this reporting system for content or behavior that is illegal or violates laws. This includes illegal usage of the FreeYap platform or situations where we may be legally required to report to authorities.
+                </p>
+                <small class="text-warning">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <strong>Note:</strong> For content that's just inappropriate or doesn't match your preferences, please use the Vibe Check system instead.
+                </small>
+            </div>
+            
+            <form id="vibe-check-report-form">
+                <!-- Report Type Selection -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">What are you reporting?</label>
+                    <div class="report-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contentType" id="illegal-content" value="illegal-content" required>
+                            <label class="form-check-label" for="illegal-content">
+                                <strong>Illegal Content</strong>
+                                <small class="text-muted d-block">Content that violates laws or platform terms</small>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contentType" id="minor-user" value="minor-user" required>
+                            <label class="form-check-label" for="minor-user">
+                                <strong>Underage User</strong>
+                                <small class="text-muted d-block">User appears to be under 18 years old</small>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contentType" id="platform-abuse" value="platform-abuse" required>
+                            <label class="form-check-label" for="platform-abuse">
+                                <strong>Platform Abuse</strong>
+                                <small class="text-muted d-block">Illegal use of FreeYap's services</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal Notice -->
+                <div class="mt-3">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-gavel me-1"></i>
+                        <strong>Legal Notice:</strong> False reports may violate terms of service. Only report content you genuinely believe is illegal or harmful.
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between mt-3">
+                    <button type="button" id="cancel-vibe-check" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>                    <button type="submit" id="submit-vibe-check" class="btn btn-danger" style="background-color: var(--primary); border-color: var(--primary);">
+                        <i class="fas fa-flag me-1"></i>Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Background Overlay -->
+<div id="vibe-check-overlay" class="hidden">
+</div>
+
+<!-- Report Confirmation Modal -->
+<div id="vibe-check-confirmation" class="report-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="text-center">
+            <div class="success-icon">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <h5 class="mt-3 mb-2">Report Submitted</h5>
+            <p class="text-muted">
+                Thank you for helping keep FreeYap safe and legal. Your report has been submitted and will be reviewed according to our policies and legal obligations. We take all reports seriously and will take appropriate action as required.
+            </p>
+            <button type="button" id="close-vibe-confirmation" class="btn btn-primary mt-2">
+                <i class="fas fa-check me-1"></i>Understood
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/widgets/reportWidget.js"></script>

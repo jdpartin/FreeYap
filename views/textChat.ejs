@@ -1,7 +1,10 @@
 <div class="container my-0 p-0">
-    <div class="row g-0">
-        <div class="col-md-4 pe-1">
+    <div class="row g-0">        <div class="col-md-4 pe-1">
             <%- include('./components/topics-widget') %>
+            <div class="text-center">
+                <%- include('./components/vibe-check-widget') %>
+                <%- include('./components/report-widget') %>
+            </div>
         </div>
         <div class="col-md-8 ps-1">
             <%- include('./components/text-chat-widget') %>
@@ -18,6 +21,8 @@
 
         const topicsWidget = new TopicsWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
+        const vibeCheckWidget = new VibeCheckWidget(connectionManager);
+        const reportWidget = new ReportWidget(connectionManager);
 
         connectionManager.StartMatchmaking(chatMode);
     });

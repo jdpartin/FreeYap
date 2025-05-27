@@ -72,6 +72,12 @@ app.get('/webrtc-demo', (req: Request, res: Response) => {
   res.render('webrtcDemo', { title: 'WebRTC Demo', layout: 'layout' });
 });
 
+// Get my IP endpoint
+app.post('/my-ip', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  res.send({ ip });
+});
+
 server.listen(PORT, () => {
   console.log(`FreeYap server running at http://localhost:${PORT}`);
 });

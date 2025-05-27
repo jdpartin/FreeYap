@@ -12,6 +12,9 @@ class WebRTCConnectionManager
         this.partnerSocketId = null;
         this.socket = null;
 
+        this.myIP = null;
+        this.peerIP = null;
+
         this.connectionCount = 0; // Used to prevent delayed matchmaking from being called on an old connection
 
         window.webRTCConnectionManager = this;
@@ -29,6 +32,16 @@ class WebRTCConnectionManager
     GetPeer()
     {
         return this.peer;
+    }
+
+    GetPeerIP()
+    {
+        return this.peerIP;
+    }
+
+    GetMyIP()
+    {
+        return this.myIP;
     }
 
     CloseConnection()
@@ -138,6 +151,18 @@ class WebRTCConnectionManager
 
     async #connectToSocket()
     {
+        const response = await fetch(`/my-ip`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        this.myIP = data.ip;
+
         return new Promise((resolve) =>
         {
             this.socket = io();
@@ -262,6 +287,24 @@ class WebRTCConnectionManager
         this.peer.on('close', () => {
             this.#handlePeerClose();
         });
+
+        this.peer.on('data', (data) => 
+        {
+            const parsedData = JSON.parse(data.toString());
+
+            if (parsedData.type === 'send-ip')
+            {
+                this.peerIP = parsedData.ip;
+                this.#raiseEvent('received-peer-ip');
+            }
+            else if (parsedData.type === 'request-ip')
+            {
+                this.peer.send(JSON.stringify({
+                    type: 'send-ip',
+                    ip: this.myIP
+                }));
+            }
+        });
     }
 
     #handlePeerSignal(data)
@@ -271,6 +314,7 @@ class WebRTCConnectionManager
 
     #handlePeerConnect()
     {
+        this.peer.send(JSON.stringify({ type: 'request-ip' }));
         this.socket.disconnect();// Disconnect from the socket server once the peer connection is established
         this.#raiseEvent('connectionReady');
     }

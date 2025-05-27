@@ -1,0 +1,96 @@
+<link href="/css/vibe-check-widget.css" rel="stylesheet">
+
+<!-- Vibe Check Button -->
+<button id="vibe-check-button" class="btn btn-primary btn-sm vibe-check-btn" title="Help them find the right queue" style="background-color: var(--primary); border-color: var(--primary);">
+    <i class="fas fa-route"></i> Vibe Check
+</button>
+
+<!-- Vibe Check Form -->
+<div id="vibe-check-form" class="vibe-check-form hidden">
+    <div class="card shadow-sm">
+        <div class="card-header text-white" style="background-color: var(--primary);">
+            <h6 class="mb-0">
+                <i class="fas fa-compass me-2"></i>
+                Vibe Check
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="friendly-intro mb-3">
+                <p class="text-muted mb-2">
+                    <i class="fas fa-info-circle text-primary me-1"></i>
+                    Welcome to FreeYap's revolutionary Vibe Check system! Unlike traditional moderation, we believe in empowering free expression. Vibe Checks help us sort users into queues that best match their content, ensuring a tailored experience for everyone.
+                </p>
+                <small class="text-primary">
+                    <i class="fas fa-heart me-1"></i>
+                    <strong>Don't worry:</strong> This isn't about punishment or bans—it's about crafting the perfect environment for your content.
+                </small>
+            </div>
+            
+            <form id="vibe-check-report-form">
+                <!-- Content Type Selection -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">What type of content are they showing?</label>
+                    <div class="content-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contentType" id="adult-content" value="adult-content" required>
+                            <label class="form-check-label" for="adult-content">
+                                <strong>Adult/Sexual Content</strong>
+                                <small class="text-muted d-block">They might want the adult content queue</small>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contentType" id="graphic-content" value="graphic-content" required>
+                            <label class="form-check-label" for="graphic-content">
+                                <strong>Graphic/Intense Content</strong>
+                                <small class="text-muted d-block">Better suited for mature content areas</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Note for illegal use -->
+                <div class="mt-3">
+                    <small class="text-danger">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <strong>Important:</strong> For illegal use of the app, don't submit a vibe check, submit a report.
+                    </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between mt-3">
+                    <button type="button" id="cancel-vibe-check" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" id="submit-vibe-check" class="btn btn-primary" style="background-color: var(--primary); border-color: var(--primary);">
+                        <i class="fas fa-hand-holding-heart me-1"></i>Help Them Out
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Background Overlay -->
+<div id="vibe-check-overlay" class="hidden">
+</div>
+
+<!-- Vibe Check Confirmation Modal -->
+<div id="vibe-check-confirmation" class="vibe-check-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="text-center">
+            <div class="success-icon">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <h5 class="mt-3 mb-2">Vibe Check Complete!</h5>
+            <p class="text-muted">
+                Thank you for contributing to our revolutionary platform! At FreeYap, we champion free expression and empower users to find the perfect queue for their unique content. No bans, no moderation—just a tailored experience for everyone.
+            </p>
+            <button type="button" id="close-vibe-confirmation" class="btn btn-primary mt-2">
+                <i class="fas fa-thumbs-up me-1"></i>Got it!
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/widgets/vibeCheckWidget.js"></script>

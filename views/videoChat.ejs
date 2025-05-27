@@ -3,6 +3,10 @@
         <div class="col-md-8 pe-1">
             <%- include('./components/topics-widget') %>
             <%- include('./components/video-chat-widget') %>
+            <div class="text-center">
+                <%- include('./components/vibe-check-widget') %>
+                <%- include('./components/report-widget') %>
+            </div>
         </div>
         <div class="col-md-4 ps-1">
             <%- include('./components/text-chat-widget') %>
@@ -20,6 +24,8 @@
         const topicsWidget = new TopicsWidget(connectionManager);
         const videoChatWidget = new VideoChatWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
+        const vibeCheckWidget = new VibeCheckWidget(connectionManager);
+        const reportWidget = new ReportWidget(connectionManager);
 
         let mediaInitializationSucceeded = await videoChatWidget.MediaInitialization;
 
