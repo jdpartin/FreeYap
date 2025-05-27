@@ -1,0 +1,58 @@
+/* Special fixes for text-chat-widget in voiceChat view */
+body.voicechat-view .text-chat-container .input-group > .input-group-prepend .btn,
+body.voicechat-view .text-chat-container .input-group > .input-group-append .btn {
+    height: 38px !important;
+    padding: 6px 12px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.voicechat-view .text-chat-container .input-group > .form-control {
+    height: 38px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    padding: 6px 12px !important;
+}
+
+body.voicechat-view .text-chat-container .input-group {
+    flex-wrap: nowrap !important;
+    margin: 0 !important;
+    align-items: stretch !important;
+    border-collapse: collapse !important;
+}
+
+body.voicechat-view .text-chat-container .input-group > * {
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+body.voicechat-view .text-chat-container .input-group-prepend {
+    margin-right: 0 !important;
+}
+
+body.voicechat-view .text-chat-container .input-group-append {
+    margin-left: 0 !important;
+}
+
+body.voicechat-view .text-chat-container .input-group > :first-child {
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
+}
+
+body.voicechat-view .text-chat-container .input-group > :last-child {
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+}
+
+/* Fix for input and buttons being different sizes */
+body.voicechat-view .text-chat-container .input-group {
+    display: flex;
+}
+
+body.voicechat-view .text-chat-container .input-group > *,
+body.voicechat-view .text-chat-container .input-group .btn {
+    border-width: 1px;
+    line-height: 1.5;
+}

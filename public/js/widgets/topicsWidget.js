@@ -96,7 +96,7 @@ class TopicsWidget
                 for (const topic of this.myTopics)
                 {
                     this.myTopicsListElement.innerHTML += `<div class="topic-bubble">${topic}</div>`;
-                    await new Promise(resolve => setTimeout(resolve, animationDelay));
+                    //await new Promise(resolve => setTimeout(resolve, animationDelay));
                 }
             }
             else
@@ -107,9 +107,11 @@ class TopicsWidget
 
         if (this.peerTopics == null || this.peerTopics.length === 0)
         {
-            if (this.webRTCConnectionManager.GetPeer() == null)
+            let peer = this.webRTCConnectionManager.GetPeer();
+
+            if (peer == null || peer.destroyed)
             {
-                this.partnerTopicsListElement.innerHTML = '<div class="topics-empty">Waiting for partner...</div>';
+                this.partnerTopicsListElement.innerHTML = '<div class="topics-empty"><i class="spinner-border spinner-border-sm"></i> Waiting for partner...</div>';
             }
             else
             {
@@ -123,7 +125,7 @@ class TopicsWidget
             for (const topic of this.peerTopics)
             {
                 this.partnerTopicsListElement.innerHTML += `<div class="topic-bubble">${topic}</div>`;
-                await new Promise(resolve => setTimeout(resolve, animationDelay));
+                //await new Promise(resolve => setTimeout(resolve, animationDelay));
             }
         }
     }

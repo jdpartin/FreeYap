@@ -56,14 +56,6 @@ app.get('/help', (req: Request, res: Response) => {
   res.render('help', { title: 'FreeYap Help & FAQs' });
 });
 
-app.get('/queue', (req: Request, res: Response) => {
-  res.render('queue', { title: 'Queue' });
-});
-
-app.get('/template', (req: Request, res: Response) => {
-  res.render('template', { title: 'Template Page' });
-});
-
 app.get('/video-chat', (req: Request, res: Response) => {
   res.render('videoChat', { title: 'Video Chat' });
 });
@@ -72,56 +64,12 @@ app.get('/voice-chat', (req: Request, res: Response) => {
   res.render('voiceChat', { title: 'Voice Chat' });
 });
 
-app.get('/webrtc-demo', (req: Request, res: Response) => {
-  res.render('webrtcDemo', { title: 'WebRTC Demo', layout: 'layout' });
-});
-
 app.get('/text-chat', (req: Request, res: Response) => {
   res.render('textChat', { title: 'Text Chat' });
 });
 
-app.get('/topics-demo', (req: Request, res: Response) => {
-  res.render('topics-demo', { title: 'Topics Demo' });
-});
-
-app.get('/simple-text-chat', (req: Request, res: Response) => {
-  res.render('simpleTextChat', { title: 'Simple Text Chat' });
-});
-
-app.get('/semantic-similarity', (req: Request, res: Response) => {
-  res.render('semanticSimilarity', { title: 'Semantic Similarity Tester' });
-});
-
-app.get('/modular-text-chat-demo', (req: Request, res: Response) => {
-  res.render('modularTextChatDemo', { title: 'Modular Text Chat Demo' });
-});
-
-app.get('/text-chat-test', (req: Request, res: Response) => {
-    res.render('textChatTest', { 
-        title: 'Text Chat Test', 
-        layout: 'layout' // Explicitly set the layout
-    });
-});
-
-app.get('/video-chat-test', (req: Request, res: Response) => {
-    res.render('videoChatTest', { 
-        title: 'Video Chat Test', 
-        layout: 'layout' // Explicitly set the layout
-    });
-});
-
-app.get('/voice-chat-test', (req: Request, res: Response) => {
-    res.render('voiceChatTest', { 
-        title: 'Voice Chat Test', 
-        layout: 'layout' // Explicitly set the layout
-    });
-});
-
-app.get('/combined-chat', (req: Request, res: Response) => {
-    res.render('combinedChatView', { 
-        title: 'Combined Chat Experience', 
-        layout: 'layout' // Explicitly set the layout
-    });
+app.get('/webrtc-demo', (req: Request, res: Response) => {
+  res.render('webrtcDemo', { title: 'WebRTC Demo', layout: 'layout' });
 });
 
 server.listen(PORT, () => {

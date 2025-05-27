@@ -1,10 +1,9 @@
 <div class="container my-0 p-0">
     <div class="row g-0">
-        <div class="col-md-8 pe-1">
+        <div class="col-md-4 pe-1">
             <%- include('./components/topics-widget') %>
-            <%- include('./components/video-chat-widget') %>
         </div>
-        <div class="col-md-4 ps-1">
+        <div class="col-md-8 ps-1">
             <%- include('./components/text-chat-widget') %>
         </div>
     </div>
@@ -18,18 +17,8 @@
         const connectionManager = new WebRTCConnectionManager();
 
         const topicsWidget = new TopicsWidget(connectionManager);
-        const videoChatWidget = new VideoChatWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
 
-        let mediaInitializationSucceeded = await videoChatWidget.MediaInitialization;
-
-        if (mediaInitializationSucceeded)
-        {
-            connectionManager.StartMatchmaking(chatMode);
-        }
-        else
-        {
-            window.alert("Camera and/or audio permissions denied. Please change your browser settings and refresh the page.");
-        }
+        connectionManager.StartMatchmaking(chatMode);
     });
 </script>

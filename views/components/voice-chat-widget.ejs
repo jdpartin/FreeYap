@@ -1,19 +1,9 @@
 <link href="/css/voice-chat-widget.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<script src="/js/modules/voiceChat.js"></script>
-
-<div class="container">
-    <h1>Voice Chat Test</h1>
-    
-    <div id="voice-container">
-        <div id="voice-controls">
-            <button id="test-mic-btn" class="btn" style="background-color: #007bff; display: none;">Test Microphone (Fallback)</button>
-            <button id="start-voice-btn" class="btn" disabled>Start Voice Chat</button>
-            <button id="stop-voice-btn" class="btn" disabled>Stop Voice</button>
-            <button id="mute-audio-btn" class="btn" disabled>Mute Audio</button>
-            <button id="voice-effect-btn" class="btn" disabled>Voice Effect</button>
-        </div>
-        
+<div class="container p-0">
+    <div id="voice-container" class="layout-default">
+        <!-- Audio visualizer -->
         <div id="audio-visualizer">
             <div class="audio-wrapper">
                 <label>Local Audio</label>
@@ -38,9 +28,248 @@
                 </div>
             </div>
         </div>
+          <!-- Effect menus container -->
+        <div id="effect-menus-container">
+            <!-- Voice Effects Menu -->
+            <div id="voice-effects-menu" class="effect-menu">
+                <div class="effect-menu-header">
+                    <h5>Voice Effects</h5>
+                    <button class="close-menu-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="effect-menu-content">
+                    <div class="effect-category">
+                        <h6>Voice Changers</h6>
+                        <div class="effect-options">
+                            <div class="effect-option active" data-effect="none">
+                                <div class="effect-preview voice-normal"></div>
+                                <span>Normal</span>
+                            </div>
+                            <div class="effect-option" data-effect="deep">
+                                <div class="effect-preview voice-deep"></div>
+                                <span>Deep</span>
+                            </div>
+                            <div class="effect-option" data-effect="high">
+                                <div class="effect-preview voice-high"></div>
+                                <span>High</span>
+                            </div>
+                            <div class="effect-option" data-effect="robot">
+                                <div class="effect-preview voice-robot"></div>
+                                <span>Robot</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <div id="connection-status">
-            Status: Initializing microphone permissions...
+        <!-- Bottom controls bar with simplified layout -->
+        <div id="bottom-controls-bar" class="d-flex flex-column">
+            <!-- Voice controls in white section -->
+            <div id="voice-controls" class="white-section">
+                <button id="start-voice-btn" class="control-btn d-none" title="Start Voice Chat">
+                    <i class="fas fa-phone"></i>
+                </button>
+                <button id="stop-voice-btn" class="control-btn d-none" title="Stop Voice">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+                <button id="mute-audio-btn" class="control-btn" title="Toggle Audio">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button id="settings-btn" class="control-btn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>        <!-- Bottom bar for voice chat title and layout controls -->
+        <div id="bottom-bar" class="text-white d-flex justify-content-between align-items-center">
+            <!-- Voice effect controls on the left -->
+            <div id="voice-effects" class="d-flex align-items-center">
+                <button class="effect-btn" title="Voice Effects">
+                    <i class="fas fa-bullhorn"></i>
+                </button>
+            </div>
+            
         </div>
     </div>
 </div>
+
+<script src="/js/widgets/voiceChatWidget.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle effect menus
+    const effectMenus = document.querySelectorAll('.effect-menu');
+    const effectButtons = document.querySelectorAll('.effect-btn');
+    const closeMenuBtns = document.querySelectorAll('.close-menu-btn');
+    
+    // Function to close all menus
+    function closeAllMenus() {
+        effectMenus.forEach(menu => {
+            menu.classList.remove('active');
+        });
+        
+        effectButtons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+    }
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', function(e) {
+        const isMenuClick = e.target.closest('.effect-menu');
+        const isEffectBtnClick = e.target.closest('.effect-btn');
+        
+        if (!isMenuClick && !isEffectBtnClick) {
+            closeAllMenus();
+        }
+    });
+    
+    // Close button functionality
+    closeMenuBtns.forEach(btn => {
+        btn.addEventListener('click', closeAllMenus);
+    });
+    
+    // Effect option selection
+    const effectOptions = document.querySelectorAll('.effect-option');
+    
+    effectOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const effectType = this.getAttribute('data-effect');
+            const categoryContainer = this.closest('.effect-category');
+            
+            // Remove active class from siblings
+            const siblings = categoryContainer.querySelectorAll('.effect-option');
+            siblings.forEach(sibling => sibling.classList.remove('active'));
+            
+            // Add active class to selected option
+            this.classList.add('active');
+            
+            // Show a visual indicator that the effect was applied
+            const notification = document.createElement('div');
+            notification.classList.add('toast', 'show', 'position-fixed', 'bottom-0', 'end-0', 'm-3');
+            notification.style.zIndex = '1000';
+            notification.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            notification.style.color = 'white';
+            notification.style.padding = '10px 15px';
+            notification.style.borderRadius = '4px';
+            notification.innerHTML = `<div class="toast-body">Applied: ${effectType} voice effect</div>`;
+            document.body.appendChild(notification);
+            
+            // Remove the notification after 2 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+            
+            // Apply the effect (placeholder for actual implementation)
+            console.log(`Applying ${effectType} voice effect`);
+            
+            // Here you would call the actual function to apply the selected voice effect
+        });
+    });
+    
+    // Voice effect button functionality
+    effectButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Get the effect type from the button's title attribute
+            const effectType = this.getAttribute('title');
+            
+            // Position the menu relative to the button
+            const buttonRect = this.getBoundingClientRect();
+            const effectMenusContainer = document.getElementById('effect-menus-container');
+            
+            // Update the position to be above the button
+            effectMenusContainer.style.position = 'absolute';
+            effectMenusContainer.style.bottom = '80px'; // Position above the bottom bar
+            
+            // Toggle active state for the clicked button
+            this.classList.toggle('active');
+            
+            // Determine which menu to show
+            let targetMenu;
+            if (effectType === 'Voice Effects') {
+                targetMenu = document.getElementById('voice-effects-menu');
+            }
+            
+            // Close all menus
+            effectMenus.forEach(menu => {
+                menu.classList.remove('active');
+            });
+            
+            // Toggle the target menu
+            if (targetMenu) {
+                targetMenu.classList.toggle('active');
+                
+                // Add a subtle animation effect
+                targetMenu.style.animation = 'none';
+                setTimeout(() => {
+                    targetMenu.style.animation = 'slideUp 0.3s ease';
+                }, 10);
+            }
+            
+            console.log(`${effectType} menu toggled`);
+        });
+    });
+
+    const localWave = document.getElementById('local-wave');
+    
+    // Settings button functionality - show a dropdown menu with options
+    const settingsBtn = document.getElementById('settings-btn');
+    
+    settingsBtn.addEventListener('click', function() {
+        // Create settings dropdown if it doesn't exist yet
+        let settingsMenu = document.getElementById('settings-dropdown');
+        
+        if (!settingsMenu) {
+            settingsMenu = document.createElement('div');
+            settingsMenu.id = 'settings-dropdown';
+            settingsMenu.classList.add('settings-dropdown', 'position-absolute', 'bg-white', 'p-2', 'rounded', 'shadow');
+            settingsMenu.style.width = '200px';
+            settingsMenu.style.right = '10px';
+            settingsMenu.style.top = '60px';
+            settingsMenu.style.zIndex = '100';
+            
+            settingsMenu.innerHTML = `
+                <h6 class="dropdown-header border-bottom pb-2 mb-2">Audio Settings</h6>
+                <div class="mb-3">
+                    <label for="microphoneSelect" class="form-label">Microphone</label>
+                    <select class="form-select form-select-sm" id="microphoneSelect">
+                        <option selected>Default microphone</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="speakerSelect" class="form-label">Speaker</label>
+                    <select class="form-select form-select-sm" id="speakerSelect">
+                        <option selected>Default speaker</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label for="volumeControl" class="form-label">Volume</label>
+                    <input type="range" class="form-range" id="volumeControl" min="0" max="100" step="1" value="100">
+                </div>
+                <button class="btn btn-sm btn-primary w-100">Apply Settings</button>
+            `;
+            
+            document.getElementById('voice-controls').appendChild(settingsMenu);
+        } else {
+            // Toggle visibility
+            if (settingsMenu.style.display === 'none' || !settingsMenu.style.display) {
+                settingsMenu.style.display = 'block';
+            } else {
+                settingsMenu.style.display = 'none';
+            }
+        }
+        
+        // Close settings menu when clicking elsewhere
+        setTimeout(() => {
+            document.addEventListener('click', function closeSettings(e) {
+                if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+                    settingsMenu.style.display = 'none';
+                    document.removeEventListener('click', closeSettings);
+                }
+            });
+        }, 0);
+        
+        console.log('Settings button clicked');
+    });
+});
+</script>

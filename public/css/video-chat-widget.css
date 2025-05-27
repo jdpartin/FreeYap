@@ -1,10 +1,4 @@
-/* Import root variables */
-@import url('/styles.css');
-
-/* Define the primary red color matching the text chat widget */
-:root {
-    --primary-red: #ff0000; /* Same as text chat widget */
-}
+/* Video Chat Widget Styles */
 
 /* Simplified styling for video chat widget */
 #video-container {
@@ -118,7 +112,7 @@ video {
 
 /* Control button styles - Primary red color */
 .control-btn {
-    background-color: var(--primary-red); /* Use the same red as text chat widget */
+    background-color: var(--primary); /* Use the main primary color */
     color: white;
     border: none;
     border-radius: 50%;
@@ -147,7 +141,7 @@ video {
 
 /* Bottom bar styles */
 #bottom-bar {
-    background-color: var(--primary-red); /* Matches the top bar of the text chat widget */
+    background-color: var(--primary); /* Use the main primary color */
     color: white;
     padding: 10px;
     width: 100%;

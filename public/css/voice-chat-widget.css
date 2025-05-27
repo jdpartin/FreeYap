@@ -2,6 +2,13 @@
     margin: 20px auto;
     max-width: 800px;
     text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.125); /* Match video-chat-widget border */
+    border-radius: 12px; /* Match video-chat-widget border-radius */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Match video-chat-widget shadow */
+    background: #ffffff; /* Plain white background */
+    overflow: hidden; /* Ensure content stays within rounded corners */
+    display: flex;
+    flex-direction: column;
 }
 
 #voice-controls {
@@ -35,12 +42,14 @@
     flex-wrap: wrap;
     gap: 40px;
     margin: 30px 0;
+    background-color: #ffffff; /* Plain white background */
 }
 
 .audio-wrapper {
     flex: 1;
     min-width: 250px;
     text-align: center;
+    background-color: #ffffff; /* Plain white background */
 }
 
 .audio-wrapper label {
@@ -69,7 +78,7 @@ audio {
 .wave-bar {
     width: 8px;
     min-height: 4px;
-    background: linear-gradient(to top, #4CAF50, #81C784);
+    background-color: var(--primary); /* Solid red color */
     border-radius: 4px;
     animation: wave 1.5s ease-in-out infinite;
 }
@@ -86,12 +95,13 @@ audio {
 }
 
 .audio-wave.active .wave-bar {
-    background: linear-gradient(to top, #FF5722, #FF8A65);
+    background-color: var(--primary);
 }
 
 .audio-wave.muted .wave-bar {
     background: linear-gradient(to top, #666, #999);
     animation-play-state: paused;
+    /* Keep the gray color for muted state to visually indicate audio is muted */
 }
 
 #connection-status {
@@ -112,11 +122,306 @@ audio {
 }
 
 #mute-audio-btn.muted {
-    background-color: #F44336;
+    background-color: var(--primary);
 }
 
 #mute-audio-btn.muted:hover {
-    background-color: #D32F2F;
+    background-color: var(--primary);
+}
+
+#bottom-bar {
+    background-color: var(--primary, #2196F3); /* Use the main primary color with fallback */
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin-top: auto; /* Push to bottom of container like video widget */
+    width: 100%;
+}
+
+/* Bottom controls bar styling */
+#bottom-controls-bar {
+    padding: 10px 0;
+    /* Removed border-top to eliminate the thin line above audio controls */
+}
+
+#voice-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background-color: #ffffff;
+    margin-bottom: 0;
+}
+
+/* Control buttons styling */
+.control-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.05);
+}
+
+.control-btn i {
+    font-size: 16px;
+    color: #333;
+}
+
+#start-voice-btn {
+    background-color: #4CAF50;
+}
+
+#start-voice-btn i {
+    color: white;
+}
+
+#stop-voice-btn {
+    background-color: var(--primary);
+}
+
+#stop-voice-btn i {
+    color: white;
+}
+
+#mute-audio-btn.muted {
+    background-color: var(--primary);
+}
+
+#mute-audio-btn.muted i {
+    color: white;
+}
+
+/* Effects menus styling */
+#effect-menus-container {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    width: 90%;
+    max-width: 320px;
+}
+
+.effect-menu {
+    display: none;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.effect-menu.active {
+    display: block;
+}
+
+.effect-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.effect-menu-header h5 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.close-menu-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #666;
+}
+
+.close-menu-btn:hover {
+    color: #333;
+}
+
+.effect-menu-content {
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.effect-category {
+    margin-bottom: 15px;
+}
+
+.effect-category h6 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+    font-weight: 600;
+}
+
+.effect-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 10px;
+}
+
+.effect-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.effect-option:hover {
+    background-color: #f0f0f0;
+}
+
+.effect-option.active {
+    background-color: #e3f2fd;
+}
+
+.effect-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f5f5f5;
+}
+
+.effect-option span {
+    font-size: 12px;
+    color: #333;
+}
+
+/* Voice effect previews */
+.voice-normal {
+    background: linear-gradient(135deg, #81c784, #4caf50);
+}
+
+.voice-deep {
+    background: linear-gradient(135deg, #5c6bc0, #3f51b5);
+}
+
+.voice-high {
+    background: linear-gradient(135deg, #ffb74d, #ff9800);
+}
+
+.voice-robot {
+    background: linear-gradient(135deg, #90a4ae, #607d8b);
+}
+
+#voice-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Match video-chat-widget hover shadow */
+}
+
+/* Voice effects button */
+#voice-effects .effect-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+#voice-effects .effect-btn:hover,
+#voice-effects .effect-btn.active {
+    background-color: rgba(255,255,255,0.2);
+}
+
+/* Animation for menu appearance */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Settings dropdown styles */
+.settings-dropdown {
+    display: none;
+    animation: fadeIn 0.2s ease;
+}
+
+.settings-dropdown .dropdown-header {
+    color: #333;
+    font-weight: 600;
+}
+
+.settings-dropdown label {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.settings-dropdown .form-select {
+    font-size: 0.85rem;
+}
+
+/* Tooltip styles */
+.tooltip-custom {
+    position: fixed;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Toast notification styles */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @media (max-width: 600px) {
@@ -129,5 +434,17 @@ audio {
         display: block;
         width: 100%;
         margin: 5px 0;
+    }
+    
+    #effect-menus-container {
+        width: 100%;
+        max-width: 100%;
+        bottom: 110px;
+    }
+    
+    .settings-dropdown {
+        width: 100% !important;
+        right: 0 !important;
+        left: 0 !important;
     }
 }

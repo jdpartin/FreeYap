@@ -33,7 +33,7 @@
 
                         <!-- Emoji Button -->
                         <div class="input-group-prepend">
-                            <button class="btn btn-secondary" id="emoji-button" style="background-color: var(--primary); border-radius: 4px 0 0 4px; border:none !important;" disabled>
+                            <button class="btn btn-secondary" id="emoji-button" style="background-color: var(--primary); border-radius: 4px 0 0 4px; border:none !important; height: 38px; margin: 0; padding: 6px 12px; display: flex; align-items: center; justify-content: center;" disabled>
                                 <i class="bi bi-emoji-smile"></i>
                             </button>
                         </div><!-- Custom Popup with Tabs -->                        
@@ -98,9 +98,9 @@
                                 </div>
                             </div>
                         </div>                        
-                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled>
+                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." disabled style="height: 38px; margin: 0; box-sizing: border-box;">
                         <div class="input-group-append">
-                            <button class="btn btn-primary" id="send-button" disabled style="border-radius: 0 4px 4px 0;background: var(--primary) !important;">
+                            <button class="btn btn-primary" id="send-button" disabled style="border-radius: 0 4px 4px 0; background: var(--primary) !important; height: 38px; margin: 0; padding: 6px 12px; display: flex; align-items: center; justify-content: center;">
                                 <i class="bi bi-send-fill"></i>
                             </button>
                         </div>
@@ -230,7 +230,7 @@
             emoji-picker::part(wrapper) {
                 background: white !important;
             }
-            /* Remove unwanted margins between input group elements */
+            /* Fix input height and alignment issues */
             .input-group-prepend,
             .input-group-append {
                 display: flex;
@@ -239,9 +239,52 @@
             .input-group-append .btn {
                 position: relative;
                 z-index: 2;
+                height: 38px;
+                padding: 6px 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             #chat-input {
                 border-radius: 0;
+                height: 38px; /* Match button height */
+                padding: 6px 12px;
+                box-sizing: border-box;
+                line-height: 1.5;
+            }
+            /* Remove the gap between elements */
+            .input-group {
+                flex-wrap: nowrap;
+                margin: 0;
+                align-items: stretch;
+            }
+            .input-group > .form-control {
+                margin: 0;
+                position: relative;
+                flex: 1 1 auto;
+                width: 1%;
+                min-width: 0;
+            }
+            /* Override Bootstrap's negative margin that can cause alignment issues */
+            .input-group > * {
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+            /* Fix specific margins for prepend/append */
+            .input-group-prepend {
+                margin-right: 0 !important;
+            }
+            .input-group-append {
+                margin-left: 0 !important;
+            }
+            /* Fix border radius for first and last elements */
+            .input-group > :first-child {
+                border-top-left-radius: 4px !important;
+                border-bottom-left-radius: 4px !important;
+            }
+            .input-group > :last-child {
+                border-top-right-radius: 4px !important;
+                border-bottom-right-radius: 4px !important;
             }
         `;        
         

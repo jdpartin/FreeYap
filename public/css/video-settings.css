@@ -39,8 +39,8 @@
 }
 
 #video-settings-modal .btn-primary {
-    background-color: var(--primary-red, #ff0000);
-    border-color: var(--primary-red, #ff0000);
+    background-color: var(--primary);
+    border-color: var(--primary);
 }
 
 #video-settings-modal .btn-primary:hover {
