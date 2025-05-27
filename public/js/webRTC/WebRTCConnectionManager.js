@@ -110,7 +110,8 @@ class WebRTCConnectionManager
 
     async #delayedMatchmakingRoutine(chatMode, topics = [])
     {
-        await new Promise(resolve => setTimeout(resolve, 10000)); // Wait for 10 seconds
+        // Matchmaking stagger to prevent race conditions: 50% chance for 9 or 10 seconds
+        await new Promise(resolve => setTimeout(resolve, Math.random() < 0.5 ? 9000 : 10000));
 
         if (!this.peer)
         {

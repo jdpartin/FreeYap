@@ -10,7 +10,7 @@ BEGIN
     FROM matchmaking_queue q
     WHERE 
         q.chat_mode = mode
-        AND q.has_topics = TRUE AND q.inserted_at <= NOW() - INTERVAL '10 seconds'
+        AND q.has_topics = TRUE AND q.inserted_at <= NOW() - INTERVAL '11 seconds' -- Matchmaking stagger to prevent race conditions
     ORDER BY q.inserted_at ASC
     LIMIT 1;
 
