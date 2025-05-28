@@ -19,6 +19,7 @@
     "ejs": "^3.1.9",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
+    "giphy-api": "^2.0.2",
     "openai": "^4.103.0",
     "pg": "^8.16.0",
     "simple-peer": "^9.11.1",

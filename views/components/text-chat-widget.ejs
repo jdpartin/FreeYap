@@ -1,6 +1,25 @@
 <link href="/css/text-chat-widget.css" rel="stylesheet">
 <link href="/css/chat-minimize.css" rel="stylesheet">
 
+<style>
+    .gif-image
+    {
+        height:200px;
+    }
+
+    .sticker-image
+    {
+        height:200px;
+    }
+
+    .scrollable_div
+    {
+        width:100%;
+        height:100%;
+        overflow-y: scroll;
+    }
+</style>
+
 <div class="container text-chat-container p-0">
     <div class="row justify-content-center">
         <div class="col-12">
@@ -59,9 +78,10 @@
                                 <!-- Emojis Tab -->
                                 <div id="emojis-tab" class="tab-pane active" style="height: 100%; display: block;">
                                     <div id="emoji-picker-container" style="height: 100%; overflow: auto;"></div>
-                                </div>                                <!-- GIFs Tab -->
+                                </div>
+                                <!-- GIFs Tab -->
                                 <div id="gifs-tab" class="tab-pane" style="height: 100%; display: none; padding: 20px; text-align: center;">
-                                    <p style="color: #666; margin-top: 50px;">GIFs coming soon!</p>
+                                    
                                 </div>
                                   <!-- Stickers Tab -->
                                 <div id="stickers-tab" class="tab-pane" style="height: 100%; display: none; padding: 20px; text-align: center;">
@@ -107,7 +127,8 @@
                     </div>
 
                 </div>
-            </div>        </div>    
+            </div>        
+        </div>    
     </div>
 </div>
 
@@ -118,21 +139,28 @@
 </div>
 
 <script src="/js/widgets/textChatWidget.js"></script>
+<script src="/js/apiClients/giphyAPIClient.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
 
 
 <script>    
     document.addEventListener('DOMContentLoaded', function () {
+        const giphyAPIClient = new GiphyAPIClient();
+
         const emojiButton = document.getElementById('emoji-button');
         const chatInput = document.getElementById('chat-input');
         const customPopup = document.getElementById('custom-popup');
-        const emojiPickerContainer = document.getElementById('emoji-picker-container');        // Get references to minimize-related elements        
+        const emojiPickerContainer = document.getElementById('emoji-picker-container');        
+        // Get references to minimize-related elements        
         //const minimizeButton = document.getElementById('minimize-chat-btn');
-        const chatBubble = document.getElementById('chat-bubble');        const chatCard = document.querySelector('.chat-card');
+        const chatBubble = document.getElementById('chat-bubble');        
+        const chatCard = document.querySelector('.chat-card');
         const container = document.querySelector('.text-chat-container');
+
         let unreadCount = 0;
         
         let emojiPicker = null;        // Initialize emoji picker only when first opened
+
         function initializeEmojiPicker() {
             if (!emojiPicker) {
                 emojiPicker = document.createElement('emoji-picker');
@@ -148,6 +176,56 @@
                     //customPopup.style.display = 'none'; // Hide popup after selection
                 });
             }        
+        }
+
+        async function initializeGifPicker()
+        {
+            var gifsTab = document.getElementById("gifs-tab");
+            var trendingGifs = await giphyAPIClient.GetTrendingGifs();
+            var gifHTML = '<div class="scrollable_div">';
+
+            trendingGifs.data.forEach(gifData => {
+                gifHTML += `<img src="${gifData.images.original.url}" alt="Trending GIF" class="gif-image" data-gif-url="${gifData.images.original.url}">`;
+            });
+
+            gifHTML += '</div>';
+
+            gifsTab.innerHTML = gifHTML;
+
+            // Add click event listener to GIFs
+            const gifImages = gifsTab.querySelectorAll('.gif-image');
+            gifImages.forEach(gifImage => {
+                gifImage.addEventListener('click', () => {
+                    const gifUrl = gifImage.getAttribute('data-gif-url');
+                    sendGifMessage(gifUrl);
+                });
+            });
+        }
+
+        async function initializeStickerPicker()
+        {
+            var stickersTab = document.getElementById("stickers-tab");
+            var trendingStickers = await giphyAPIClient.GetTrendingStickers();
+            var stickerHTML = '<div class="scrollable_div">';
+
+            trendingStickers.data.forEach(stickerData => {
+                stickerHTML += `<img src="${stickerData.images.original.url}" alt="Trending Sticker" class="sticker-image" data-sticker-url="${stickerData.images.original.url}">`;
+            });
+
+            stickerHTML += '</div>';
+
+            stickersTab.innerHTML = stickerHTML;
+        }
+
+        function sendGifMessage(gifUrl) {
+            const chatLogContainer = document.getElementById('chat-log-container');
+            const gifMessage = document.createElement('div');
+            gifMessage.className = 'chat-message sent';
+            gifMessage.innerHTML = `<img src="${gifUrl}" alt="GIF" class="gif-image">`;
+            chatLogContainer.appendChild(gifMessage);
+
+            // Optionally, scroll to the bottom of the chat
+            chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
         }
 
         // Toggle the custom popup when the button is clicked
@@ -185,8 +263,17 @@
                 }
 
                 // Initialize emoji picker when emojis tab is selected
-                if (targetTab === 'emojis') {
+                if (targetTab === 'emojis')
+                {
                     initializeEmojiPicker();
+                }
+                else if (targetTab === 'gifs')
+                {
+                    initializeGifPicker();
+                }
+                else if (targetTab === 'stickers')
+                {
+                    initializeStickerPicker();
                 }
             });
         });        // Set up utilities functionality

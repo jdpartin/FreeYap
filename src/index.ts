@@ -9,6 +9,7 @@ import { setupWebRTCSignaling } from './webrtc';
 import matchmakingApi from './api/matchmaking';
 import topicPopularityApi from './api/topic_popularity';
 import semanticSimilarityApi from './api/semantic_similarity';
+import giphyApi from './api/giphy';
 import MatchmakingManager from './managers/matchmakingManager';
 
 const app = express();
@@ -39,6 +40,7 @@ MatchmakingManager.initialize(io);
 app.use('/api/matchmaking', matchmakingApi);
 app.use('/api/topic-popularity', topicPopularityApi);
 app.use('/api/semantic-similarity', semanticSimilarityApi);
+app.use('/api/giphy', giphyApi);
 
 // Initialize WebRTC signaling
 setupWebRTCSignaling(io);
