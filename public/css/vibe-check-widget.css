@@ -189,7 +189,6 @@
     max-width: 400px;
     width: 90%;
     text-align: center;
-    animation: modalSlideIn 0.3s ease-out;
 }
 
 @keyframes modalSlideIn {
@@ -225,6 +224,15 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1040;
+}
+
+/* Center align the #vibe-check widget */
+#vibe-check {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
 }
 
 /* Responsive design */

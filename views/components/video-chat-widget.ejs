@@ -167,7 +167,7 @@
         </div>
         
         <!-- Bottom controls bar with simplified layout options -->
-        <div id="bottom-controls-bar" class="d-flex flex-column" >           
+        <div id="bottom-controls-bar" class="d-flex flex-column" >  
              <!-- Video controls in white section -->
             <div id="video-controls" class="white-section">
                 <button id="mute-video-btn" class="control-btn" title="Toggle Video">
@@ -184,30 +184,45 @@
                 </button>
             </div>
         </div>        
+
         <!-- Bottom bar for video chat title and layout controls -->
-        <div id="bottom-bar" class="text-white d-flex justify-content-between align-items-center">
-            <!-- Video effect controls on the left -->
-            <div id="video-effects" class="d-flex align-items-center">
-                <button class="effect-btn" title="Backgrounds/Filters">
-                    <i class="fas fa-magic"></i>
-                </button>
-                <button class="effect-btn" title="Avatars">
-                    <i class="fas fa-user-circle"></i>
-                </button>
-                <button class="effect-btn" title="Voice Effects">
-                    <i class="fas fa-bullhorn"></i>
-                </button>
+        <div id="bottom-bar" class="text-white d-flex align-items-center">
+            <!-- Column for video effect controls -->
+            <div id="video-effects" class="d-flex flex-column align-items-start">
+                <div class="d-flex flex-row">
+                    <button class="effect-btn" title="Backgrounds/Filters">
+                        <i class="fas fa-magic"></i>
+                    </button>
+                    <button class="effect-btn" title="Avatars">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <button class="effect-btn" title="Voice Effects">
+                        <i class="fas fa-bullhorn"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Column for Vibe Check Widget -->
+            <div id="vibe-check" class="d-flex flex-column align-items-center">
+                <div class="d-flex flex-row">
+                    <!-- The vibe check widget is automatically being initialized 
+                         in the video chat widget class constructor -->
+                    <%- include('./vibe-check-widget') %>
+                </div>
+            </div>
+
+            <!-- Column for layout controls -->
+            <div id="layout-controls" class="d-flex flex-column align-items-end">
+                <div class="d-flex flex-row">
+                    <button class="layout-btn active" data-layout="default" title="Default Layout">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="layout-btn" data-layout="pip" title="Picture in Picture">
+                        <i class="fas fa-clone"></i>
+                    </button>
+                </div>
             </div>
             
-            <!-- Layout controls on the right -->
-            <div id="layout-controls" class="d-flex align-items-center">
-                <button class="layout-btn active" data-layout="default" title="Default Layout">
-                    <i class="fas fa-th-large"></i>
-                </button>
-                <button class="layout-btn" data-layout="pip" title="Picture in Picture">
-                    <i class="fas fa-clone"></i>
-                </button>
-            </div>
         </div>
     </div>
 </div>

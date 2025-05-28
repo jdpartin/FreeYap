@@ -4,6 +4,9 @@ class VideoChatWidget
     {
         this.webRTCConnectionManager = webRTCConnectionManager;
 
+        // There is a vibe check widget in the video chat widget
+        this.vibeCheckWidget = new VibeCheckWidget(webRTCConnectionManager);
+
         this.eventTarget = new EventTarget();
         this.messageType = 'video-chat';
         

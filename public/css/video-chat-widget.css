@@ -63,13 +63,14 @@ video {
     display: flex;
     gap: 10px;
     margin-left: auto; /* Pushes the layout controls to the right */
+    justify-content: flex-end; /* Aligns layout controls to the right */
 }
 
 /* Video effects styles */
 #video-effects {
     display: flex;
     gap: 10px;
-    margin-left: 10px; /* Add some margin on the left */
+    justify-content: flex-start; /* Aligns video effects to the left */
 }
 
 .effect-btn {
@@ -153,6 +154,15 @@ video {
     align-items: center;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
+}
+
+/* Fixed widths for bottom bar columns */
+#video-effects,
+#vibe-check,
+#layout-controls {
+    flex: 1;
+    max-width: 33%;
+    text-align: center;
 }
 
 /* Detached PiP mode - Fixed to window */
