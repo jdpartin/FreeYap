@@ -40,7 +40,9 @@ class VoiceChatWidget
         this.#setupUIEventListeners();
         this.#setupAudioIconContainers();
         this.MediaInitialization = this.#initializeMedia();
-    }    async #initializeMedia()
+    }    
+    
+    async #initializeMedia()
     {
         try
         {
@@ -166,7 +168,9 @@ class VoiceChatWidget
         {
             iconContainer.classList.add('volume-peak');
         }
-    }    #handleConnectionReady()
+    }    
+    
+    #handleConnectionReady()
     {
         let peer = this.webRTCConnectionManager.GetPeer();
 
@@ -179,10 +183,10 @@ class VoiceChatWidget
     #handleConnectionClosed()
     {
         this.remoteStream = null;
-        
+
         // Stop volume analysis
         this.volumeAnalysisActive = false;
-        
+
         // Reset volume visualizations
         if (this.localIconContainer)
         {
@@ -193,7 +197,12 @@ class VoiceChatWidget
             this.remoteIconContainer.classList.remove('volume-silent', 'volume-low', 'volume-medium', 'volume-high', 'volume-peak');
         }
 
-        this.muteAudioBtn.disabled = true;
+        // Stop local audio tracks
+        if (this.localStream)
+        {
+            this.localStream.getTracks().forEach(track => track.stop());
+            this.localStream = null;
+        }
     }
 
     #setupVoiceChannel(peer)
@@ -268,10 +277,7 @@ class VoiceChatWidget
 
     #startVoiceTransmission(peer)
     {
-        this.localStream.getTracks().forEach(track =>
-        {
-            peer.addTrack(track, this.localStream);
-        });
+        peer.emit('stream', this.localStream);
     }    
     
     #toggleAudio(mute)
