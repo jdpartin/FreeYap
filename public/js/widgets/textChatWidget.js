@@ -228,7 +228,7 @@ class TextChatWidget
 
 /****** Page JS ******/
 
-const giphyAPIClient = new GiphyAPIClient();
+var giphyAPIClient;
 
 const debounceDelay = 700;
 
@@ -240,6 +240,8 @@ const searchStickerLimit = 30;
 var emojiPicker;
 
 document.addEventListener('DOMContentLoaded', function () {
+    giphyAPIClient = new GiphyAPIClient();
+
     initializeMediaTabSwitching();
     initializeUtilityItemFunctionality();
     addChatEnterKeyListener();

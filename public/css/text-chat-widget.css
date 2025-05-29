@@ -27,7 +27,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  background-color: #f8f9fa;
+  background-color: white;
 }
 
 /* Welcome message styles */
@@ -53,6 +53,7 @@
 /* Input group container */
 .input-group-container {
     position: relative;
+    background: white;
 }
 
 /* Emoji button */
@@ -177,6 +178,7 @@
     width: 100%;
     height: 100%;
     overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 /* Utilities grid */
@@ -218,6 +220,7 @@
 /* Send button */
 #send-button {
     border-radius: 0 4px 4px 0;
+    border:none;
     background: var(--primary) !important;
     height: 38px;
     margin: 0;

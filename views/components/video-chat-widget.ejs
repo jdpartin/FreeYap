@@ -1,6 +1,8 @@
 <link href="/css/video-chat-widget.css" rel="stylesheet">
+<!--
 <link href="/css/video-settings.css" rel="stylesheet">
 <link href="/css/video-effects.css" rel="stylesheet">
+-->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <div class="container p-0">
@@ -15,8 +17,8 @@
             </div>        
         </div>
         
-        <!-- Effect menus containers -->
-        <div id="effect-menus-container">
+        <!-- Effect menus containers --->
+        <div id="effect-menus-container" style="display:none;">
             <!-- Background/Filters Menu -->
             <div id="backgrounds-filters-menu" class="effect-menu">
                 <div class="effect-menu-header">
@@ -176,27 +178,27 @@
                 <button id="mute-audio-btn" class="control-btn" title="Toggle Audio">
                     <i class="fas fa-microphone"></i>
                 </button>
-                <button id="share-screen-btn" class="control-btn" title="Share Screen">
+                <button id="share-screen-btn" class="control-btn" title="Share Screen" style="display:none;">
                     <i class="fas fa-desktop"></i>
                 </button>
-                <button id="settings-btn" class="control-btn" title="Settings">
+                <button id="settings-btn" class="control-btn" title="Settings" style="display:none;">
                     <i class="fas fa-cog"></i>
                 </button>
             </div>
-        </div>        
+        </div>
 
         <!-- Bottom bar for video chat title and layout controls -->
         <div id="bottom-bar" class="text-white d-flex align-items-center">
             <!-- Column for video effect controls -->
             <div id="video-effects" class="d-flex flex-column align-items-start">
                 <div class="d-flex flex-row">
-                    <button class="effect-btn" title="Backgrounds/Filters">
+                    <button class="effect-btn" title="Backgrounds/Filters" style="display:none;">
                         <i class="fas fa-magic"></i>
                     </button>
-                    <button class="effect-btn" title="Avatars">
+                    <button class="effect-btn" title="Avatars" style="display:none;">
                         <i class="fas fa-user-circle"></i>
                     </button>
-                    <button class="effect-btn" title="Voice Effects">
+                    <button class="effect-btn" title="Voice Effects" style="display:none;">
                         <i class="fas fa-bullhorn"></i>
                     </button>
                 </div>

@@ -4,11 +4,10 @@
 #video-container {
     margin: 0 auto;
     max-width: 800px;
-    background: #fff; /* Solid white background */
+    background: white; /* Solid white background */
     border: 1px solid rgba(0, 0, 0, 0.125); /* Updated border */
     border-radius: 12px; /* Updated border-radius */
     padding: 0; /* Removed padding */
-    background: linear-gradient(135deg, #f0f0f0, #ffffff);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Updated box-shadow */
     transition: none; /* Disable shadow transition */
     display: flex;
