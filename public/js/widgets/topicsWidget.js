@@ -9,8 +9,29 @@ class TopicsWidget
         this.peerTopics = null;
         this.myTopics = this.#getTopicsFromURL();
 
+        this.connectionLostAndMaxAttempts = false;
+
         this.partnerTopicsListElement = document.getElementById('partner-topics-list');
         this.myTopicsListElement = document.getElementById('user-topics-list');
+
+        this.webRTCConnectionManager.on('matchFound', () =>
+        {
+            // set up the topics message handler before the connection is established
+            this.webRTCConnectionManager.GetPeer().on('data', (data) =>
+            {
+                const parsedData = JSON.parse(data.toString());
+
+                if (parsedData.type === 'request-topics')
+                {
+                    this.webRTCConnectionManager.SendMessage({
+                        messageType: 'send-topics',
+                        messageObject: { topics: this.myTopics }
+                    });
+                }
+                // we dont need to handle the acknowledgment message type here, 
+                // it is handled by the SendMessage method
+            });
+        });
 
         this.webRTCConnectionManager.on('connectionReady', () =>
         {
@@ -22,7 +43,18 @@ class TopicsWidget
             this.#handleConnectionClosed();
         });
 
+        this.webRTCConnectionManager.on('connectionLostMaxAttempts', () =>
+        {
+            this.#handleConnectionLostAndMaxAttempts();
+        });
+
         this.#updateTopicsUI();
+    }
+
+    #handleConnectionLostAndMaxAttempts()
+    {
+        this.connectionLostAndMaxAttempts = true;
+        this.partnerTopicsListElement.innerHTML = '<div class="topics-empty">CONNECTION LOST!<br>Please refresh the page to try again.</div>';
     }
 
     #getTopicsFromURL()
@@ -47,44 +79,6 @@ class TopicsWidget
         return topics;
     }
 
-    #setupDataChannel(peer)
-    {
-        peer.on('data', (data) => 
-        {
-            try 
-            {
-                const parsedData = JSON.parse(data.toString());
-
-                if (parsedData.type === this.messageType)
-                {
-                    this.peerTopics = parsedData.topics;
-                    this.#updateTopicsUI();
-                }
-                else if (parsedData.type === 'request-topics')
-                {
-                    this.#sendTopics(peer);
-                }
-            }
-            catch (error)
-            {
-                console.error(error);
-            }
-        });
-
-        // Request peer topics when the data channel is ready
-        peer.send(JSON.stringify({ type: 'request-topics' }));
-    }
-
-    #sendTopics(peer)
-    {
-        const topicsMessage = {
-            type: this.messageType,
-            topics: this.myTopics
-        };
-
-        peer.send(JSON.stringify(topicsMessage));
-    }
-
     async #updateTopicsUI()
     {
         var animationDelay = 100; // Delay in milliseconds for animation effect
@@ -104,6 +98,9 @@ class TopicsWidget
                 this.myTopicsListElement.innerHTML = '<div class="topics-empty">No Topics</div>';
             }
         }
+        
+        if (this.connectionLostAndMaxAttempts)
+            return;
 
         if (this.peerTopics == null || this.peerTopics.length === 0)
         {
@@ -132,7 +129,16 @@ class TopicsWidget
 
     #handleConnectionReady()
     {
-        this.#setupDataChannel(this.webRTCConnectionManager.GetPeer());
+        this.webRTCConnectionManager.SendMessage({
+            messageType: 'request-topics',
+            acknowledgmentMessageType: 'send-topics',
+            requireAcknowledgment: true,
+            callbackFunction: (data) =>
+            {
+                this.peerTopics = data.topics;
+                this.#updateTopicsUI();
+            }
+        });
     }
 
     #handleConnectionClosed()

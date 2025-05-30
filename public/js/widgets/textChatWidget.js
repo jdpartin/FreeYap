@@ -76,6 +76,58 @@ class TextChatWidget
         this.#sendImage(url);
     }
 
+    SendGame(embedUrl)
+    {
+        this.#sendGame(embedUrl);
+    }
+
+    #sendGame(embedUrl)
+    {
+        let type = 'sent';
+
+        this.#addGameToUI(embedUrl, type);
+
+        let peer = this.webRTCConnectionManager.GetPeer();
+
+        peer.send(JSON.stringify({
+            type: `${this.messageType}-game`,
+            embedUrl: embedUrl,
+            timestamp: new Date().toISOString()
+        }));
+    }
+
+    #addGameToUI(embedUrl, type)
+    {
+        if (this.isFirstMessage)
+        {
+            this.chatLogContainer.innerHTML = ''; // Clear welcome message
+            this.isFirstMessage = false;
+        }
+
+        const gameEl = this.#createGameMessageElement(type, embedUrl);
+        this.chatLogContainer.appendChild(gameEl);
+        
+        this.chatInput.value = '';
+        this.chatLogContainer.scrollTop = this.chatLogContainer.scrollHeight;
+    }    #createGameMessageElement(type, embedUrl)
+    {
+        const container = document.createElement('div');
+        container.className = `message-container ${type} game-message-container`;
+        
+        const message = document.createElement('div');
+        message.className = `message message-${type} game-message`;
+        message.innerHTML = `<iframe src="${embedUrl}" class="game-embed" frameborder="0"></iframe>`;
+
+        const meta = document.createElement('div');
+        meta.className = 'message-meta';
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        meta.textContent = time;
+        container.appendChild(message);
+        container.appendChild(meta);
+
+        return container;
+    }
+
     #addMessageToUI(message, type)
     {
         if (this.isFirstMessage)
@@ -181,9 +233,13 @@ class TextChatWidget
                 {
                     this.#addMessageToUI(parsedData.content, type);
                 }
-                if (parsedData.type === `${this.messageType}-image`)
+                else if (parsedData.type === `${this.messageType}-image`)
                 {
                     this.#addImageToUI(this.#getImageTagFromUrl(parsedData.url), type);
+                }
+                else if (parsedData.type === `${this.messageType}-game`)
+                {
+                    this.#addGameToUI(parsedData.embedUrl, type);
                 }
             }
             catch (error)
@@ -229,6 +285,7 @@ class TextChatWidget
 /****** Page JS ******/
 
 var giphyAPIClient;
+var gamesAPIClient;
 
 const debounceDelay = 700;
 
@@ -238,9 +295,11 @@ const trendingStickerLimit = 20;
 const searchStickerLimit = 30;
 
 var emojiPicker;
+var multiplayerGames;
 
 document.addEventListener('DOMContentLoaded', function () {
     giphyAPIClient = new GiphyAPIClient();
+    gamesAPIClient = new GamesAPIClient();
 
     initializeMediaTabSwitching();
     initializeUtilityItemFunctionality();
@@ -432,6 +491,85 @@ function putStickersInContainer(stickerResult)
     });
 }
 
+async function initializeGamesPicker()
+{
+    var gameContainer = document.getElementById("game-container");
+
+    if (gameContainer.innerHTML == '')
+    {
+        searchGames();
+
+        var gameSearchBar = document.getElementById("game-search-bar");
+
+        let debounceTimer;
+
+        gameSearchBar.addEventListener('keyup', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchGames();
+            }, debounceDelay);
+        });
+    }
+}
+
+async function searchGames()
+{
+    var gameContainer = document.getElementById("game-container");
+
+    gameContainer.innerHTML =  `<div class="spinner-border" role="status">
+                                    <span class="sr-only">Searching...</span>
+                                </div>`;
+    
+    var gameSearchBar = document.getElementById("game-search-bar");
+
+    if (gameSearchBar.value == "")
+    {
+        putGamesInContainer(await getMultiplayerGames());
+    }
+    else
+    {
+        putGamesInContainer(await getMultiplayerGames(gameSearchBar.value));
+    }   
+}
+
+async function getMultiplayerGames(searchTerm, limit)
+{
+    return await gamesAPIClient.getMultiplayerGames(searchTerm, limit);
+}
+
+function putGamesInContainer(gameResult)
+{
+    var gameContainer = document.getElementById("game-container");
+
+    gameContainer.innerHTML = '';
+
+    if (gameResult.data && gameResult.data.length > 0)
+    {
+        gameResult.data.forEach(gameData => {
+            gameContainer.innerHTML += `
+                <div class="game-div">
+                    <img src="${gameData.image}" 
+                        alt="${gameData.title}"
+                        class="game-image">
+                    <h5>${gameData.title}</h5>
+                    <div style="display:none;" class="game-embed-url">${gameData.embed}</div>
+                </div>`;
+        });
+    }
+    else
+    {
+        gameContainer.innerHTML = 'No games found';
+    }
+
+    const gameDivs = gameContainer.querySelectorAll('.game-div');
+
+    gameDivs.forEach(gameDiv => {
+        gameDiv.addEventListener('click', () => {
+            window.textChatWidget.SendGame(gameDiv.querySelector('.game-embed-url').innerHTML);
+        });
+    });
+}
+
 function initializeMediaTabSwitching()
 {
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -468,6 +606,10 @@ function initializeMediaTabSwitching()
             else if (targetTab === 'stickers')
             {
                 initializeStickerPicker();
+            }
+            else if (targetTab === 'games')
+            {
+                initializeGamesPicker();
             }
         });
     });

@@ -19,12 +19,17 @@ class WebRTCConnectionManager
         this.myIP = null;
         this.peerIP = null;
 
+        this.socketConnectionLostCount = 0;
+        this.lastSocketConnectionLostTime = null;
+        this.socketConnectionLostThreshold = 3; // max reconnect attempts before displaying connection lost message
+
         this.connectionCount = 0; // Used to prevent delayed matchmaking from being called on an old connection
+        this.socketConnectionCount = 0; // Used to track the number of socket connections
 
         window.webRTCConnectionManager = this;
 
         this.matchmakingAPIClient = new MatchmakingAPIClient();
-        this.initialization = this.#connectToSocket();
+        this.initialization = this.#connectToSocket(false);
     }
 
     //#endregion
@@ -133,9 +138,7 @@ class WebRTCConnectionManager
         this.peer.destroy();
         this.peerIP = null;
         this.partnerSocketId = null;
-        this.#connectToSocket().then(() => {
-            this.StartMatchmaking(this.chatMode);
-        });
+        this.#connectToSocket();
         //this.#raiseEvent('closed'); No need to call this because peer.destroy() will call it
     }
 
@@ -211,11 +214,24 @@ class WebRTCConnectionManager
         return topics;
     }
 
-    async #startMatchmaking(chatMode)
+    async #startMatchmaking(chatMode = null)
     {
         await this.initialization;
 
-        this.chatMode = chatMode;
+        if (chatMode == null)
+        {
+            if (this.chatMode == null)
+            {
+                console.error('Chat mode is not set. Cannot start matchmaking.');
+                return;
+            }
+
+            chatMode = this.chatMode;
+        }
+        else
+        {
+            this.chatMode = chatMode;
+        }
 
         let topics = this.#getTopicsFromURL();
 
@@ -235,7 +251,8 @@ class WebRTCConnectionManager
         var connectionCount = this.connectionCount;
 
         // Matchmaking stagger to prevent race conditions: 50% chance for 9 or 10 seconds
-        await new Promise(resolve => setTimeout(resolve, Math.random() < 0.5 ? 9000 : 10000));
+        let matchmakingDelay = (Math.random() * 1000) + 9000;// Random delay between 9 and 10 seconds
+        await new Promise(resolve => setTimeout(resolve, matchmakingDelay));
 
         // Only connect if no peer connection exists and the connection count has not changed
         if (!this.peer && this.connectionCount === connectionCount)
@@ -261,36 +278,73 @@ class WebRTCConnectionManager
     //#region Socket Connection (Server Communication)
 
 
-    async #connectToSocket()
+    async #connectToSocket(matchmake = true)
     {
-        const response = await fetch(`/my-ip`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({})
-        });
+        this.socketConnectionCount++;
 
-        const data = await response.json();
+        if (!this.myIP)
+        {
+            // we only need the ip of the first connection, so we can skip this if we already have it
+            const response = await fetch(`/my-ip`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
 
-        this.myIP = data.ip;
+            const data = await response.json();
+
+            this.myIP = data.ip;
+        }
 
         return new Promise((resolve) =>
         {
             this.socket = io();
+
+            this.#startSocketTimeoutCounter();
 
             this.socket.on('connect', () =>
             {
                 if (this.socket.id == null)
                 {
                     console.error('Socket connection failed. No socket ID received.');
+                    this.socket = null;
+                    this.#handleSocketClose();
                     return;
                 }
 
                 this.#setupSocketListeners();
                 this.#raiseEvent('socketConnected');
+
+                if (matchmake)
+                    this.#startMatchmaking();
+
                 resolve();
             });
+        });
+    }
+
+    async #startSocketTimeoutCounter()
+    {
+        let currentSocketConnectionCount = this.socketConnectionCount; 
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                if (this.socket && !this.peer && this.socketConnectionCount == currentSocketConnectionCount
+                    && (!this.socket.connected || this.socket.id == null))
+                {
+                    console.error('Socket connection timed out.');
+
+                    this.#raiseEvent('socketConnectionTimeout');
+
+                    this.socket = null;
+                    this.#handleSocketClose();
+
+                    resolve();
+                }
+                resolve();
+            }, 5000); // 5 seconds timeout
         });
     }
 
@@ -342,14 +396,28 @@ class WebRTCConnectionManager
 
     #handleSocketClose()
     {
-        // if the connection to the server is lost
-        if (this.peer == null)
+        if (this.peer == null) // We disconnect on purpose when a peer connection is established
         {
-            this.#connectToSocket();
-        }
-        else
-        {
-            // Do nothing
+            this.socketConnectionLostCount++;
+            this.lastSocketConnectionLostTime = Date.now();
+
+            if (this.socketConnectionLostCount <= this.socketConnectionLostThreshold)
+            {
+                console.warn(`Socket connection lost. Attempting to reconnect...`);
+
+                this.#raiseEvent('connectionLost');
+
+                this.#connectToSocket();
+            }
+            else
+            {
+                console.error(`Socket connection lost. Reached maximum reconnect attempts (${this.socketConnectionLostThreshold}).`);
+                
+                window.alert('Connection lost. Please refresh the page to try again.');
+                
+                this.#raiseEvent('connectionClosed');
+                this.#raiseEvent('connectionLostMaxAttempts');
+            }
         }
     }
 
@@ -450,19 +518,10 @@ class WebRTCConnectionManager
         // Increment connection count to prevent delayed matchmaking from being called on the old connection
         this.connectionCount++;
         this.peer = null
+        this.socket = null;
 
         this.#raiseEvent('connectionClosed');
-
-        if (this.socket.id == null)
-        {
-            this.#connectToSocket().then(() => {
-                this.StartMatchmaking(this.chatMode);
-            });
-        }
-        else
-        {
-            this.StartMatchmaking(this.chatMode);
-        }
+        this.#connectToSocket();
     }
 
 

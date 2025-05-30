@@ -42,6 +42,9 @@
                                 <button class="tab-btn" data-tab="stickers" title="Stickers">
                                     <i class="bi bi-sticky"></i>
                                 </button>
+                                <button class="tab-btn" data-tab="games" title="Games">
+                                    <i class="bi bi-controller"></i>
+                                </button>
                                 <!-- Utilities tab hidden for now -->
                                 <button class="tab-btn" data-tab="utilities" title="Utilities" style="display:none;">
                                     <i class="bi bi-tools"></i>
@@ -50,19 +53,28 @@
                             
                             <!-- Tab Content -->
                             <div class="tab-content">
+
                                 <!-- Emojis Tab -->
                                 <div id="emojis-tab" class="tab-pane active">
                                     <div id="emoji-picker-container"></div>
                                 </div>
+
                                 <!-- GIFs Tab -->
                                 <div id="gifs-tab" class="tab-pane scrollable_div tab-pane-with-padding">
                                     <input type="text" id="gif-search-bar" placeholder="Search gifs...">
                                     <div id="gif-container"></div>
                                 </div>
+
                                   <!-- Stickers Tab -->
                                 <div id="stickers-tab" class="tab-pane scrollable_div tab-pane-with-padding">
                                     <input type="text" id="sticker-search-bar" placeholder="Search stickers...">
                                     <div id="sticker-container"></div>
+                                </div>
+
+                                <!-- Games Tab -->
+                                <div id="games-tab" class="tab-pane scrollable_div tab-pane-with-padding">
+                                    <input type="text" id="game-search-bar" placeholder="Search games...">
+                                    <div id="game-container"></div>
                                 </div>
                                 
                                 <!-- Utilities Tab -->
@@ -93,6 +105,7 @@
                                         </div>
                                     </div>
                                 </div>
+
                             </div>                        
                         </div>    
 
@@ -112,5 +125,6 @@
 
 <script src="/js/widgets/textChatWidget.js"></script>
 <script src="/js/apiClients/giphyAPIClient.js"></script>
+<script src="/js/apiClients/gamesAPIClient.js"></script>
 
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>

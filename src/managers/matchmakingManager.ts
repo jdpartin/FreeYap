@@ -267,24 +267,24 @@ class MatchmakingManager
     
     static async #delayedMatchmaking(socketId: string, topics: string[], mode: string): Promise<boolean>
     {
+        // Users with topics
         if (topics && topics.length > 0)
         {
+            // perfer matching with a random topic user otherwise a mismatched topic user
             const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: string | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
-                const randomTopicUser = randomTopicResult[0].get_oldest_random_topic_user;
+                const randomTopicUserSocketId = randomTopicResult[0].get_oldest_random_topic_user;
 
-                if (randomTopicUser.length > 0)
+                if (randomTopicUserSocketId)
                 {
-                    const mappedUserSocketId = randomTopicUser[0];
-
-                    if (!socketId || !mappedUserSocketId)
+                    if (!socketId || !randomTopicUserSocketId)
                     {
                         throw new Error('Both socket IDs are required to trigger a connection.');
                     }
 
-                    await this.#triggerConnection(socketId, mappedUserSocketId);
+                    await this.#triggerConnection(socketId, randomTopicUserSocketId);
                     return true;
                 }
             }
@@ -309,8 +309,9 @@ class MatchmakingManager
                 }
             }
         }        
-        else
+        else // Random topic users
         {
+            // at this point match them with another random topic user
             const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: string | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)

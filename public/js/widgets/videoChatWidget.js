@@ -24,7 +24,7 @@ class VideoChatWidget
         
         // Dispatch an event when the widget is initialized
         document.dispatchEvent(new Event('videoChatWidgetInitialized'));
-        
+
         this.webRTCConnectionManager.on('connectionReady', () =>
         {
             this.#handleConnectionReady();

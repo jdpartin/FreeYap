@@ -158,7 +158,7 @@
 }
 
 /* Search bars styling */
-#gif-search-bar, #sticker-search-bar {
+#gif-search-bar, #sticker-search-bar, #game-search-bar {
     width: 100%;
     margin: 0 5px 5px 5px;
     border-radius: 5px;
@@ -171,6 +171,65 @@
     height: 200px;
     display: inline-block;
     cursor: pointer;
+}
+
+/* Game container grid layout */
+#game-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    padding: 10px;
+}
+
+.game-div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    text-align: center;
+    overflow: hidden;
+}
+
+.game-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    object-fit: cover;
+}
+
+.game-div h5 {
+    font-size: 0.8rem;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+}
+
+.game-embed {
+    width: 100%;
+    height: 300px;
+    border: none;
+    border-radius: 8px;
+}
+
+/* Game message container overrides */
+.game-message-container .game-message {
+    max-width: 95%; /* Allow game embeds to be much wider */
+    min-width: 300px; /* Ensure minimum width for proper game display */
+    width: 100%;
+}
+
+/* On larger screens, make game embeds even wider */
+@media (min-width: 768px) {
+    .game-message-container .game-message {
+        max-width: 100%;
+        min-width: 400px;
+    }
+    
+    .game-embed {
+        height: 400px; /* Larger height on desktop */
+    }
 }
 
 /* Scrollable divs */
