@@ -12,6 +12,10 @@ class WebRTCConnectionManager
         this.partnerSocketId = null;
         this.socket = null;
 
+        this.connectionReady = false;
+
+        this.peerConnectionTimeoutStarted = false;
+
         this.myIP = null;
         this.peerIP = null;
 
@@ -23,11 +27,91 @@ class WebRTCConnectionManager
         this.initialization = this.#connectToSocket();
     }
 
-
     //#endregion
 
     //#region Public Methods
 
+    /**
+     * Sends a message over the WebRTC connection.
+     * If requireAcknowledgment is true, it will retry if no acknowledgment is received within the specified timeout.
+     * A listener is needed to handle the incoming message before calling this method.
+     * Listeners need to be set up before the connection is ready
+     * Dont forget to wait for connectionReady before sending messages.
+     * Dont pass the ackEnf variable, it is for retries.
+     */
+    SendMessage({
+        messageType, 
+        messageObject = null, 
+        callbackFunction = null,
+        requireAcknowledgment = false,
+        acknowledgmentMessageType = null,
+        acknowledgmentTimeoutMS = 1000,
+        maxRetries = 3,
+        ackEnf = null
+    })
+    {
+        /*
+            Example:
+
+            Connection not yet ready:
+
+                // the chanel is always called 'data'
+                peer.on('data', (data) =>
+                {
+                    const parsedData = JSON.parse(data.toString());
+
+                    // The messageType is received from the peer
+                    if (parsedData.type === 'request-ip')
+                    {                        // We send back the acknowledgment message type with the response
+                        this.SendMessage({
+                            messageType: 'send-ip',
+                            messageObject: { ip: this.myIP }
+                        });
+                    }
+                    // we dont need to handle the acknowledgment message type here, 
+                    // it is handled by the SendMessage method
+                });
+
+
+            Once the connection is ready:                // now we send the request (remember, this will happen from both sides)
+                this.SendMessage({
+                    messageType: 'request-ip',
+                    acknowledgmentMessageType: 'send-ip',
+                    requireAcknowledgment: true,
+                    callbackFunction: (data) => {
+                        console.log('Received IP from peer:', data.ip);
+                    }
+                });
+        */
+        if (requireAcknowledgment)
+        {
+            ackEnf ??= new MessageAcknowledgmentEnforcer(
+                messageType, 
+                messageObject, 
+                callbackFunction,
+                requireAcknowledgment, 
+                acknowledgmentMessageType,
+                acknowledgmentTimeoutMS,
+                maxRetries,
+                this
+            );
+
+            this.peer.on('data', (data) => 
+            {
+                const parsedData = JSON.parse(data.toString());
+
+                if (parsedData.type === acknowledgmentMessageType)
+                {
+                    ackEnf.ReceiveCallback(parsedData);
+                }
+            });
+        }
+
+        this.peer.send(JSON.stringify({
+            type: messageType,
+            ...messageObject
+        }));
+    }
 
     GetPeer()
     {
@@ -46,7 +130,13 @@ class WebRTCConnectionManager
 
     CloseConnection()
     {
-        
+        this.peer.destroy();
+        this.peerIP = null;
+        this.partnerSocketId = null;
+        this.#connectToSocket().then(() => {
+            this.StartMatchmaking(this.chatMode);
+        });
+        //this.#raiseEvent('closed'); No need to call this because peer.destroy() will call it
     }
 
     async StartMatchmaking(chatMode)
@@ -68,6 +158,28 @@ class WebRTCConnectionManager
     //#endregion
 
     //#region Private Methods
+
+
+    async #startPeerConnectionTimeout()
+    {
+        if (this.peer && !this.peerConnectionTimeoutStarted && !this.connectionReady)
+        {
+            return new Promise((resolve) => {
+                this.peerConnectionTimeoutStarted = true;
+
+                setTimeout(() => {
+                    this.peerConnectionTimeoutStarted = false;
+
+                    if (!this.connectionReady)
+                    {
+                        this.CloseConnection();
+                        this.#raiseEvent('peerTimeout');
+                    }
+                    resolve();
+                }, 10000);
+            });
+        }
+    }
 
     //#region Events
 
@@ -224,6 +336,7 @@ class WebRTCConnectionManager
             this.#createNonInitiatorPeer();
         }
 
+        this.#startPeerConnectionTimeout();
         this.#raiseEvent('matchFound');
     }
 
@@ -288,21 +401,16 @@ class WebRTCConnectionManager
             this.#handlePeerClose();
         });
 
-        this.peer.on('data', (data) => 
+        // Handle IP address exchange
+        this.peer.on('data', (data) =>
         {
             const parsedData = JSON.parse(data.toString());
 
-            if (parsedData.type === 'send-ip')
-            {
-                this.peerIP = parsedData.ip;
-                this.#raiseEvent('received-peer-ip');
-            }
-            else if (parsedData.type === 'request-ip')
-            {
-                this.peer.send(JSON.stringify({
-                    type: 'send-ip',
-                    ip: this.myIP
-                }));
+            if (parsedData.type === 'request-ip')            {
+                this.SendMessage({
+                    messageType: 'send-ip',
+                    messageObject: { ip: this.myIP }
+                });
             }
         });
     }
@@ -314,7 +422,19 @@ class WebRTCConnectionManager
 
     #handlePeerConnect()
     {
-        this.peer.send(JSON.stringify({ type: 'request-ip' }));
+        this.connectionReady = true;
+
+        // Handle IP address exchange
+        this.SendMessage({
+            messageType: 'request-ip',
+            acknowledgmentMessageType: 'send-ip',
+            requireAcknowledgment: true,
+            callbackFunction: data => 
+            {
+                this.peerIP = data.ip;
+            }
+        });
+
         this.socket.disconnect();// Disconnect from the socket server once the peer connection is established
         this.#raiseEvent('connectionReady');
     }
@@ -350,4 +470,72 @@ class WebRTCConnectionManager
 
     //#endregion
 
+}
+
+
+class MessageAcknowledgmentEnforcer
+{
+    constructor(
+        messageType, 
+        messageObject, 
+        callbackFunction,
+        requireAcknowledgment,
+        acknowledgmentMessageType,
+        acknowledgmentTimeoutMS,
+        maxRetries,
+        webRTCConnectionManager
+    )
+    {
+        this.messageType = messageType;
+        this.messageObject = messageObject;
+        this.callbackFunction = callbackFunction;
+        this.requireAcknowledgment = requireAcknowledgment;
+        this.acknowledgmentTimeoutMS = acknowledgmentTimeoutMS;
+        this.acknowledgmentMessageType = acknowledgmentMessageType;
+        this.maxRetries = maxRetries;
+        this.webRTCConnectionManager = webRTCConnectionManager;
+
+        this.receivedCallback = false;
+        this.retryCount = 0;
+
+        if (this.requireAcknowledgment)
+        {
+            this.#startTimeout();
+        }
+    }
+
+    ReceiveCallback(data)
+    {
+        if (!this.receivedCallback) 
+        {
+            this.receivedCallback = true;
+
+            if (this.callbackFunction && typeof this.callbackFunction === 'function')
+            {
+                this.callbackFunction(data);
+            }
+        }
+    }
+
+    async #startTimeout()
+    {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                if (!this.receivedCallback && this.retryCount < this.maxRetries)
+                {
+                    this.retryCount++;                    this.webRTCConnectionManager.SendMessage({
+                        messageType: this.messageType,
+                        messageObject: this.messageObject,
+                        callbackFunction: this.callbackFunction,
+                        requireAcknowledgment: this.requireAcknowledgment,
+                        acknowledgmentMessageType: this.acknowledgmentMessageType,
+                        acknowledgmentTimeoutMS: this.acknowledgmentTimeoutMS,
+                        maxRetries: this.maxRetries,
+                        ackEnf: this
+                    });
+                }
+                resolve();
+            }, this.acknowledgmentTimeoutMS);
+        });
+    }
 }
