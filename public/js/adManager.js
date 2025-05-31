@@ -28,8 +28,7 @@ class AdManager
                     width: 320,
                     description: ''
                 }
-            },
-            desktop: {
+            },            desktop: {
                 primary: {
                     key: '744beb8c9596767a79a65a75cde3eabd',
                     container: 'fixed-ad-right',
@@ -37,12 +36,12 @@ class AdManager
                     height: 600,
                     width: 160,
                     description: 'These ads help keep FreeYap free'
-                },                
+                },                  
                 secondary: {
-                    key: '744beb8c9596767a79a65a75cde3eabd',
+                    key: '5eaed353afff2a51c8be72be62bb2dcf',
                     container: 'fixed-ad-left',
                     format: 'iframe',
-                    height: 600,
+                    height: 300,
                     width: 160,
                     description: 'We never collect or sell your data'
                 }
@@ -63,9 +62,7 @@ class AdManager
         console.log(`AdManager: Initializing for ${this.isMobile ? 'mobile' : 'desktop'} device`);
         
         // Load primary ad immediately
-        this.loadPrimaryAd();
-        
-        // Load secondary ad after initial delay
+        this.loadPrimaryAd();        // Load secondary ad after initial delay
         setTimeout(() => {
             this.loadSecondaryAd();
             this.startRefreshCycle();
@@ -84,9 +81,7 @@ class AdManager
         
         this.loadAd('primary', config);
         console.log(`AdManager: Primary ${deviceType} ad loaded`);
-    }
-
-    /**
+    }    /**
      * Load the secondary ad
      */
     loadSecondaryAd()
@@ -96,7 +91,7 @@ class AdManager
         
         this.loadAd('secondary', config);
         console.log(`AdManager: Secondary ${deviceType} ad loaded`);
-    }    /**
+    }/**
      * Load an ad with the given configuration
      */
     loadAd(adType, config)
@@ -112,15 +107,21 @@ class AdManager
         const existingDescElement = container.querySelector('.ad-description');
         if (existingDescElement) {
             descriptionText = existingDescElement.textContent.trim();
-        }
-
-        // Clear existing ad content but preserve description
+        }        // Clear existing ad content but preserve description
         const adScripts = container.querySelectorAll('script');
         adScripts.forEach(script => script.remove());
         
         // Remove any existing ad iframes
         const adIframes = container.querySelectorAll('iframe');
         adIframes.forEach(iframe => iframe.remove());
+        
+        // Remove any existing native ad containers
+        const nativeContainers = container.querySelectorAll('[id^="container-"]');
+        nativeContainers.forEach(div => div.remove());
+        
+        // Remove placeholder content
+        const placeholderElements = container.querySelectorAll('.ad-placeholder, p:not(.ad-description)');
+        placeholderElements.forEach(element => element.remove());
 
         // Ensure description element exists and is properly positioned
         if (descriptionText) {
@@ -131,30 +132,46 @@ class AdManager
                 container.insertBefore(descElement, container.firstChild);
             }
             descElement.textContent = descriptionText;
+        }        // Create script elements based on format
+        if (config.format === 'native') {
+            // Native ad format with div container
+            const containerDiv = document.createElement('div');
+            containerDiv.id = `container-${config.key}`;
+            
+            const invokeScript = document.createElement('script');
+            invokeScript.async = true;
+            invokeScript.setAttribute('data-cfasync', 'false');
+            invokeScript.src = `//orepassport.com/${config.key}/invoke.js`;
+            
+            // Add timestamp to force refresh
+            invokeScript.src += `?t=${Date.now()}`;
+            
+            container.appendChild(containerDiv);
+            container.appendChild(invokeScript);
+        } else {
+            // Standard iframe format
+            const optionsScript = document.createElement('script');
+            optionsScript.type = 'text/javascript';
+            optionsScript.textContent = `
+                atOptions = {
+                    'key': '${config.key}',
+                    'format': '${config.format}',
+                    'height': ${config.height},
+                    'width': ${config.width},
+                    'params': {}
+                };
+            `;
+
+            const invokeScript = document.createElement('script');
+            invokeScript.type = 'text/javascript';
+            invokeScript.src = `//orepassport.com/${config.key}/invoke.js`;
+
+            // Add a timestamp to force refresh
+            invokeScript.src += `?t=${Date.now()}`;
+
+            container.appendChild(optionsScript);
+            container.appendChild(invokeScript);
         }
-
-        // Create script elements
-        const optionsScript = document.createElement('script');
-        optionsScript.type = 'text/javascript';
-        optionsScript.textContent = `
-            atOptions = {
-                'key': '${config.key}',
-                'format': '${config.format}',
-                'height': ${config.height},
-                'width': ${config.width},
-                'params': {}
-            };
-        `;
-
-        const invokeScript = document.createElement('script');
-        invokeScript.type = 'text/javascript';
-        invokeScript.src = `//orepassport.com/${config.key}/invoke.js`;
-
-        // Add a timestamp to force refresh
-        invokeScript.src += `?t=${Date.now()}`;
-
-        container.appendChild(optionsScript);
-        container.appendChild(invokeScript);
     }
 
     /**
@@ -169,9 +186,7 @@ class AdManager
         this.refreshTimers.primary = setInterval(() => {
             this.loadPrimaryAd();
             console.log('AdManager: Primary ad refreshed');
-        }, this.refreshInterval);
-
-        // Secondary ad refreshes every 30 seconds with 15 second offset
+        }, this.refreshInterval);        // Secondary ad refreshes every 30 seconds with 15 second offset
         this.refreshTimers.secondary = setInterval(() => {
             this.loadSecondaryAd();
             console.log('AdManager: Secondary ad refreshed');
@@ -180,9 +195,7 @@ class AdManager
         // Start secondary refresh cycle with stagger delay
         setTimeout(() => {
             // Clear the secondary timer and restart with proper timing
-            clearInterval(this.refreshTimers.secondary);
-            
-            this.refreshTimers.secondary = setInterval(() => {
+            clearInterval(this.refreshTimers.secondary);            this.refreshTimers.secondary = setInterval(() => {
                 this.loadSecondaryAd();
                 console.log('AdManager: Secondary ad refreshed (staggered)');
             }, this.refreshInterval);

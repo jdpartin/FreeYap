@@ -3,6 +3,11 @@
  * Uses typo-js with Hunspell dictionaries for professional spell checking
  */
 
+// Prevent duplicate declarations
+if (typeof window.FreeYapSpellChecker !== 'undefined') {
+    console.log('FreeYapSpellChecker already exists, skipping redeclaration');
+} else {
+
 class FreeYapSpellChecker {
     constructor() {
         this.typo = null;
@@ -252,16 +257,96 @@ class FreeYapSpellChecker {
         });
 
         return errors;
+    }    /**
+     * Get word suggestions for autocomplete as user types
+     */
+    getWordSuggestions(input, maxSuggestions = 8) {
+        console.log('getWordSuggestions called with:', input, 'isInitialized:', this.isInitialized);
+        
+        if (!this.isInitialized || !input || input.length < 2) {
+            console.log('Early return - not initialized or input too short');
+            return [];
+        }
+
+        const cleanInput = input.toLowerCase().replace(/[^\w]/g, '');
+        if (cleanInput.length < 2) {
+            console.log('Early return - clean input too short:', cleanInput);
+            return [];
+        }
+
+        console.log('Processing input:', cleanInput);
+        const suggestions = [];
+        
+        // If using typo-js dictionary
+        if (this.typo && this.typo.wordlist) {
+            const wordlist = this.typo.wordlist;
+            
+            // First, get words that start with the input
+            const startsWith = [];
+            const contains = [];
+            
+            for (const word in wordlist) {
+                if (suggestions.length >= maxSuggestions * 2) break; // Get more than needed for filtering
+                
+                const lowerWord = word.toLowerCase();
+                if (lowerWord.startsWith(cleanInput)) {
+                    startsWith.push(word);
+                } else if (lowerWord.includes(cleanInput)) {
+                    contains.push(word);
+                }
+            }
+            
+            // Prioritize words that start with input, then ones that contain it
+            suggestions.push(...startsWith.slice(0, maxSuggestions));
+            if (suggestions.length < maxSuggestions) {
+                suggestions.push(...contains.slice(0, maxSuggestions - suggestions.length));
+            }
+        }
+        // If using fallback dictionary
+        else if (this.fallbackDictionary) {
+            const dictArray = Array.from(this.fallbackDictionary);
+            
+            // Filter words that start with or contain the input
+            const startsWith = dictArray.filter(word => 
+                word.toLowerCase().startsWith(cleanInput)
+            );
+            const contains = dictArray.filter(word => 
+                word.toLowerCase().includes(cleanInput) && 
+                !word.toLowerCase().startsWith(cleanInput)
+            );
+            
+            suggestions.push(...startsWith.slice(0, maxSuggestions));
+            if (suggestions.length < maxSuggestions) {
+                suggestions.push(...contains.slice(0, maxSuggestions - suggestions.length));
+            }
+        }
+
+        // Include custom words
+        for (const word of this.customWords) {
+            if (suggestions.length >= maxSuggestions) break;
+            if (word.toLowerCase().startsWith(cleanInput) && !suggestions.includes(word)) {
+                suggestions.unshift(word); // Add custom words at the beginning
+            }
+        }        // Filter out very short words and common words for better suggestions
+        const finalSuggestions = suggestions
+            .filter(word => word.length >= 3)
+            .filter(word => !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'way', 'she', 'use', 'say', 'way'].includes(word.toLowerCase()))
+            .slice(0, maxSuggestions);
+              console.log('Final suggestions for', cleanInput + ':', finalSuggestions);
+        return finalSuggestions;
     }
 }
 
-// Initialize global spell checker
-window.freeYapSpellChecker = new FreeYapSpellChecker();
+// Initialize global spell checker only if not already done
+if (!window.freeYapSpellChecker) {
+    window.freeYapSpellChecker = new FreeYapSpellChecker();
+}
 
 /**
  * Utility functions for integrating spell check with form elements
  */
-window.SpellCheckUtils = {
+if (!window.SpellCheckUtils) {
+    window.SpellCheckUtils = {
     /**
      * Add spell checking to a text input or textarea
      */
@@ -360,5 +445,204 @@ window.SpellCheckUtils = {
         }
         
         return null;
-    }
+    },
+
+    /**
+     * Enable word suggestion dropdown for an input element
+     */
+    enableWordSuggestions(element, options = {}) {
+        if (!element) return;
+
+        const config = {
+            maxSuggestions: 6,
+            minInputLength: 2,
+            showOnFocus: false,
+            ...options
+        };
+
+        let currentDropdown = null;
+        let selectedIndex = -1;
+        let debounceTimer = null;        const showSuggestions = (suggestions) => {
+            hideSuggestions();
+            
+            if (suggestions.length === 0) return;
+
+            // Create dropdown
+            currentDropdown = document.createElement('div');
+            currentDropdown.className = 'word-suggestions-dropdown';
+            currentDropdown.innerHTML = suggestions.map((word, index) => 
+                `<div class="word-suggestion-item" data-index="${index}" data-word="${word}">${word}</div>`
+            ).join('');
+
+            // Position dropdown below input
+            const rect = element.getBoundingClientRect();
+            currentDropdown.style.cssText = `
+                position: absolute;
+                top: ${rect.bottom + window.scrollY}px;
+                left: ${rect.left + window.scrollX}px;
+                width: ${rect.width}px;
+                background: white;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                max-height: 200px;
+                overflow-y: auto;
+            `;
+
+            document.body.appendChild(currentDropdown);
+            selectedIndex = -1;
+
+            // Add click handlers
+            currentDropdown.addEventListener('click', (e) => {
+                if (e.target.classList.contains('word-suggestion-item')) {
+                    const word = e.target.dataset.word;
+                    insertWord(word);
+                }
+            });
+
+            // Add hover handlers for visual feedback
+            currentDropdown.addEventListener('mouseover', (e) => {
+                if (e.target.classList.contains('word-suggestion-item')) {
+                    updateSelection(parseInt(e.target.dataset.index));
+                }
+            });
+        };
+
+        const hideSuggestions = () => {
+            if (currentDropdown) {
+                currentDropdown.remove();
+                currentDropdown = null;
+                selectedIndex = -1;
+            }
+        };
+
+        const updateSelection = (index) => {
+            if (!currentDropdown) return;
+            
+            // Remove previous selection
+            const items = currentDropdown.querySelectorAll('.word-suggestion-item');
+            items.forEach(item => item.classList.remove('selected'));
+            
+            // Add new selection
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('selected');
+                selectedIndex = index;
+                
+                // Scroll into view if needed
+                items[index].scrollIntoView({ block: 'nearest' });
+            } else {
+                selectedIndex = -1;
+            }
+        };
+
+        const insertWord = (word) => {
+            const currentValue = element.value;
+            const cursorPos = element.selectionStart;
+            
+            // Find the start of the current word
+            let wordStart = cursorPos;
+            while (wordStart > 0 && /\w/.test(currentValue[wordStart - 1])) {
+                wordStart--;
+            }
+            
+            // Replace current word with suggestion
+            const beforeWord = currentValue.substring(0, wordStart);
+            const afterCursor = currentValue.substring(cursorPos);
+            
+            element.value = beforeWord + word + afterCursor;
+            element.setSelectionRange(wordStart + word.length, wordStart + word.length);
+            
+            hideSuggestions();
+            element.focus();
+            
+            // Trigger input event for other listeners
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+        };        // Input event handler
+        element.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            
+            const value = element.value;
+            const cursorPos = element.selectionStart;
+            
+            // Find current word at cursor
+            let wordStart = cursorPos;
+            let wordEnd = cursorPos;
+            
+            while (wordStart > 0 && /\w/.test(value[wordStart - 1])) {
+                wordStart--;
+            }
+            while (wordEnd < value.length && /\w/.test(value[wordEnd])) {
+                wordEnd++;
+            }
+            
+            const currentWord = value.substring(wordStart, wordEnd);
+            console.log('Input event - current word:', currentWord, 'min length:', config.minInputLength);
+            
+            if (currentWord.length >= config.minInputLength) {
+                debounceTimer = setTimeout(() => {
+                    console.log('Requesting suggestions for:', currentWord);
+                    const suggestions = window.freeYapSpellChecker.getWordSuggestions(
+                        currentWord, 
+                        config.maxSuggestions
+                    );
+                    console.log('Received suggestions:', suggestions);
+                    showSuggestions(suggestions);
+                }, 300);
+            } else {
+                console.log('Word too short, hiding suggestions');
+                hideSuggestions();
+            }
+        });
+
+        // Keyboard navigation
+        element.addEventListener('keydown', (e) => {
+            if (!currentDropdown) return;
+            
+            const items = currentDropdown.querySelectorAll('.word-suggestion-item');
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    updateSelection(selectedIndex < items.length - 1 ? selectedIndex + 1 : 0);
+                    break;
+                    
+                case 'ArrowUp':
+                    e.preventDefault();
+                    updateSelection(selectedIndex > 0 ? selectedIndex - 1 : items.length - 1);
+                    break;
+                    
+                case 'Enter':
+                case 'Tab':
+                    if (selectedIndex >= 0) {
+                        e.preventDefault();
+                        const selectedWord = items[selectedIndex].dataset.word;
+                        insertWord(selectedWord);
+                    }
+                    break;
+                    
+                case 'Escape':
+                    e.preventDefault();
+                    hideSuggestions();
+                    break;
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!element.contains(e.target) && !currentDropdown?.contains(e.target)) {
+                hideSuggestions();
+            }
+        });
+
+        // Hide suggestions when element loses focus (delayed to allow for clicks)
+        element.addEventListener('blur', () => {            setTimeout(() => {
+                if (document.activeElement !== element) {
+                    hideSuggestions();                }
+            }, 150);
+        });
+    },
 };
+}
+
+} // End of guard for FreeYapSpellChecker class existence

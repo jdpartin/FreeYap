@@ -76,10 +76,6 @@ app.get('/text-chat', (req: Request, res: Response) => {
   res.render('textChat', { title: 'Text Chat' });
 });
 
-app.get('/webrtc-demo', (req: Request, res: Response) => {
-  res.render('webrtcDemo', { title: 'WebRTC Demo', layout: 'layout' });
-});
-
 app.get('/terms', (req: Request, res: Response) => {
   res.render('terms', { title: 'Terms of Service - FreeYap' });
 });
@@ -95,6 +91,7 @@ app.get('/safety', (req: Request, res: Response) => {
 app.get('/features', (req: Request, res: Response) => {
   res.render('features', { title: 'Request a Feature - FreeYap' });
 });
+
 
 // Get my IP endpoint
 app.post('/my-ip', (req, res) => {

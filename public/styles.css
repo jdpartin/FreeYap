@@ -775,13 +775,25 @@ body {
   min-height: 60px; /* Ensure minimum height for loading state */
 }
 
+/* Placeholder text styling for mobile ads */
+.mobile-ad-box .ad-placeholder {
+  font-size: 9px;
+  color: #999;
+  margin: 0;
+  padding: 4px 8px;
+  line-height: 1.1;
+  text-align: center;
+  max-height: 30px;
+  overflow: hidden;
+}
+
 .ad-box {
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
   padding: 5px;
   width: 160px;
-  min-height: 620px; /* Accommodate 600px ad height + description + padding */
+  min-height: 320px; /* Reduced for smaller ads */
   font-size: 12px;
   color: #666;
   display: flex;
@@ -789,11 +801,70 @@ body {
   align-items: center;
 }
 
+/* Specific styling for right sidebar ad (larger) */
+.fixed-ad-right .ad-box {
+  min-height: 620px; /* Accommodate 600px ad height + description + padding */
+}
+
+/* Left sidebar ad containers (smaller) */
+.fixed-ad-left .ad-box {
+  min-height: 320px; /* Accommodate 300px ad height + description + padding */
+}
+
+/* Special styling for native ad container */
+.fixed-ad-left .ad-box[data-ad-container="fixed-ad-left-bottom"] {
+  min-height: 270px; /* Smaller for native banner ads */
+}
+
+/* Native ad container styling */
+[id^="container-"] {
+  width: 100% !important;
+  max-width: 160px;
+  text-align: center;
+}
+
 .ad-box iframe {
-  width: 160px !important;
-  height: 600px !important;
   border: none;
   margin-top: 5px;
+}
+
+/* Right sidebar iframe styling */
+.fixed-ad-right .ad-box iframe {
+  width: 160px !important;
+  height: 600px !important;
+}
+
+/* Left sidebar iframe styling */
+.fixed-ad-left .ad-box iframe {
+  width: 160px !important;
+  height: 300px !important;
+}
+
+/* Native banner styling */
+.native-banner {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  width: 160px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.native-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+  text-align: center;
+}
+
+.native-banner-content i {
+  color: var(--primary);
+  font-size: 12px;
 }
 
 .ad-description {

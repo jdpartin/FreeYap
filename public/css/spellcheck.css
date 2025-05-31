@@ -38,6 +38,59 @@
     border-bottom: none;
 }
 
+/* Word suggestion dropdown */
+.word-suggestions-dropdown {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    position: absolute;
+}
+
+.word-suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.word-suggestion-item:hover,
+.word-suggestion-item.selected {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.word-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.word-suggestion-item:active {
+    background-color: #dee2e6;
+}
+
+/* Scrollbar styling for suggestions */
+.word-suggestions-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.word-suggestions-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.word-suggestions-dropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.word-suggestions-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
 /* Spell check toggle button */
 .spell-check-toggle {
     font-size: 0.8rem;
