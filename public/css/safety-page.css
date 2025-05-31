@@ -1,0 +1,152 @@
+/* Safety Page Styles */
+.safety-card {
+  max-width: 100%;
+  margin: 2rem auto;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.safety-content {
+  line-height: 1.7;
+  color: #333;
+}
+
+.safety-content h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.safety-tips {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.tip-item {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary, #ff4f7a);
+  transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+  background: #f1f3f4;
+  transform: translateX(4px);
+}
+
+.tip-item h5 {
+  color: var(--primary, #ff4f7a);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.tip-item p {
+  margin-bottom: 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.alert-item {
+  border-left-color: #ffc107;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+}
+
+.alert-item h5 {
+  color: #856404;
+}
+
+.emergency-section {
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 2px solid #feb2b2;
+}
+
+.emergency-contacts {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.contact-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #e53e3e;
+}
+
+.contact-item h5 {
+  color: #e53e3e;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.contact-item p {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.remember-section {
+  margin-top: 2rem;
+}
+
+.remember-section .alert {
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #bee5eb 100%);
+  border-left: 4px solid #17a2b8;
+}
+
+.remember-section h5 {
+  color: #117a8b;
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .safety-card {
+    margin: 1rem;
+  }
+  
+  .tip-item {
+    padding: 1rem;
+  }
+  
+  .emergency-section {
+    padding: 1.5rem;
+  }
+  
+  .safety-content h2 {
+    font-size: 1.2rem;
+  }
+  
+  .tip-item h5 {
+    font-size: 1rem;
+  }
+  
+  .tip-item p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .safety-card {
+    margin: 0.5rem;
+  }
+  
+  .tip-item {
+    padding: 0.75rem;
+  }
+  
+  .emergency-section {
+    padding: 1rem;
+  }
+}

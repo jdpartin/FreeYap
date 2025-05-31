@@ -1,9 +1,15 @@
 /* Video Chat Widget Styles */
 
+/* Logo styling */
+.logo-image {
+    height: 23px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
 /* Simplified styling for video chat widget */
 #video-container {
     margin: 0 auto;
-    max-width: 800px;
     background: white; /* Solid white background */
     border: 1px solid rgba(0, 0, 0, 0.125); /* Updated border */
     border-radius: 12px; /* Updated border-radius */
@@ -145,14 +151,16 @@ video {
     color: white;
     padding: 10px;
     width: 100%;
+    /* This is now a top bar, not a bottom bar
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
+    */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
     margin-top: auto; /* Push to bottom of container */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
 }
 
 /* Fixed widths for bottom bar columns */
@@ -162,6 +170,19 @@ video {
     flex: 1;
     max-width: 33%;
     text-align: center;
+}
+
+/* Chat session title styling */
+#chat-session-title {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 1rem;
+    min-width: 0; /* Allow flex shrinking */
+}
+
+#chat-session-title .logo-image {
+    flex-shrink: 0; /* Prevent logo from shrinking */
 }
 
 /* Detached PiP mode - Fixed to window */
@@ -217,20 +238,38 @@ video {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1201px) {
     #video-container {
         padding: 0; /* Removed padding */
+    }
+
+    /* Mobile layout for chat session title */
+    #chat-session-title {
+        font-size: 0.9rem; /* Slightly smaller font on mobile */
+        overflow: hidden; /* Prevent overflow */
+        flex-shrink: 1; /* Allow shrinking if needed */
+    }
+
+    #chat-session-title .logo-image {
+        height: 20px; /* Slightly smaller logo on mobile */
+        margin-right: 6px; /* Reduce margin */
+    }
+
+    /* Ensure video effects column can shrink properly on mobile */
+    #video-effects {
+        min-width: 0;
+        max-width: 40%; /* Allow more space for title on mobile */
     }
 
     #top-controls-bar {
         flex-direction: column;
         align-items: center; /* Center controls on smaller screens */
         gap: 8px;
-    }
-      #layout-controls {
-        /* Allow layout controls to wrap if needed */
-        flex-wrap: wrap;
-        justify-content: center;
+    }      
+    
+    #layout-controls {
+        /* Hide layout controls on mobile */
+        display: none !important;
     }
     
     .layout-default #videos {

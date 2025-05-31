@@ -1,73 +1,670 @@
+<!-- Include external CSS for help page -->
+<link rel="stylesheet" href="/css/help-page.css">
+
 <div class="help-card">
-  <h1 class="text-center">Help & FAQs</h1>
+  <div class="help-hero">
+    <h1>Help & Support</h1>
+    <p>Find answers to common questions and get help using FreeYap</p>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-container">
+    <i class="fas fa-search search-icon"></i>
+    <input type="text" class="search-input" id="faqSearch" placeholder="Search for help topics, features, or troubleshooting...">
+    <button class="clear-search" id="clearSearch">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="quick-links">
+    <a href="#getting-started" class="quick-link" data-category="getting-started">
+      <span class="quick-link-icon">🚀</span>
+      <div class="quick-link-title">Getting Started</div>
+    </a>
+    <a href="#troubleshooting" class="quick-link" data-category="troubleshooting">
+      <span class="quick-link-icon">🔧</span>
+      <div class="quick-link-title">Troubleshooting</div>
+    </a>
+    <a href="#features" class="quick-link" data-category="features">
+      <span class="quick-link-icon">✨</span>
+      <div class="quick-link-title">Features</div>
+    </a>
+    <a href="#privacy" class="quick-link" data-category="privacy">
+      <span class="quick-link-icon">🔒</span>
+      <div class="quick-link-title">Privacy & Safety</div>
+    </a>
+    <a href="#account" class="quick-link" data-category="account">
+      <span class="quick-link-icon">👤</span>
+      <div class="quick-link-title">No Accounts</div>
+    </a>
+  </div>
+
+  <!-- FAQ Categories -->
   
-  <h2 class="section-title">
-    <span class="icon">❓</span>
-    Getting Started
-  </h2>
-  <ul class="faq-list">
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>How do I start a chat?</strong><br>
-        Simply click on one of the chat options (Video, Voice, or Text) on the homepage to get matched with someone.
+  <!-- Getting Started -->
+  <div class="faq-category" id="getting-started">
+    <div class="faq-category-header" onclick="toggleCategory('getting-started')">
+      <h2 class="faq-category-title">
+        <span>🚀</span>
+        Getting Started
+        <i class="fas fa-chevron-down expand-icon"></i>
+      </h2>
+    </div>
+    <div class="faq-category-content">
+      
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">❓</span>
+          <span class="faq-question-text">How do I start chatting on FreeYap?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Starting a chat is simple:</p>
+          <ul>
+            <li>Visit the FreeYap homepage</li>
+            <li>Optionally add topics you want to discuss (up to 10)</li>
+            <li>Choose your preferred chat mode: Video, Voice, or Text</li>
+            <li>Click the button and wait to be matched with someone</li>
+          </ul>
+          <p>No registration required - you can start chatting immediately!</p>
+        </div>
       </div>
-    </li>
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>Is FreeYap free to use?</strong><br>
-        Yes, FreeYap is completely free to use. No hidden charges or premium features.
-      </div>
-    </li>
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>Do I need to create an account?</strong><br>
-        No, you can start chatting immediately without registration.
-      </div>
-    </li>
-  </ul>
 
-  <h2 class="section-title">
-    <span class="icon">🛡️</span>
-    Safety & Privacy
-  </h2>
-  <ul class="faq-list">
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>How can I report inappropriate behavior?</strong><br>
-        Use the "Report" button during chat to flag any violations. Our moderators review reports 24/7.
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🆓</span>
+          <span class="faq-question-text">Is FreeYap really free?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Yes! FreeYap is completely free to use. We're funded through minimal, non-intrusive advertising.</p>
+          <p>There are no:</p>
+          <ul>
+            <li>Premium subscriptions</li>
+            <li>Hidden fees</li>
+            <li>Coins or tokens to buy</li>
+            <li>Feature restrictions</li>
+          </ul>
+          <p>All features are available to everyone for free.</p>
+        </div>
       </div>
-    </li>
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>Can others see my personal information?</strong><br>
-        No, we don't share any personal information. Your privacy is our priority.
-      </div>
-    </li>
-  </ul>
 
-  <h2 class="section-title">
-    <span class="icon">🎯</span>
-    Topics & Matching
-  </h2>
-  <ul class="faq-list">
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>How does topic matching work?</strong><br>
-        Add topics of interest, and we'll try to match you with users who share similar interests.
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">📱</span>
+          <span class="faq-question-text">Do I need an account or app?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>No account needed! FreeYap works directly in your web browser.</p>
+          <p>Benefits of no accounts:</p>
+          <ul>
+            <li>Instant access - no sign-up process</li>
+            <li>Complete anonymity</li>
+            <li>No personal data stored</li>
+            <li>No passwords to remember</li>
+          </ul>
+          <p>Simply visit our website and start chatting immediately.</p>
+        </div>
       </div>
-    </li>
-    <li>
-      <span class="icon">Q</span>
-      <div>
-        <strong>Can I change topics during a chat?</strong><br>
-        Yes, you can update your topics anytime, even during an active chat.
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🎯</span>
+          <span class="faq-question-text">How do topics work?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Topics help you find people with similar interests:</p>
+          <ul>
+            <li>Add up to 10 topics on the homepage</li>
+            <li>Our semantic matching finds people with related interests</li>
+            <li>You'll see which topics you matched on</li>
+            <li>Topics are ranked by similarity</li>
+            <li>You can chat without topics too (random matching)</li>
+          </ul>
+          <p>Our Smart Topic Matching™ understands meaning, not just keywords!</p>
+        </div>
       </div>
-    </li>
-  </ul>
+
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="faq-category" id="features">
+    <div class="faq-category-header" onclick="toggleCategory('features')">
+      <h2 class="faq-category-title">
+        <span>✨</span>
+        Features & Capabilities
+        <i class="fas fa-chevron-down expand-icon"></i>
+      </h2>
+    </div>
+    <div class="faq-category-content">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🎮</span>
+          <span class="faq-question-text">What features does text chat have?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Text chat is feature-rich and interactive:</p>
+          <ul>
+            <li><strong>Rich messaging:</strong> Send emojis, GIFs, and stickers</li>
+            <li><strong>Games:</strong> Hundreds of games to play together</li>
+            <li><strong>Spell check:</strong> Built-in spelling assistance</li>
+            <li><strong>Coming soon:</strong> File sharing, image uploads, screen sharing</li>
+          </ul>
+          <p>It's much more than basic messaging!</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">📹</span>
+          <span class="faq-question-text">What video chat features are available?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Video chat includes:</p>
+          <ul>
+            <li>High-quality video and audio</li>
+            <li>Camera and microphone controls</li>
+            <li>Side-by-side text chat</li>
+            <li><strong>Coming soon:</strong> Virtual backgrounds, filters, avatars</li>
+          </ul>
+          <p>All video calls use end-to-end encryption for privacy.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🎙️</span>
+          <span class="faq-question-text">How does voice chat work?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Voice chat offers crystal-clear audio communication:</p>
+          <ul>
+            <li>Audio-only conversations for focused discussions</li>
+            <li>Text chat sidebar available during voice calls</li>
+            <li>Microphone controls and audio settings</li>
+            <li><strong>Coming soon:</strong> Voice changing effects</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🧠</span>
+          <span class="faq-question-text">How does Smart Topic Matching work?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Our semantic matching system is smarter than keyword matching:</p>
+          <ul>
+            <li>Understands meaning and context, not just exact words</li>
+            <li>Finds the best available match from the entire queue</li>
+            <li>Shows you exactly which topics matched and their similarity</li>
+            <li>Falls back to general matching if no topic matches are available</li>
+          </ul>
+          <p>This means better conversations with people who actually share your interests!</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🎚️</span>
+          <span class="faq-question-text">What is the Vibe system?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>The Vibe system lets you control your content comfort level:</p>
+          <ul>
+            <li><strong>Conservative:</strong> Family-friendly conversations only</li>
+            <li><strong>Moderate:</strong> Okay with some mature topics</li>
+            <li><strong>Open:</strong> Comfortable with all legal adult content</li>
+          </ul>
+          <p>Users can "Vibe Check" others who seem to be in the wrong category, helping keep everyone comfortable.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Privacy & Safety -->
+  <div class="faq-category" id="privacy">
+    <div class="faq-category-header" onclick="toggleCategory('privacy')">
+      <h2 class="faq-category-title">
+        <span>🔒</span>
+        Privacy & Safety
+        <i class="fas fa-chevron-down expand-icon"></i>
+      </h2>
+    </div>
+    <div class="faq-category-content">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🔐</span>
+          <span class="faq-question-text">How private are my conversations?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Your conversations are completely private:</p>
+          <ul>
+            <li><strong>End-to-end encryption:</strong> Only you and your chat partner can read messages</li>
+            <li><strong>No storage:</strong> We don't store or monitor your conversations</li>
+            <li><strong>No data collection:</strong> We don't collect personal information</li>
+            <li><strong>Peer-to-peer:</strong> Direct connections when possible</li>
+          </ul>
+          <p>Not even FreeYap staff can see your private chats.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🚨</span>
+          <span class="faq-question-text">How do I report inappropriate behavior?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>We have several reporting mechanisms:</p>
+          <ul>
+            <li><strong>Report button:</strong> Available during all chats</li>
+            <li><strong>Vibe Check:</strong> For content that's in the wrong category</li>
+            <li><strong>Illegal Activity:</strong> Special reporting for serious violations</li>
+            <li><strong>Minor on Platform:</strong> Report suspected underage users</li>
+          </ul>
+          <p>All reports are reviewed, and we take appropriate action while protecting privacy.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">👮</span>
+          <span class="faq-question-text">What is FreeYap's moderation approach?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>We believe in treating adults like adults:</p>
+          <ul>
+            <li><strong>No moral policing:</strong> We don't judge personal opinions or beliefs</li>
+            <li><strong>Legal focus only:</strong> We only act on serious illegal activity</li>
+            <li><strong>Self-regulation:</strong> The Vibe system lets users self-sort</li>
+            <li><strong>No auto-bans:</strong> We don't automatically ban for cursing, weapons, or controversial topics</li>
+          </ul>
+          <p>Our goal is free expression within legal boundaries.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🔞</span>
+          <span class="faq-question-text">Is FreeYap for adults only?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Yes, FreeYap is strictly 18+ only:</p>
+          <ul>
+            <li>Platform designed for adult conversations</li>
+            <li>No age verification required (privacy-focused)</li>
+            <li>Systems in place to detect and handle minors</li>
+            <li>Automatic protections if a minor is detected</li>
+          </ul>
+          <p>We're committed to creating a space for mature, adult conversation.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Troubleshooting -->
+  <div class="faq-category" id="troubleshooting">
+    <div class="faq-category-header" onclick="toggleCategory('troubleshooting')">
+      <h2 class="faq-category-title">
+        <span>🔧</span>
+        Troubleshooting
+        <i class="fas fa-chevron-down expand-icon"></i>
+      </h2>
+    </div>
+    <div class="faq-category-content">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🎥</span>
+          <span class="faq-question-text">Video/audio not working?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Try these troubleshooting steps:</p>
+          <ul>
+            <li><strong>Allow permissions:</strong> Grant camera/microphone access when prompted</li>
+            <li><strong>Check browser:</strong> Use Chrome, Firefox, or Safari (latest versions)</li>
+            <li><strong>Restart browser:</strong> Close and reopen your browser</li>
+            <li><strong>Check hardware:</strong> Ensure your camera/mic are working in other apps</li>
+            <li><strong>Disable extensions:</strong> Some browser extensions can interfere</li>
+          </ul>
+          <p>Still having issues? Try refreshing the page or using a different browser.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">⏳</span>
+          <span class="faq-question-text">Taking too long to find a match?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>If matching is slow:</p>
+          <ul>
+            <li><strong>Try fewer topics:</strong> Too many specific topics can limit matches</li>
+            <li><strong>Use popular topics:</strong> Check the popular topics list on the homepage</li>
+            <li><strong>Try different times:</strong> Peak hours have more users</li>
+            <li><strong>Switch modes:</strong> Text chat typically has more users than video/voice</li>
+            <li><strong>Go random:</strong> Remove all topics for fastest matching</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🔌</span>
+          <span class="faq-question-text">Connection keeps dropping?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>For connection issues:</p>
+          <ul>
+            <li><strong>Check internet:</strong> Ensure stable internet connection</li>
+            <li><strong>Close other apps:</strong> Free up bandwidth</li>
+            <li><strong>Move closer to router:</strong> Improve WiFi signal</li>
+            <li><strong>Try different network:</strong> Switch between WiFi and mobile data</li>
+            <li><strong>Firewall/VPN:</strong> Some networks block WebRTC connections</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🌐</span>
+          <span class="faq-question-text">Browser compatibility issues?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>FreeYap works best with:</p>
+          <ul>
+            <li><strong>Chrome:</strong> Best performance and compatibility</li>
+            <li><strong>Firefox:</strong> Full feature support</li>
+            <li><strong>Safari:</strong> Works on Mac and iOS</li>
+            <li><strong>Edge:</strong> Good Windows compatibility</li>
+          </ul>
+          <p>Avoid older browsers or Internet Explorer. Make sure JavaScript is enabled.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">📱</span>
+          <span class="faq-question-text">Mobile device issues?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>For mobile users:</p>
+          <ul>
+            <li><strong>Use browser:</strong> Don't use in-app browsers (Facebook, Instagram, etc.)</li>
+            <li><strong>Allow permissions:</strong> Grant camera/microphone access</li>
+            <li><strong>Close other apps:</strong> Free up memory and processing power</li>
+            <li><strong>Check iOS/Android version:</strong> Use recent operating system versions</li>
+            <li><strong>Landscape mode:</strong> May work better for video chat</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Account & Data -->
+  <div class="faq-category" id="account">
+    <div class="faq-category-header" onclick="toggleCategory('account')">
+      <h2 class="faq-category-title">
+        <span>👤</span>
+        No Accounts Policy
+        <i class="fas fa-chevron-down expand-icon"></i>
+      </h2>
+    </div>
+    <div class="faq-category-content">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🚫</span>
+          <span class="faq-question-text">Why doesn't FreeYap have user accounts?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>No accounts means:</p>
+          <ul>
+            <li><strong>True anonymity:</strong> No way to track or identify you</li>
+            <li><strong>Instant access:</strong> No signup friction</li>
+            <li><strong>No data collection:</strong> Nothing to store or sell</li>
+            <li><strong>Privacy by design:</strong> Can't lose what we don't have</li>
+          </ul>
+          <p>This aligns with our adult-focused, privacy-first philosophy.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🍪</span>
+          <span class="faq-question-text">What data does FreeYap collect?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>We collect minimal data:</p>
+          <ul>
+            <li><strong>Topics:</strong> Temporarily stored in browser cookies</li>
+            <li><strong>Anonymous analytics:</strong> Basic usage statistics (no personal info)</li>
+            <li><strong>No conversations:</strong> Chat content is never stored</li>
+            <li><strong>No personal info:</strong> Names, emails, phones not collected</li>
+          </ul>
+          <p>We're ad-funded, not data-sold. Your privacy is not our product.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">💾</span>
+          <span class="faq-question-text">Can I save my chat history?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Chat history is not saved by design:</p>
+          <ul>
+            <li><strong>Privacy protection:</strong> No permanent records</li>
+            <li><strong>Fresh starts:</strong> Each conversation is independent</li>
+            <li><strong>No subpoenas:</strong> Nothing to turn over to authorities</li>
+            <li><strong>Adult freedom:</strong> No permanent consequences for private conversations</li>
+          </ul>
+          <p>If you want to save something, copy it to your own device during the chat.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Company & Future -->
+  <div class="faq-category" id="company">
+    <div class="faq-category-header" onclick="toggleCategory('company')">
+      <h2 class="faq-category-title">
+        <span>🏢</span>
+        About FreeYap
+        <i class="fas fa-chevron-down expand-icon"></i>
+      </h2>
+    </div>
+    <div class="faq-category-content">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🎯</span>
+          <span class="faq-question-text">What is FreeYap's mission?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Our mission is simple: <strong>Treat adults like adults.</strong></p>
+          <ul>
+            <li>Create a space for genuine, unfiltered conversation</li>
+            <li>Respect user autonomy and intelligence</li>
+            <li>Enable meaningful connections without gatekeeping</li>
+            <li>Protect privacy while fostering community</li>
+          </ul>
+          <p>We believe the internet needs more spaces for real human connection.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🚀</span>
+          <span class="faq-question-text">What features are coming soon?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Exciting features in development:</p>
+          <ul>
+            <li><strong>Group chats:</strong> 2-4 person conversations</li>
+            <li><strong>Video effects:</strong> Virtual backgrounds, filters, avatars</li>
+            <li><strong>Voice effects:</strong> Voice changing capabilities</li>
+            <li><strong>File sharing:</strong> Images, videos, documents in chat</li>
+            <li><strong>Screen sharing:</strong> Native screen sharing support</li>
+            <li><strong>Team building:</strong> Corporate ice-breaker events</li>
+            <li><strong>Influencer events:</strong> Code-based group matching</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">💰</span>
+          <span class="faq-question-text">How does FreeYap make money?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>We use a simple, honest business model:</p>
+          <ul>
+            <li><strong>Minimal advertising:</strong> Non-intrusive ads that respect your experience</li>
+            <li><strong>No data selling:</strong> Your information is never sold to third parties</li>
+            <li><strong>No premium tiers:</strong> All features remain free for everyone</li>
+            <li><strong>No manipulation:</strong> No algorithms designed to maximize engagement</li>
+          </ul>
+          <p>Our goal is sustainability, not exploitation.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          <span class="faq-question-icon">🌍</span>
+          <span class="faq-question-text">Who can use FreeYap?</span>
+          <i class="fas fa-chevron-down faq-toggle"></i>
+        </button>
+        <div class="faq-answer">
+          <p>FreeYap welcomes:</p>
+          <ul>
+            <li><strong>Adults 18+:</strong> From anywhere in the world</li>
+            <li><strong>All political views:</strong> Conservative, liberal, and everything between</li>
+            <li><strong>All backgrounds:</strong> Different cultures, religions, perspectives</li>
+            <li><strong>All interests:</strong> Serious discussions to casual chat</li>
+          </ul>
+          <p>The only requirements: be an adult and follow the law.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- No Results Message -->
+  <div class="no-results" id="noResults">
+    <div class="no-results-icon">🔍</div>
+    <h3>No results found</h3>
+    <p>Try different search terms or browse the categories above.</p>
+  </div>
+  <!-- Contact Section -->
+  <div class="contact-section">
+    <div class="contact-header">
+      <h3>Still Need Help?</h3>
+      <p>Can't find what you're looking for? We're here to help.</p>
+    </div>
+
+    <div class="contact-grid">
+      <!-- Quick Tips -->
+      <div class="contact-card">
+        <div class="contact-card-header">
+          <span class="contact-icon">💡</span>
+          <h4>Quick Tips</h4>
+        </div>
+        <div class="contact-card-content">
+          <ul>
+            <li>Try refreshing the page</li>
+            <li>Clear your browser cache</li>
+            <li>Use a different browser</li>
+            <li>Check your internet connection</li>
+          </ul>
+          <p><strong>Remember:</strong> FreeYap is designed to just work - no accounts, no complex setup, no hassle.</p>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="contact-card">
+        <div class="contact-card-header">
+          <span class="contact-icon">📧</span>
+          <h4>Contact Us</h4>
+        </div>
+        <div class="contact-card-content">
+          <p>For technical issues, feedback, or questions:</p>
+          <div class="email-contact">
+            <strong>Email:</strong> 
+            <a href="mailto:help@freeyap.com" class="help-email">help@freeyap.com</a>
+          </div>
+          
+          <form class="contact-form" id="contactForm">
+            <div class="form-group">
+              <label for="contactSubject">Subject</label>
+              <select id="contactSubject" name="subject" required>
+                <option value="">Select a topic</option>
+                <option value="technical">Technical Issue</option>
+                <option value="feedback">Feedback/Suggestion</option>
+                <option value="question">General Question</option>
+                <option value="privacy">Privacy Concern</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="contactMessage">Message</label>
+              <textarea id="contactMessage" name="message" rows="4" placeholder="Describe your issue or question..." required></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="contactEmail">Your Email (optional)</label>
+              <input type="email" id="contactEmail" name="email" placeholder="your@email.com">
+              <small class="form-note">Only needed if you want a response</small>
+            </div>
+            
+            <button type="submit" class="contact-submit">
+              <i class="fas fa-paper-plane"></i>
+              Send Message
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-footer">
+      <p class="contact-note">
+        <i class="fas fa-shield-alt"></i>
+        Your privacy matters: We only use your email to respond to your message and never share it with anyone.
+      </p>
+    </div>
+  </div>
 </div>
+
+<!-- Include external JavaScript for help page -->
+<script src="/js/help-page.js"></script>

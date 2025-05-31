@@ -1,19 +1,57 @@
-/* Report Widget Styles */
+/* Enhanced Report Widget Styles */
 .report-btn {
     position: relative;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     font-size: 0.875rem;
     z-index: 1000;
-    border-radius: 20px;
-    background-color: var(--primary) !important;
-    border-color: var(--primary) !important;
+    border-radius: 50px;
+    background: linear-gradient(135deg, var(--primary), #e63946, #ff6b6b) !important;
+    border: none !important;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 
+        0 8px 32px rgba(255, 77, 109, 0.4),
+        0 4px 16px rgba(255, 77, 109, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.report-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
 }
 
 .report-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 77, 109, 0.3);
-    background-color: #c82333 !important;
-    border-color: #bd2130 !important;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+        0 12px 40px rgba(255, 77, 109, 0.5),
+        0 6px 20px rgba(255, 77, 109, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #e63946, #c82333, #ff4757) !important;
+}
+
+.report-btn:hover::before {
+    left: 100%;
+}
+
+.report-btn:active {
+    transform: translateY(-2px) scale(0.98);
+    box-shadow: 
+        0 6px 24px rgba(255, 77, 109, 0.4),
+        0 3px 12px rgba(255, 77, 109, 0.2);
+}
+
+.report-btn i {
+    margin-right: 0.5rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .report-form {
@@ -22,12 +60,35 @@
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
-    max-width: 500px;
+    max-width: 580px;
     z-index: 1050;
-    transition: all 0.3s ease;
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 249, 250, 0.95)),
+        radial-gradient(circle at 20% 20%, rgba(255, 77, 109, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+    backdrop-filter: blur(30px) saturate(1.2);
+    border-radius: 28px;
+    box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.08),
+        0 8px 16px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(255, 255, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    animation: modalSlideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.report-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border-radius: 28px;
+    pointer-events: none;
 }
 
 .report-form.hidden {
@@ -36,113 +97,394 @@
 
 .report-form .card {
     border: none;
-    border-radius: 15px;
+    border-radius: 28px;
     overflow: hidden;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+    z-index: 1;
 }
 
 .report-form .card-header {
     border-bottom: none;
-    padding: 1rem 1.25rem;
-    background-color: var(--primary) !important;
+    padding: 2rem 2.5rem 1.5rem 2.5rem;
+    background: linear-gradient(135deg, var(--primary), #e63946, #ff6b6b) !important;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.report-form .card-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%),
+        conic-gradient(from 0deg, rgba(255, 255, 255, 0.1), transparent, rgba(255, 255, 255, 0.1));
+    animation: shimmer 8s ease-in-out infinite;
+}
+
+.report-form .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.report-form .card-header h6 {
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
+}
+
+.report-form .card-header i {
+    margin-right: 0.75rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .report-form .card-body {
-    padding: 1.25rem;
+    padding: 2.5rem;
     max-height: 70vh;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
-/* Report Options Styling */
-.report-options .form-check {
-    margin-bottom: 1rem;
-    padding: 0.75rem 1rem;
-    border: 2px solid #e9ecef;
+.report-form .card-body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
+}
+
+.report-form .card-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.report-form .card-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 10px;
-    transition: all 0.3s ease;
+}
+
+.report-form .card-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary), #e63946);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.report-form .card-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #e63946, #c82333);
+    background-clip: content-box;
+}
+
+/* Enhanced Report Options */
+.report-options .form-check {
+    margin-bottom: 1.5rem;
+    padding: 1.8rem 2rem;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     cursor: pointer;
-    background-color: #f8f9fa;
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.8)),
+        radial-gradient(circle at 10% 20%, rgba(255, 77, 109, 0.02) 0%, transparent 50%);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.report-options .form-check::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), #e63946, #ff6b6b);
+    transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 0 0 10px 10px;
+}
+
+.report-options .form-check::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
 }
 
 .report-options .form-check:hover {
-    border-color: var(--primary);
-    background-color: #fff5f5;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(255, 77, 109, 0.1);
+    border-color: rgba(255, 77, 109, 0.3);
+    background: 
+        linear-gradient(135deg, rgba(255, 245, 245, 0.95), rgba(255, 255, 255, 0.9)),
+        radial-gradient(circle at 10% 20%, rgba(255, 77, 109, 0.05) 0%, transparent 50%);
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 
+        0 12px 32px rgba(255, 77, 109, 0.15),
+        0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.report-options .form-check:hover::before {
+    left: 0;
+}
+
+.report-options .form-check:hover::after {
+    opacity: 1;
 }
 
 .report-options .form-check-input:checked + .form-check-label {
     color: var(--primary);
-    font-weight: 600;
+    font-weight: 800;
 }
 
 .report-options .form-check:has(.form-check-input:checked) {
     border-color: var(--primary);
-    background-color: #fff5f5;
-    box-shadow: 0 2px 8px rgba(255, 77, 109, 0.2);
+    background: 
+        linear-gradient(135deg, rgba(255, 245, 245, 0.95), rgba(255, 255, 255, 0.9)),
+        radial-gradient(circle at 10% 20%, rgba(255, 77, 109, 0.08) 0%, transparent 50%);
+    box-shadow: 
+        0 12px 32px rgba(255, 77, 109, 0.2),
+        0 6px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-3px) scale(1.01);
+}
+
+.report-options .form-check:has(.form-check-input:checked)::before {
+    left: 0;
+}
+
+.report-options .form-check:has(.form-check-input:checked)::after {
+    opacity: 1;
+}
+
+.report-options .form-check-input {
+    width: 1.4rem;
+    height: 1.4rem;
+    margin-top: 0.1rem;
+    border: 3px solid rgba(255, 77, 109, 0.3);
+    background-color: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 
+        0 4px 12px rgba(255, 77, 109, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.report-options .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 
+        0 0 0 4px rgba(255, 77, 109, 0.2),
+        0 4px 12px rgba(255, 77, 109, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.report-options .form-check-input:focus {
+    box-shadow: 
+        0 0 0 4px rgba(255, 77, 109, 0.25),
+        0 4px 12px rgba(255, 77, 109, 0.2);
 }
 
 .report-options .form-check-label {
     cursor: pointer;
     margin-bottom: 0;
     width: 100%;
+    margin-left: 0.75rem;
+    transition: all 0.3s ease;
 }
 
 .report-options .form-check-label strong {
     display: block;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
+    font-size: 1.15rem;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    transition: color 0.3s ease;
 }
 
 .report-options .form-check-label small {
-    font-size: 0.875rem;
-    line-height: 1.3;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #6c757d;
+    font-weight: 500;
+    transition: color 0.3s ease;
 }
 
-/* Warning Introduction Styling */
+/* Enhanced Warning Introduction */
 .warning-intro {
-    border-left: 4px solid var(--primary);
-    padding-left: 1rem;
-    background-color: #fff5f5;
-    padding: 1rem;
-    border-radius: 0 8px 8px 0;
-    margin-bottom: 1.5rem;
+    border-left: 6px solid var(--primary);
+    padding: 2rem;
+    background: 
+        linear-gradient(135deg, rgba(255, 245, 245, 0.95), rgba(255, 255, 255, 0.9)),
+        radial-gradient(circle at 20% 20%, rgba(255, 77, 109, 0.05) 0%, transparent 50%);
+    border-radius: 0 20px 20px 0;
+    margin-bottom: 2.5rem;
+    position: relative;
+    box-shadow: 
+        0 8px 24px rgba(255, 77, 109, 0.12),
+        0 4px 12px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+}
+
+.warning-intro::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary), #e63946, #ff6b6b);
+    border-radius: 0 0 0 20px;
+}
+
+.warning-intro::after {
+    content: '';
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: 0 15px 15px 0;
+    pointer-events: none;
 }
 
 .warning-intro p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+.warning-intro p i {
+    margin-right: 0.5rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .warning-intro small {
     display: block;
-    margin-top: 0.5rem;
-}
-
-/* Alert Styling for Legal Notice */
-.alert-warning {
-    border-color: #ffc107;
-    background-color: #fff8e1;
-    color: #856404;
-    border-radius: 8px;
+    margin-top: 1rem;
+    padding: 1rem 1.5rem;
+    background: 
+        linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 248, 225, 0.8)),
+        radial-gradient(circle at 80% 20%, rgba(255, 193, 7, 0.05) 0%, transparent 50%);
+    border-radius: 16px;
     border-left: 4px solid #ffc107;
+    position: relative;
+    z-index: 1;
+    box-shadow: 
+        0 4px 12px rgba(255, 193, 7, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* Modal Overlay */
+.warning-intro::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary), #e63946);
+    border-radius: 0 0 0 16px;
+}
+
+.warning-intro p {
+    margin-bottom: 0.8rem;
+    font-weight: 500;
+}
+
+.warning-intro small {
+    display: block;
+    margin-top: 0.8rem;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 10px;
+    border-left: 3px solid #ffc107;
+}
+
+/* Enhanced Alert Styling */
+.alert-warning {
+    border: none;
+    background: 
+        linear-gradient(135deg, rgba(255, 248, 225, 0.95), rgba(255, 255, 255, 0.9)),
+        radial-gradient(circle at 20% 20%, rgba(255, 193, 7, 0.08) 0%, transparent 50%);
+    color: #856404;
+    border-radius: 20px;
+    border-left: 6px solid #ffc107;
+    box-shadow: 
+        0 8px 24px rgba(255, 193, 7, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem 2rem;
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.alert-warning::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: 20px;
+    pointer-events: none;
+}
+
+.alert-warning i {
+    margin-right: 0.5rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.alert-warning strong {
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+/* Enhanced Modal Overlay */
 #vibe-check-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: 
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%),
+        linear-gradient(45deg, rgba(255, 77, 109, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
     z-index: 1040;
-    transition: opacity 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    backdrop-filter: blur(8px) saturate(1.2);
+    animation: fadeIn 0.4s ease;
 }
 
 #vibe-check-overlay.hidden {
     display: none;
 }
 
-/* Report Modal Styling */
+/* Enhanced Report Modal Styling */
 .report-modal {
     position: fixed;
     top: 0;
@@ -153,6 +495,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: fadeIn 0.4s ease;
 }
 
 .report-modal.hidden {
@@ -165,90 +508,375 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: 
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%),
+        linear-gradient(45deg, rgba(40, 167, 69, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+    backdrop-filter: blur(8px) saturate(1.2);
 }
 
 .report-modal .modal-content {
     position: relative;
-    background-color: white;
-    border-radius: 15px;
-    padding: 2rem;
-    margin: 1rem;
-    max-width: 400px;
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 249, 250, 0.95)),
+        radial-gradient(circle at 20% 20%, rgba(40, 167, 69, 0.05) 0%, transparent 50%);
+    border-radius: 24px;
+    padding: 3rem;
+    margin: 1.5rem;
+    max-width: 480px;
     width: 100%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease;
+    box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 16px 32px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+    animation: slideInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.report-modal .modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: 24px;
+    pointer-events: none;
 }
 
 .report-modal .success-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
 }
 
 .report-modal .success-icon i {
     color: #28a745;
+    filter: drop-shadow(0 4px 8px rgba(40, 167, 69, 0.3));
+    animation: bounceIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Button Styling */
+.report-modal h5 {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: #2c3e50;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 1;
+}
+
+.report-modal p {
+    color: #6c757d;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
+
+/* Enhanced Button Styling */
 .report-form .btn-danger {
-    background-color: var(--primary) !important;
-    border-color: var(--primary) !important;
-    border-radius: 20px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--primary), #e63946, #ff6b6b) !important;
+    border: none !important;
+    border-radius: 50px;
+    padding: 0.75rem 2rem;
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 
+        0 8px 24px rgba(255, 77, 109, 0.3),
+        0 4px 12px rgba(255, 77, 109, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+}
+
+.report-form .btn-danger::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
 }
 
 .report-form .btn-danger:hover {
-    background-color: #c82333 !important;
-    border-color: #bd2130 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(255, 77, 109, 0.3);
+    background: linear-gradient(135deg, #e63946, #c82333, #ff4757) !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 12px 32px rgba(255, 77, 109, 0.4),
+        0 6px 16px rgba(255, 77, 109, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.report-form .btn-danger:hover::before {
+    left: 100%;
+}
+
+.report-form .btn-danger:active {
+    transform: translateY(-1px) scale(0.98);
 }
 
 .report-form .btn-outline-secondary {
-    border-radius: 20px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    border-radius: 50px;
+    padding: 0.75rem 2rem;
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 2px solid #6c757d !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #495057 !important;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+    box-shadow: 
+        0 4px 12px rgba(108, 117, 125, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.report-form .btn-outline-secondary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(108, 117, 125, 0.1), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
 }
 
 .report-form .btn-outline-secondary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 24px rgba(108, 117, 125, 0.2),
+        0 4px 12px rgba(108, 117, 125, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    background: rgba(248, 249, 250, 0.95) !important;
+    border-color: #495057 !important;
+    color: #343a40 !important;
 }
 
-/* Animation */
-@keyframes slideIn {
-    from {
+.report-form .btn-outline-secondary:hover::before {
+    left: 100%;
+}
+
+.report-modal .btn-primary {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    border: none !important;
+    border-radius: 50px;
+    padding: 0.75rem 2rem;
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 
+        0 8px 24px rgba(40, 167, 69, 0.3),
+        0 4px 12px rgba(40, 167, 69, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+}
+
+.report-modal .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
+}
+
+.report-modal .btn-primary:hover {
+    background: linear-gradient(135deg, #20c997, #17a085) !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 12px 32px rgba(40, 167, 69, 0.4),
+        0 6px 16px rgba(40, 167, 69, 0.3);
+}
+
+.report-modal .btn-primary:hover::before {
+    left: 100%;
+}
+
+/* Enhanced Animations */
+@keyframes modalSlideIn {
+    0% {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translate(-50%, -50%) scale(0.8) rotateX(15deg);
+        filter: blur(10px);
     }
-    to {
+    60% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.05) rotateX(-2deg);
+        filter: blur(2px);
+    }
+    100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+        filter: blur(0px);
     }
 }
 
-/* Responsive Design */
+@keyframes slideInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(40px) scale(0.9);
+        filter: blur(8px);
+    }
+    60% {
+        opacity: 0.8;
+        transform: translateY(-5px) scale(1.02);
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    100% {
+        opacity: 1;
+        backdrop-filter: blur(8px) saturate(1.2);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) rotate(-10deg);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1) rotate(5deg);
+    }
+    70% {
+        opacity: 0.9;
+        transform: scale(0.95) rotate(-2deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+        opacity: 0.3;
+    }
+    25% {
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(-50%, -50%) rotate(180deg);
+        opacity: 0.4;
+    }
+    75% {
+        opacity: 0.7;
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+        opacity: 0.3;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 77, 109, 0);
+    }
+}
+
+/* Enhanced Responsive Design */
 @media (max-width: 576px) {
     .report-form {
         width: 95%;
         margin: 1rem;
+        border-radius: 24px;
+    }
+    
+    .report-form .card-body {
+        padding: 1.5rem;
+        max-height: 80vh;
+    }
+    
+    .report-form .card-header {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+    }
+    
+    .report-options .form-check {
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 16px;
+    }
+    
+    .warning-intro {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0 16px 16px 0;
+    }
+    
+    .report-modal .modal-content {
+        padding: 2rem;
+        margin: 1rem;
+        border-radius: 20px;
+    }
+    
+    .report-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.8rem;
+        border-radius: 40px;
+    }
+    
+    .report-form .btn-danger,
+    .report-form .btn-outline-secondary,
+    .report-modal .btn-primary {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+        border-radius: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-form {
+        width: 100%;
+        margin: 0.5rem;
+        border-radius: 20px;
     }
     
     .report-form .card-body {
         padding: 1rem;
-        max-height: 80vh;
+    }
+    
+    .report-form .card-header {
+        padding: 1rem 1rem 0.5rem 1rem;
+    }
+    
+    .report-form .card-header h6 {
+        font-size: 1rem;
     }
     
     .report-options .form-check {
-        padding: 0.5rem 0.75rem;
-        margin-bottom: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 0.8rem;
     }
     
     .warning-intro {
-        padding: 0.75rem;
+        padding: 1rem;
         margin-bottom: 1rem;
     }
     
@@ -256,24 +884,139 @@
         padding: 1.5rem;
         margin: 0.5rem;
     }
+    
+    .report-modal .success-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
 }
 
-/* Focus States for Accessibility */
+/* Enhanced Focus States for Accessibility */
 .report-options .form-check-input:focus {
-    box-shadow: 0 0 0 0.2rem rgba(255, 77, 109, 0.25);
+    box-shadow: 
+        0 0 0 4px rgba(255, 77, 109, 0.25),
+        0 4px 12px rgba(255, 77, 109, 0.2);
+    outline: none;
 }
 
 .report-form .btn:focus {
-    box-shadow: 0 0 0 0.2rem rgba(255, 77, 109, 0.25);
+    box-shadow: 
+        0 0 0 4px rgba(255, 77, 109, 0.25),
+        0 8px 24px rgba(255, 77, 109, 0.3);
+    outline: none;
 }
 
-/* High Contrast Mode Support */
+.report-btn:focus {
+    box-shadow: 
+        0 0 0 4px rgba(255, 77, 109, 0.25),
+        0 8px 32px rgba(255, 77, 109, 0.4);
+    outline: none;
+}
+
+/* Enhanced High Contrast Mode Support */
 @media (prefers-contrast: high) {
     .report-options .form-check {
         border-width: 3px;
+        background: white;
     }
     
     .warning-intro {
-        border-left-width: 6px;
+        border-left-width: 8px;
+        background: white;
+    }
+    
+    .alert-warning {
+        border-left-width: 8px;
+        background: white;
+    }
+    
+    .report-form {
+        background: white;
+        border: 2px solid #000;
+    }
+    
+    .report-form .card-header {
+        background: var(--primary) !important;
+        color: white;
     }
 }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .report-btn,
+    .report-form,
+    .report-options .form-check,
+    .report-modal .modal-content,
+    #vibe-check-overlay {
+        transition: none;
+        animation: none;
+    }
+    
+    .report-btn::before,
+    .report-form .card-header::before,
+    .report-options .form-check::before,
+    .report-form .btn-danger::before,
+    .report-form .btn-outline-secondary::before,
+    .report-modal .btn-primary::before {
+        animation: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .report-btn,
+    .report-form,
+    #vibe-check-overlay,
+    .report-modal {
+        display: none !important;
+    }
+}
+
+/* Dark Mode Support (commented out to prevent automatic dark theme) */
+/*
+@media (prefers-color-scheme: dark) {
+    .report-form {
+        background: 
+            linear-gradient(135deg, rgba(30, 30, 30, 0.98), rgba(40, 40, 40, 0.95)),
+            radial-gradient(circle at 20% 20%, rgba(255, 77, 109, 0.05) 0%, transparent 50%);
+        color: #e9ecef;
+    }
+    
+    .report-options .form-check {
+        background: 
+            linear-gradient(135deg, rgba(40, 40, 40, 0.9), rgba(50, 50, 50, 0.8)),
+            radial-gradient(circle at 10% 20%, rgba(255, 77, 109, 0.03) 0%, transparent 50%);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e9ecef;
+    }
+    
+    .report-options .form-check-label strong {
+        color: #f8f9fa;
+    }
+    
+    .warning-intro {
+        background: 
+            linear-gradient(135deg, rgba(50, 30, 30, 0.95), rgba(60, 40, 40, 0.9)),
+            radial-gradient(circle at 20% 20%, rgba(255, 77, 109, 0.08) 0%, transparent 50%);
+        color: #e9ecef;
+    }
+    
+    .alert-warning {
+        background: 
+            linear-gradient(135deg, rgba(60, 50, 30, 0.95), rgba(70, 60, 40, 0.9)),
+            radial-gradient(circle at 20% 20%, rgba(255, 193, 7, 0.08) 0%, transparent 50%);
+        color: #ffc107;
+    }
+    
+    .report-modal .modal-content {
+        background: 
+            linear-gradient(135deg, rgba(30, 30, 30, 0.98), rgba(40, 40, 40, 0.95)),
+            radial-gradient(circle at 20% 20%, rgba(40, 167, 69, 0.05) 0%, transparent 50%);
+        color: #e9ecef;
+    }
+    
+    .report-modal h5 {
+        color: #f8f9fa;
+    }
+}
+*/

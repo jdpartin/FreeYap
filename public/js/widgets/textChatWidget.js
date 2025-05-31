@@ -104,12 +104,18 @@ class TextChatWidget
             this.isFirstMessage = false;
         }
 
+        document.querySelectorAll('.game-message').forEach(el => {
+            el.innerHTML = '<i class="bi bi-controller"></i> Game Ended'; // Clear any existing game elements
+        });
+
         const gameEl = this.#createGameMessageElement(type, embedUrl);
         this.chatLogContainer.appendChild(gameEl);
         
         this.chatInput.value = '';
         this.chatLogContainer.scrollTop = this.chatLogContainer.scrollHeight;
-    }    #createGameMessageElement(type, embedUrl)
+    }    
+    
+    #createGameMessageElement(type, embedUrl)
     {
         const container = document.createElement('div');
         container.className = `message-container ${type} game-message-container`;
@@ -500,6 +506,19 @@ async function initializeGamesPicker()
         searchGames();
 
         var gameSearchBar = document.getElementById("game-search-bar");
+        var gameCategorySelect = document.getElementById("game-category-select");
+
+        var gameCategories = await gamesAPIClient.getMultiplayerGameCategories();
+
+        if (gameCategories && gameCategories.length > 0)
+        {
+            gameCategories.forEach(category => {
+                var option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                gameCategorySelect.appendChild(option);
+            });
+        }
 
         let debounceTimer;
 
@@ -509,12 +528,18 @@ async function initializeGamesPicker()
                 searchGames();
             }, debounceDelay);
         });
+
+        gameCategorySelect.addEventListener('change', () => {
+            searchGames();
+        });
     }
 }
 
 async function searchGames()
 {
     var gameContainer = document.getElementById("game-container");
+    var gameCategorySelect = document.getElementById("game-category-select");
+    var selectedCategory = gameCategorySelect.value;
 
     gameContainer.innerHTML =  `<div class="spinner-border" role="status">
                                     <span class="sr-only">Searching...</span>
@@ -524,17 +549,36 @@ async function searchGames()
 
     if (gameSearchBar.value == "")
     {
-        putGamesInContainer(await getMultiplayerGames());
+        if (selectedCategory == "")
+        {
+            putGamesInContainer(await getMultiplayerGames(null, 25));
+        }
+        else
+        {
+            putGamesInContainer(await getMultiplayerGamesByCategory(null, selectedCategory, 30));
+        }
     }
     else
     {
-        putGamesInContainer(await getMultiplayerGames(gameSearchBar.value));
+        if (selectedCategory == "")
+        {
+            putGamesInContainer(await getMultiplayerGames(gameSearchBar.value, 50));
+        }
+        else
+        {
+            putGamesInContainer(await getMultiplayerGamesByCategory(gameSearchBar.value, selectedCategory, 50));
+        }
     }   
 }
 
 async function getMultiplayerGames(searchTerm, limit)
 {
     return await gamesAPIClient.getMultiplayerGames(searchTerm, limit);
+}
+
+async function getMultiplayerGamesByCategory(searchTerm, categoryId, limit)
+{
+    return await gamesAPIClient.getMultiplayerGamesByCategory(categoryId, searchTerm, limit);
 }
 
 function putGamesInContainer(gameResult)
@@ -546,8 +590,15 @@ function putGamesInContainer(gameResult)
     if (gameResult.data && gameResult.data.length > 0)
     {
         gameResult.data.forEach(gameData => {
+            // Escape HTML characters in description for safe display in title attribute
+            const escapedDescription = (gameData.description || 'No description available')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
             gameContainer.innerHTML += `
-                <div class="game-div">
+                <div class="game-div" title="${escapedDescription}">
                     <img src="${gameData.image}" 
                         alt="${gameData.title}"
                         class="game-image">

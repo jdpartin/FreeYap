@@ -7,6 +7,49 @@
 
 <div class="container p-0">
     <div id="video-container" class="layout-default">
+        
+        <!-- Bottom bar for video chat title and layout controls -->
+        <div id="bottom-bar" class="text-white d-flex align-items-center">
+            <!-- Column for video effect controls -->
+            <div id="video-effects" class="d-flex flex-column align-items-start">
+                <div class="d-flex flex-row">                    <span id="chat-session-title">
+                        <img src="/images/logo_white.png" class="logo-image" alt="FreeYap Logo"> FreeYap.com
+                    </span>
+                    <button class="effect-btn" title="Backgrounds/Filters" style="display:none;">
+                        <i class="fas fa-magic"></i>
+                    </button>
+                    <button class="effect-btn" title="Avatars" style="display:none;">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    <button class="effect-btn" title="Voice Effects" style="display:none;">
+                        <i class="fas fa-bullhorn"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Column for Vibe Check Widget -->
+            <div id="vibe-check" class="d-flex flex-column align-items-center">
+                <div class="d-flex flex-row align-items-center">
+                    <!-- The vibe check widget is automatically being initialized 
+                         in the video chat widget class constructor -->
+                    <%- include('./vibe-check-widget') %>
+                </div>
+            </div>
+
+            <!-- Column for layout controls -->
+            <div id="layout-controls" class="d-flex flex-column align-items-end">
+                <div class="d-flex flex-row">
+                    <button class="layout-btn active" data-layout="default" title="Default Layout">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="layout-btn" data-layout="pip" title="Picture in Picture">
+                        <i class="fas fa-clone"></i>
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+
         <!-- Main video area -->
         <div id="videos">
             <div class="video-wrapper local-wrapper">
@@ -187,45 +230,6 @@
             </div>
         </div>
 
-        <!-- Bottom bar for video chat title and layout controls -->
-        <div id="bottom-bar" class="text-white d-flex align-items-center">
-            <!-- Column for video effect controls -->
-            <div id="video-effects" class="d-flex flex-column align-items-start">
-                <div class="d-flex flex-row">
-                    <button class="effect-btn" title="Backgrounds/Filters" style="display:none;">
-                        <i class="fas fa-magic"></i>
-                    </button>
-                    <button class="effect-btn" title="Avatars" style="display:none;">
-                        <i class="fas fa-user-circle"></i>
-                    </button>
-                    <button class="effect-btn" title="Voice Effects" style="display:none;">
-                        <i class="fas fa-bullhorn"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Column for Vibe Check Widget -->
-            <div id="vibe-check" class="d-flex flex-column align-items-center">
-                <div class="d-flex flex-row">
-                    <!-- The vibe check widget is automatically being initialized 
-                         in the video chat widget class constructor -->
-                    <%- include('./vibe-check-widget') %>
-                </div>
-            </div>
-
-            <!-- Column for layout controls -->
-            <div id="layout-controls" class="d-flex flex-column align-items-end">
-                <div class="d-flex flex-row">
-                    <button class="layout-btn active" data-layout="default" title="Default Layout">
-                        <i class="fas fa-th-large"></i>
-                    </button>
-                    <button class="layout-btn" data-layout="pip" title="Picture in Picture">
-                        <i class="fas fa-clone"></i>
-                    </button>
-                </div>
-            </div>
-            
-        </div>
     </div>
 </div>
 

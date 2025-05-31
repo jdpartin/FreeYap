@@ -37,13 +37,67 @@ class GamesAPIClient
         }
     }
 
-    async searchGames(searchTerm, limit = 20)
+    async getMultiplayerGamesByCategory(category, searchTerm = '', limit = 10)
     {
-        return await this.getMultiplayerGames(searchTerm, limit);
+        try
+        {
+            const response = await fetch(`${this.baseUrl}/get-multiplayer-games-by-category`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ category, searchTerm, limit })
+            });
+
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Fetched multiplayer games by category:', data);
+            return data;
+        }
+        catch (error)
+        {
+            console.error('Error fetching multiplayer games by category:', error);
+            return {
+                success: false,
+                error: 'Failed to fetch multiplayer games by category',
+                data: []
+            };
+        }
     }
 
-    async getAllGames(limit = 50)
+    async getMultiplayerGameCategories()
     {
-        return await this.getMultiplayerGames('', limit);
+        try
+        {
+            const response = await fetch(`${this.baseUrl}/get-multiplayer-game-categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Fetched multiplayer game categories:', data);
+
+            return data.data;
+        }
+        catch (error)
+        {
+            console.error('Error fetching multiplayer game categories:', error);
+            return {
+                success: false,
+                error: 'Failed to fetch multiplayer game categories',
+                data: []
+            };
+        }
     }
 }

@@ -11,6 +11,7 @@ import topicPopularityApi from './api/topic_popularity';
 import semanticSimilarityApi from './api/semantic_similarity';
 import giphyApi from './api/giphy';
 import gamesApi from './api/games';
+import contactApi from './api/contact';
 import MatchmakingManager from './managers/matchmakingManager';
 
 const app = express();
@@ -43,6 +44,7 @@ app.use('/api/topic-popularity', topicPopularityApi);
 app.use('/api/semantic-similarity', semanticSimilarityApi);
 app.use('/api/giphy', giphyApi);
 app.use('/api/games', gamesApi);
+app.use('/api/contact', contactApi);
 
 // Initialize WebRTC signaling
 setupWebRTCSignaling(io);
@@ -74,6 +76,22 @@ app.get('/text-chat', (req: Request, res: Response) => {
 
 app.get('/webrtc-demo', (req: Request, res: Response) => {
   res.render('webrtcDemo', { title: 'WebRTC Demo', layout: 'layout' });
+});
+
+app.get('/terms', (req: Request, res: Response) => {
+  res.render('terms', { title: 'Terms of Service - FreeYap' });
+});
+
+app.get('/privacy', (req: Request, res: Response) => {
+  res.render('privacy', { title: 'Privacy Policy - FreeYap' });
+});
+
+app.get('/safety', (req: Request, res: Response) => {
+  res.render('safety', { title: 'Protect Yourself Online - FreeYap' });
+});
+
+app.get('/features', (req: Request, res: Response) => {
+  res.render('features', { title: 'Request a Feature - FreeYap' });
 });
 
 // Get my IP endpoint

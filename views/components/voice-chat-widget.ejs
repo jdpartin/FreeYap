@@ -3,6 +3,21 @@
 
 <div class="container p-0">
     <div id="voice-container" class="layout-default">
+
+        <!-- Bottom bar for voice chat title and layout controls (Now its a top bar) -->
+        <div id="bottom-bar" class="text-white d-flex justify-content-between align-items-center">            <span id="chat-session-title">
+                <img src="/images/logo_white.png" class="logo-image" alt="FreeYap Logo"> FreeYap.com
+            </span>
+
+            <!-- Voice effect controls on the left - HIDDEN FOR NOW -->
+            <div id="voice-effects" class="d-flex align-items-center">
+                <button class="effect-btn" title="Voice Effects"  style="display:none;">
+                    <i class="fas fa-bullhorn"></i>
+                </button>
+            </div>
+            
+        </div>
+
         <!-- Audio visualizer -->
         <div id="audio-visualizer">
             <div class="audio-wrapper">
@@ -73,17 +88,6 @@
             </div>
         </div>        
         
-        <!-- Bottom bar for voice chat title and layout controls -->
-        <div id="bottom-bar" class="text-white d-flex justify-content-between align-items-center">
-
-            <!-- Voice effect controls on the left - HIDDEN FOR NOW -->
-            <div id="voice-effects" class="d-flex align-items-center">
-                <button class="effect-btn" title="Voice Effects"  style="display:none;">
-                    <i class="fas fa-bullhorn"></i>
-                </button>
-            </div>
-            
-        </div>
     </div>
 </div>
 
