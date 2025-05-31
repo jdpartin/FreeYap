@@ -46,6 +46,52 @@
 video {
     width: 100%;
     height: auto;
+    /* Prevent fullscreen on mobile devices */
+    -webkit-playsinline: true;
+    -webkit-presentation-mode: inline;
+}
+
+/* Mobile video fixes to prevent fullscreen */
+video {
+    -webkit-playsinline: true;
+    -webkit-play-inline: true;
+    object-fit: cover;
+}
+
+/* Force inline playback on iOS */
+video::-webkit-media-controls-start-playback-button {
+    display: none;
+}
+
+/* Prevent video from going fullscreen on tap */
+video::-webkit-media-controls-fullscreen-button {
+    display: none;
+}
+
+/* Ensure videos stay contained within their wrapper */
+.video-wrapper video {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
+/* Additional mobile-specific video styling */
+@media (max-width: 768px) {
+    video {
+        -webkit-playsinline: true !important;
+    }
+    
+    .video-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .video-wrapper video {
+        transform: translateZ(0); /* Force hardware acceleration */
+        -webkit-transform: translateZ(0);
+    }
 }
 
 #bottom-controls-bar {

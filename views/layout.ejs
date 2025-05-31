@@ -1,12 +1,11 @@
 <%- include('components/header') %>
-    <div class="fixed-ad-right">
-    <div class="ad-box text-center" data-ad-container="fixed-ad-right">
-      <div class="ad-description">These ads help keep FreeYap free</div>
-      <!-- Ad content will be dynamically loaded by AdManager -->
-    </div>
-  </div><div class="container-fluid">
-    <div class="row justify-content-center">
-      <div class="col-12 col-md-11 col-lg-10 col-xl-8">
-        <%- body %>
-      </div>    </div>
-  </div><%- include('components/footer') %>
+<main class="main-content">
+  <div class="container-fluid">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-11 col-lg-10 col-xl-8">
+          <%- body %>
+        </div>
+      </div>
+  </div>
+</main>
+<%- include('components/footer') %>

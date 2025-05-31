@@ -37,12 +37,14 @@ class VideoChatWidget
 
         this.#setupUIEventListeners();
         this.MediaInitialization = this.#initializeMedia();
-    }
-
-    async #initializeMedia()
+    }    async #initializeMedia()
     {
         try
         {
+            // Initialize video elements with mobile-friendly attributes
+            this.#initializeVideoElement(this.localVideoElement);
+            this.#initializeVideoElement(this.remoteVideoElement);
+            
             this.localStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 640 },
@@ -82,11 +84,25 @@ class VideoChatWidget
 
         this.muteVideoBtn.disabled = true;
         this.muteAudioBtn.disabled = true;
-    }
-
-    #startVideoTransmission(peer)
+    }    #startVideoTransmission(peer)
     {
-        peer.emit('stream', this.localStream);
+        if (this.localStream)
+        {
+            try 
+            {
+                // Use the correct SimplePeer API to add the local stream
+                peer.addStream(this.localStream);
+                console.log('VideoChat: Local video stream added to peer connection');
+            }
+            catch (error)
+            {
+                console.error('VideoChat: Failed to add local stream to peer:', error);
+            }
+        }
+        else
+        {
+            console.warn('VideoChat: No local stream available to transmit - media may not be initialized yet');
+        }
     }
 
     #toggleVideo(mute)
@@ -162,5 +178,24 @@ class VideoChatWidget
                 this.muteAudioBtn.innerHTML = isCurrentlyMuted ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
             }
         });
+    }
+
+    #initializeVideoElement(videoElement)
+    {
+        if (!videoElement) return;
+        
+        // Set attributes for mobile compatibility
+        videoElement.playsInline = true; // Prevent fullscreen on iOS
+        videoElement.setAttribute('webkit-playsinline', 'true'); // For older iOS devices
+        videoElement.setAttribute('playsinline', 'true');
+        videoElement.controls = false; // Hide native controls
+        
+        // For local video, keep it muted to prevent echo
+        if (videoElement.id === 'local-video') {
+            videoElement.muted = true;
+            videoElement.setAttribute('muted', 'true');
+        }
+        
+        console.log('VideoChat: Initialized video element with mobile attributes:', videoElement.id);
     }
 }

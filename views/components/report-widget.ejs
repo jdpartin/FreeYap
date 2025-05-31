@@ -1,12 +1,12 @@
 <link href="/css/report-widget.css" rel="stylesheet">
 
 <!-- Report Button -->
-<button id="vibe-check-button" class="btn btn-danger btn-sm report-btn" title="Report illegal content or underage users" style="background-color: var(--primary); border-color: var(--primary);">
+<button id="report-illegal-button" class="btn btn-danger btn-sm report-btn" title="Report illegal content or underage users" style="background-color: var(--primary); border-color: var(--primary);">
     <i class="fas fa-exclamation-triangle"></i> Report Illegal Use
 </button>
 
 <!-- Report Form -->
-<div id="vibe-check-form" class="report-form hidden">
+<div id="report-illegal-form" class="report-form hidden">
     <div class="card shadow-sm">        <div class="card-header text-white" style="background-color: var(--primary);">
             <h6 class="mb-0">
                 <i class="fas fa-shield-alt me-2"></i>
@@ -24,8 +24,7 @@
                     <strong>Note:</strong> For content that's just inappropriate or doesn't match your preferences, please use the Vibe Check system instead.
                 </small>
             </div>
-            
-            <form id="vibe-check-report-form">
+              <form id="report-illegal-submit-form">
                 <!-- Report Type Selection -->
                 <div class="mb-3">
                     <label class="form-label fw-bold">What are you reporting?</label>
@@ -50,7 +49,17 @@
                                 <strong>Platform Abuse</strong>
                                 <small class="text-muted d-block">Illegal use of FreeYap's services</small>
                             </label>
-                        </div>
+                        </div>                    </div>
+                </div>
+
+                <!-- Details Section -->
+                <div class="mb-3">
+                    <label for="report-details" class="form-label fw-bold">Additional Details</label>
+                    <textarea id="report-details" name="details" class="form-control" rows="4" 
+                              placeholder="Please provide specific details about what you're reporting. Include any relevant context that would help us understand the situation..." 
+                              maxlength="1000"></textarea>
+                    <div class="form-text">
+                        <span id="char-count">0</span>/1000 characters
                     </div>
                 </div>
 
@@ -60,13 +69,11 @@
                         <i class="fas fa-gavel me-1"></i>
                         <strong>Legal Notice:</strong> False reports may violate terms of service. Only report content you genuinely believe is illegal or harmful.
                     </div>
-                </div>
-
-                <!-- Action Buttons -->
+                </div><!-- Action Buttons -->
                 <div class="d-flex justify-content-between mt-3">
-                    <button type="button" id="cancel-vibe-check" class="btn btn-outline-secondary">
+                    <button type="button" id="cancel-report-illegal" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-1"></i>Cancel
-                    </button>                    <button type="submit" id="submit-vibe-check" class="btn btn-danger" style="background-color: var(--primary); border-color: var(--primary);">
+                    </button>                    <button type="submit" id="submit-report-illegal" class="btn btn-danger" style="background-color: var(--primary); border-color: var(--primary);">
                         <i class="fas fa-flag me-1"></i>Submit Report
                     </button>
                 </div>
@@ -76,11 +83,11 @@
 </div>
 
 <!-- Background Overlay -->
-<div id="vibe-check-overlay" class="hidden">
+<div id="report-illegal-overlay" class="hidden">
 </div>
 
 <!-- Report Confirmation Modal -->
-<div id="vibe-check-confirmation" class="report-modal hidden">
+<div id="report-illegal-confirmation" class="report-modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content">
         <div class="text-center">
@@ -91,7 +98,7 @@
             <p class="text-muted">
                 Thank you for helping keep FreeYap safe and legal. Your report has been submitted and will be reviewed according to our policies and legal obligations. We take all reports seriously and will take appropriate action as required.
             </p>
-            <button type="button" id="close-vibe-confirmation" class="btn btn-primary mt-2">
+            <button type="button" id="close-report-confirmation" class="btn btn-primary mt-2">
                 <i class="fas fa-check me-1"></i>Understood
             </button>
         </div>

@@ -464,8 +464,8 @@
     letter-spacing: 0.2px;
 }
 
-/* Enhanced Modal Overlay */
-#vibe-check-overlay {
+/* Enhanced Modal Overlay for Report Widget */
+#report-illegal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -480,7 +480,7 @@
     animation: fadeIn 0.4s ease;
 }
 
-#vibe-check-overlay.hidden {
+#report-illegal-overlay.hidden {
     display: none;
 }
 
@@ -942,12 +942,11 @@
 }
 
 /* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-    .report-btn,
+@media (prefers-reduced-motion: reduce) {    .report-btn,
     .report-form,
     .report-options .form-check,
     .report-modal .modal-content,
-    #vibe-check-overlay {
+    #report-illegal-overlay {
         transition: none;
         animation: none;
     }
@@ -963,10 +962,9 @@
 }
 
 /* Print Styles */
-@media print {
-    .report-btn,
+@media print {    .report-btn,
     .report-form,
-    #vibe-check-overlay,
+    #report-illegal-overlay,
     .report-modal {
         display: none !important;
     }

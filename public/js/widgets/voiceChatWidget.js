@@ -174,9 +174,11 @@ class VoiceChatWidget
             iconContainer.classList.add('volume-peak');
         }
     }    
-    
-    #handleConnectionReady()
+      async #handleConnectionReady()
     {
+        // Ensure media is initialized before setting up voice transmission
+        await this.MediaInitialization;
+        
         let peer = this.webRTCConnectionManager.GetPeer();
 
         this.#setupVoiceChannel(peer);
@@ -284,12 +286,28 @@ class VoiceChatWidget
         };
 
         checkRemoteVolume();
-    }
-
+    }    
+    
     #startVoiceTransmission(peer)
     {
-        peer.emit('stream', this.localStream);
-    }    
+        if (this.localStream)
+        {
+            try 
+            {
+                // Use the correct SimplePeer API to add the local stream
+                peer.addStream(this.localStream);
+                console.log('VoiceChat: Local audio stream added to peer connection');
+            }
+            catch (error)
+            {
+                console.error('VoiceChat: Failed to add local stream to peer:', error);
+            }
+        }
+        else
+        {
+            console.warn('VoiceChat: No local stream available to transmit - media may not be initialized yet');
+        }
+    }
     
     #toggleAudio(mute)
     {

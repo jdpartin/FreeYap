@@ -4,10 +4,9 @@
  */
 
 class AdManager
-{
-    constructor()
+{    constructor()
     {
-        this.isMobile = window.innerWidth <= 768;
+        this.isMobile = window.innerWidth <= 1399;
         this.refreshInterval = 30000; // 30 seconds
         this.staggerDelay = 15000; // 15 seconds stagger
         this.initialSecondaryDelay = 5000; // 5 seconds initial delay for secondary ad
@@ -205,10 +204,9 @@ class AdManager
 
     /**
      * Handle window resize to detect device type changes
-     */
-    handleResize()
+     */    handleResize()
     {
-        const newIsMobile = window.innerWidth <= 768;
+        const newIsMobile = window.innerWidth <= 1399;
         
         if (newIsMobile !== this.isMobile) {
             console.log(`AdManager: Device type changed to ${newIsMobile ? 'mobile' : 'desktop'}`);

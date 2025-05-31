@@ -635,6 +635,14 @@ function initializeVideoElement(videoElement) {
     videoElement.playsInline = true; // Especially important for iOS
     videoElement.autoplay = true;
     
+    // Add webkit-specific attribute for older iOS devices
+    videoElement.setAttribute('webkit-playsinline', 'true');
+    videoElement.setAttribute('playsinline', 'true');
+    
+    // Additional mobile-friendly attributes
+    videoElement.setAttribute('muted', 'true'); // Helps with autoplay policies
+    videoElement.controls = false; // Prevent native controls
+    
     // Add event listeners for better debugging
     videoElement.addEventListener('loadedmetadata', () => {
         console.log('[Media] Video loadedmetadata:', 

@@ -71,6 +71,113 @@ router.post('/send', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
+// Feature request submission endpoint
+router.post('/feature-request', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { title, description, category, userEmail, useCase, userImpact } = req.body;
+        
+        // Validate required fields
+        if (!title || !description) {
+            res.status(400).json({ 
+                success: false, 
+                error: 'Title and description are required' 
+            });
+            return;
+        }
+
+        // Validate title length
+        if (title.length > 200) {
+            res.status(400).json({ 
+                success: false, 
+                error: 'Title too long (max 200 characters)' 
+            });
+            return;
+        }
+
+        // Validate description length
+        if (description.length > 2000) {
+            res.status(400).json({ 
+                success: false, 
+                error: 'Description too long (max 2000 characters)' 
+            });
+            return;
+        }
+
+        // Validate category if provided
+        const allowedCategories = ['chat-enhancements', 'matching-improvements', 'platform-features', 'other'];
+        if (category && !allowedCategories.includes(category)) {
+            res.status(400).json({ 
+                success: false, 
+                error: 'Invalid category' 
+            });
+            return;
+        }
+
+        // Validate email format if provided
+        if (userEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+            res.status(400).json({ 
+                success: false, 
+                error: 'Invalid email format' 
+            });
+            return;
+        }
+
+        // Create email content for feature request
+        const categoryMap: { [key: string]: string } = {
+            'chat-enhancements': 'Chat Enhancements',
+            'matching-improvements': 'Matching Improvements', 
+            'platform-features': 'Platform Features',
+            'other': 'Other'
+        };
+
+        const emailSubject = `FreeYap Feature Request: ${title}`;
+        
+        // Create feature request email content
+        const message = `
+Feature Request Details:
+
+Title: ${title}
+Category: ${category ? categoryMap[category] : 'Not specified'}
+
+Description:
+${description}
+
+${useCase ? `Use Case:\n${useCase}\n` : ''}
+${userImpact ? `User Impact:\n${userImpact}\n` : ''}
+${userEmail ? `Contact Email: ${userEmail}` : 'No contact email provided'}
+
+---
+Submitted from FreeYap Features Page on ${new Date().toLocaleString()}
+        `.trim();
+
+        // Send email to features@freeyap.com
+        const result = await EmailService.sendContactEmail({
+            subject: 'feature-request',
+            message: message,
+            userEmail: userEmail || undefined
+        });
+
+        if (result.success) {
+            res.status(200).json({ 
+                success: true, 
+                message: 'Your feature request has been sent successfully! We\'ll review it and get back to you if we need more information.' 
+            });
+        } else {
+            res.status(500).json({ 
+                success: false, 
+                error: 'Failed to send feature request. Please try again later.' 
+            });
+        }
+
+    } catch (error) {
+        console.error('Error in feature request submission:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error' 
+        });
+    }
+});
+
 // Test email service endpoint (for development)
 router.get('/test', async (req: Request, res: Response): Promise<void> => {
     try {

@@ -12,6 +12,7 @@ import semanticSimilarityApi from './api/semantic_similarity';
 import giphyApi from './api/giphy';
 import gamesApi from './api/games';
 import contactApi from './api/contact';
+import reportApi from './api/report';
 import MatchmakingManager from './managers/matchmakingManager';
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/semantic-similarity', semanticSimilarityApi);
 app.use('/api/giphy', giphyApi);
 app.use('/api/games', gamesApi);
 app.use('/api/contact', contactApi);
+app.use('/api/report', reportApi);
 
 // Initialize WebRTC signaling
 setupWebRTCSignaling(io);
