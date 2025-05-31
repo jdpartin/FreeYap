@@ -292,7 +292,7 @@
 }
 
 /* On larger screens, make game embeds even wider */
-@media (min-width: 768px) {
+@media (min-width: 769px) {
     .game-message-container .game-message {
         max-width: 100%;
         min-width: 400px;
@@ -432,4 +432,75 @@ emoji-picker::part(wrapper) {
 .input-group > :last-child {
     border-top-right-radius: 4px !important;
     border-bottom-right-radius: 4px !important;
+}
+
+/* Game embed container - shown on desktop, hidden on mobile */
+.game-embed-container {
+    display: block;
+}
+
+.game-embed {
+    width: 100%;
+    height: 300px;
+    border: none;
+    border-radius: 8px;
+}
+
+/* Mobile game message styling - hidden on desktop, shown on mobile */
+.mobile-game-message {
+    display: none;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    text-align: left;
+}
+
+.mobile-game-icon {
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.mobile-game-text {
+    flex: 1;
+}
+
+.mobile-game-text h6 {
+    font-weight: 600;
+}
+
+.mobile-game-text p {
+    line-height: 1.4;
+}
+
+/* Mobile responsive rules */
+@media (max-width: 768px) {
+    /* Hide games tab on mobile and tablet devices */
+    .tab-btn[data-tab="games"] {
+        display: none !important;
+    }
+    
+    /* Hide game embeds and show mobile message on mobile */
+    .game-embed-container {
+        display: none !important;
+    }
+    
+    .mobile-game-message {
+        display: flex !important;
+    }
+}
+
+/* Very small mobile devices */
+@media (max-width: 576px) {
+    .chat-card {
+        height: 75vh; /* Slightly reduce height on mobile */
+    }
+    
+    .tab-btn {
+        font-size: 16px; /* Slightly smaller icons on mobile */
+        padding: 8px;
+    }
 }

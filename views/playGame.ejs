@@ -1,0 +1,20 @@
+<div id="game-container"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const gameContainer = document.getElementById('game-container');
+
+        // we need to grab the embed url from the url parameters, it is called embed
+        const urlParams = new URLSearchParams(window.location.search);
+        const embedUrl = urlParams.get('embed');
+
+        // Check if embed URL exists
+        if (!embedUrl) {
+            gameContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: #666;">No game URL provided.</div>';
+            return;
+        }
+
+        const gameEmbedCode = `<iframe src="${embedUrl}" style="width:100%;min-height: 600px;" frameborder="0" allowfullscreen></iframe>`;
+        gameContainer.innerHTML = gameEmbedCode;
+    });
+</script>

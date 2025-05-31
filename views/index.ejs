@@ -2,11 +2,13 @@
 <!-- Spell Checker CSS - only for home page -->
 <link rel="stylesheet" href="/css/spellcheck.css">
 
-<div class="widget-container">
-  <div class="widget-header">
+<div class="widget-container">  <div class="widget-header">
     <div class="logo-section">
-      <img src="/images/logo_white.png" alt="FreeYap Logo">
-      <span class="brand-text">FreeYap.com</span>
+      <div class="logo-brand-row">
+        <img src="/images/logo_white.png" alt="FreeYap Logo">
+        <span class="brand-text">FreeYap.com</span>
+      </div>
+      <p>Chat with strangers, be treated like an adult.</p>
     </div>
     <div class="status-indicator">
       <i class="fas fa-circle me-2" style="color: #4ade80;"></i>
@@ -35,9 +37,7 @@
           <i class="fas fa-video"></i>
         </div>
         <h4>Video Chat</h4>
-      </a>
-
-      <a href="/voice-chat" class="chat-interface-card">
+      </a>      <a href="/voice-chat" class="chat-interface-card">
         <div class="icon-circle">
           <i class="fas fa-microphone"></i>
         </div>
@@ -50,7 +50,16 @@
         </div>
         <h4>Text Chat</h4>
       </a>
-    </div>    <div class="popular-topics-section">
+    </div>
+
+    <div class="game-link-section mt-3 mb-3" style="display:none;">
+      <a href="/findGames" class="game-link">
+        <i class="fas fa-gamepad me-2"></i>
+        Play a Game with a Stranger
+      </a>
+    </div>
+
+    <div class="popular-topics-section">
       <div class="fw-bold mb-2" style="font-size: 0.9rem; color: var(--primary);"><i class="fas fa-star me-1"></i> Popular Topics</div>
       <div id="popularTopics" class="small" style="font-size: 0.8rem; color: var(--primary);">
         <i class="fas fa-spinner fa-spin me-2"></i>Loading popular topics...

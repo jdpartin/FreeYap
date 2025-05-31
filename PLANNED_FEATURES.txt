@@ -1,0 +1,26 @@
+Play a game with a stranger
+    a chat mode where gaming is the center focal point
+    you can choose standard modes like video, voice, or text
+    there is a large game selector widget and possibly a voting system
+    you match with someone and can select a game to play together
+    you can enter game categories or custom terms and be semantically matched with people of similar interests
+    your game doesnt disappear when your partner disconnects
+
+Video chat features
+    virtual backgrounds
+    avatars
+    filters
+
+Voice chat features
+    voice filters
+
+Text chat features
+    share screen
+    send video, voice, files
+    shared whiteboard, polls
+
+Matchmaking modes
+    group chat with 3+ people
+    random chat 1:1 within a provided group code
+    vibe system to self-categorize into modes like nsfw
+    vibe check button to nudge people into the correct mode

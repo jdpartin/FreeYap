@@ -92,6 +92,14 @@ app.get('/features', (req: Request, res: Response) => {
   res.render('features', { title: 'Request a Feature - FreeYap' });
 });
 
+app.get('/find-games', (req: Request, res: Response) => {
+  res.render('findGames', { title: 'Find Games - FreeYap' });
+});
+
+app.get('/play-game', (req: Request, res: Response) => {
+  res.render('playGame', { title: 'Play Game - FreeYap' });
+});
+
 
 // Get my IP endpoint
 app.post('/my-ip', (req, res) => {

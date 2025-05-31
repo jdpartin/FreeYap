@@ -106,9 +106,7 @@ class TextChatWidget
 
         document.querySelectorAll('.game-message').forEach(el => {
             el.innerHTML = '<i class="bi bi-controller"></i> Game Ended'; // Clear any existing game elements
-        });
-
-        const gameEl = this.#createGameMessageElement(type, embedUrl);
+        });        const gameEl = this.#createGameMessageElement(type, embedUrl);
         this.chatLogContainer.appendChild(gameEl);
         
         this.chatInput.value = '';
@@ -122,7 +120,37 @@ class TextChatWidget
         
         const message = document.createElement('div');
         message.className = `message message-${type} game-message`;
-        message.innerHTML = `<iframe src="${embedUrl}" class="game-embed" frameborder="0"></iframe>`;
+          // Create both mobile and desktop versions, let CSS handle the display       
+          message.innerHTML = `
+            <div class="game-embed-container">
+                <iframe src="${embedUrl}" class="game-embed" frameborder="0"></iframe>
+                <div class="desktop-game-controls" style="padding: 0.5rem; border-top: 1px solid #dee2e6; background-color: #f8f9fa;">
+                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button class="btn btn-sm btn-outline-success open-game-link-btn" 
+                                data-embed-url="${embedUrl}"
+                                style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                            <i class="bi bi-box-arrow-up-right"></i> Open Game in a New Tab
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-game-message">
+                <div class="mobile-game-icon">
+                    <i class="bi bi-controller" style="font-size: 2rem; color: var(--primary);"></i>
+                </div>
+                <div class="mobile-game-text">
+                    <h6 style="margin: 0.5rem 0 0.25rem 0; color: var(--primary);">Game Shared</h6>
+                    <p style="margin: 0; color: #6c757d; font-size: 0.9rem;">
+                        Games may not work on mobile devices. Please use a desktop or laptop to play.
+                    </p>
+                    <button class="btn btn-sm btn-outline-primary copy-game-link-btn" 
+                            data-embed-url="${embedUrl}"
+                            style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                        <i class="bi bi-link-45deg"></i> Copy Link
+                    </button>
+                </div>
+            </div>
+        `;
 
         const meta = document.createElement('div');
         meta.className = 'message-meta';
@@ -130,6 +158,69 @@ class TextChatWidget
         meta.textContent = time;
         container.appendChild(message);
         container.appendChild(meta);
+
+        // Add event listener for copy link button
+        const copyLinkBtn = container.querySelector('.copy-game-link-btn');
+        if (copyLinkBtn)
+        {
+            copyLinkBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const embedUrl = copyLinkBtn.getAttribute('data-embed-url');
+                const gameLink = `https://freeyap.com/play-game?embed=${encodeURIComponent(embedUrl)}`;
+                
+                navigator.clipboard.writeText(gameLink).then(() => {
+                    // Temporarily change button text to show success
+                    const originalText = copyLinkBtn.innerHTML;
+                    copyLinkBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                    copyLinkBtn.classList.remove('btn-outline-primary');
+                    copyLinkBtn.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        copyLinkBtn.innerHTML = originalText;
+                        copyLinkBtn.classList.remove('btn-success');
+                        copyLinkBtn.classList.add('btn-outline-primary');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy link:', err);
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = gameLink;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                      // Show success feedback
+                    const originalText = copyLinkBtn.innerHTML;
+                    copyLinkBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                    copyLinkBtn.classList.remove('btn-outline-primary');
+                    copyLinkBtn.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        copyLinkBtn.innerHTML = originalText;
+                        copyLinkBtn.classList.remove('btn-success');
+                        copyLinkBtn.classList.add('btn-outline-primary');
+                    }, 2000);
+                });
+            });
+        }
+
+        // Add event listener for open game button
+        const openGameBtn = container.querySelector('.open-game-link-btn');
+        if (openGameBtn)
+        {
+            openGameBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const embedUrl = openGameBtn.getAttribute('data-embed-url');
+                const gameLink = `https://freeyap.com/play-game?embed=${encodeURIComponent(embedUrl)}`;
+                
+                // Open the game link in a new tab
+                window.open(gameLink, '_blank');
+            });
+        }
 
         return container;
     }
