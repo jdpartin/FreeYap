@@ -24,8 +24,6 @@ class SemanticSimilarityAPIClient
 
             const data = await response.json();
 
-            console.log('Bulk embeddings response:', data);
-            
             return data;
         }
         catch (error)
@@ -110,8 +108,6 @@ class SemanticSimilarityAPIClient
                 results.set(topicA, bestMatch);
             }
         }
-
-        console.log('Cross comparison results:', results);
 
         return results;
     }

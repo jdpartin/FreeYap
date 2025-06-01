@@ -78,8 +78,6 @@ class TopicsWidget
             {
                 await this.Initialization;// Ensure my topics are initialized before sending
 
-                console.log('Received request for topics from peer. My topics:', this.myTopics);
-
                 this.webRTCConnectionManager.SendMessage({
                     messageType: 'send-topics',
                     messageObject: { topics: [...this.myTopics.keys()] }
@@ -107,7 +105,6 @@ class TopicsWidget
             try
             {
                 topics = JSON.parse(decodeURIComponent(topicsParam));
-                console.log('Extracted topics from URL:', topics);
             }
             catch (e)
             {
@@ -179,7 +176,9 @@ class TopicsWidget
                 {
                     console.error('Error calculating topic similarities:', error);
                 }
-            }            for (let i = 0; i < sortedMyTopics.length; i++)
+            }            
+            
+            for (let i = 0; i < sortedMyTopics.length; i++)
             {
                 const [topic] = sortedMyTopics[i];
                 let topicHtml = `<div class="topic-bubble wave-topic`;                if (similarityMap && similarityMap.has(topic))
@@ -246,7 +245,9 @@ class TopicsWidget
                 {
                     console.error('Error calculating topic similarities:', error);
                 }
-            }            for (let i = 0; i < sortedPeerTopics.length; i++)
+            }            
+            
+            for (let i = 0; i < sortedPeerTopics.length; i++)
             {
                 const [topic] = sortedPeerTopics[i];
                 let topicHtml = `<div class="topic-bubble wave-topic`;
@@ -303,8 +304,6 @@ class TopicsWidget
                 }
 
                 const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
-
-                console.log('Received topics and embeddings from peer:', topicsAndEmbeddingsResponse.embeddings);
 
                 this.peerTopics = new Map();
 
