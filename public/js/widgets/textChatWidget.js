@@ -493,11 +493,13 @@ function putGifsInContainer(gifResult)
 {
     var gifsContainer = document.getElementById("gif-container");
 
+    var gifData = gifResult;
+
     gifsContainer.innerHTML = '';
 
-    if (gifResult.data && gifResult.data.length > 0)
+    if (gifData && gifData.length > 0)
     {
-        gifResult.data.forEach(gifData => {
+        gifData.forEach(gifData => {
         gifsContainer.innerHTML += `<img src="${gifData.images.original.url}" 
                                         alt="Trending GIF" 
                                         class="gif-image" 
@@ -563,11 +565,13 @@ function putStickersInContainer(stickerResult)
 {
     var stickerContainer = document.getElementById("sticker-container");
 
+    var stickerData = stickerResult;
+
     stickerContainer.innerHTML = '';
 
-    if (stickerResult.data && stickerResult.data.length > 0)
+    if (stickerData && stickerData.length > 0)
     {
-        stickerResult.data.forEach(stickerData => {
+        stickerData.forEach(stickerData => {
         stickerContainer.innerHTML += `<img src="${stickerData.images.original.url}" 
                                             alt="Trending Sticker" 
                                             class="sticker-image" 

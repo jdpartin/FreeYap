@@ -6,7 +6,8 @@ const router = express.Router();
 // Cache for games data
 let gamesCache: any[] | null = null;
 let cacheExpiry: number = 0;
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+let isRefreshing: boolean = false;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 router.post('/get-multiplayer-games', async (req: Request, res: Response) =>
 {
@@ -14,7 +15,9 @@ router.post('/get-multiplayer-games', async (req: Request, res: Response) =>
     {
         const { searchTerm = '', limit = 10 } = req.body;
 
-        await getAllGames();        let filteredGames = [...(gamesCache || [])];        // Apply search filter if provided
+        await ensureGamesLoaded();
+        
+        let filteredGames = [...(gamesCache || [])];// Apply search filter if provided
         if (searchTerm && searchTerm.trim() !== "")
         {
             const searchLower = searchTerm.toLowerCase();
@@ -57,7 +60,7 @@ router.post('/get-multiplayer-games-by-category', async (req: Request, res: Resp
     {
         const { category, searchTerm = "", limit = 10 } = req.body;        
         
-        await getAllGames();
+        await ensureGamesLoaded();
 
         let filteredGames = [...(gamesCache || [])];// Filter by category if provided
         if (category && category.trim() !== "")
@@ -118,10 +121,10 @@ router.post('/get-multiplayer-game-categories', async (req: Request, res: Respon
 {
     try
     {
-        await getAllGames();
+        await ensureGamesLoaded();
 
         // Extract unique categories from the games
-        const categoriesSet = new Set<string>();        (gamesCache || []).forEach(game => {
+        const categoriesSet = new Set<string>();(gamesCache || []).forEach(game => {
             if (game.tags) {
                 // tags are a comma-separated string, split it into an array
                 const tagsArray = game.tags.split(',');
@@ -180,5 +183,73 @@ async function getAllGames()
     
     cacheExpiry = now + CACHE_DURATION;   
 }
+
+async function ensureGamesLoaded()
+{
+    const now = Date.now();
+    
+    // If cache is empty, wait for fresh data
+    if (!gamesCache)
+    {
+        await refreshGamesCache();
+        return;
+    }
+    
+    // If cache exists but is stale, return cached data and refresh in background
+    if (now >= cacheExpiry && !isRefreshing)
+    {
+        // Start background refresh without waiting
+        refreshGamesInBackground();
+    }
+}
+
+async function refreshGamesCache()
+{
+    try
+    {
+        isRefreshing = true;
+        const response = await fetch('https://www.onlinegames.io/media/plugins/genGames/embed.json');
+        
+        if (!response.ok)
+        {
+            throw new Error(`Failed to fetch games: ${response.status}`);
+        }
+
+        const allGames = await response.json();
+        
+        // Filter for multiplayer games only
+        gamesCache = allGames.filter((game: any) => {
+            if (!game.tags) return false;
+            const tagsArray = game.tags.split(',');
+            return tagsArray.some((tag: string) => tag.trim().toLowerCase() === 'multiplayer');
+        });
+          cacheExpiry = Date.now() + CACHE_DURATION;
+        console.log(`Games cache refreshed successfully. ${gamesCache?.length || 0} multiplayer games cached.`);
+    }
+    catch (error)
+    {
+        console.error('Failed to refresh games cache:', error);
+        // If we have old cached data and refresh fails, extend expiry by 1 hour to avoid constant retries
+        if (gamesCache)
+        {
+            cacheExpiry = Date.now() + (60 * 60 * 1000); // 1 hour fallback
+        }
+        throw error;
+    }
+    finally
+    {
+        isRefreshing = false;
+    }
+}
+
+function refreshGamesInBackground()
+{
+    refreshGamesCache().catch(error => {
+        console.error('Background games cache refresh failed:', error);
+    });
+}
+
+// Initialize cache when module loads
+refreshGamesInBackground();
 
 export default router;

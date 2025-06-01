@@ -4,14 +4,20 @@ import DatabaseManager from '../managers/databaseManager';
 const router = express.Router();
 const db = new DatabaseManager();
 
+// Cache for popular topics
+let popularTopicsCache: any[] | null = null;
+let popularTopicsCacheExpiry: number = 0;
+let isPopularTopicsRefreshing: boolean = false;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 router.post('/get-popular-topics', async (req: Request, res: Response) =>
 {
     try
     {
-        const popularityResults = await db.executeFunction('get_popular_topics', []);
+        await ensurePopularTopicsLoaded();
 
-        // Ensure we return the results directly as they come from the database
-        res.status(200).json(popularityResults || []);
+        // Return cached data
+        res.status(200).json(popularTopicsCache || []);
     }
     catch (error)
     {
@@ -45,8 +51,63 @@ router.post('/get-topic-popularity', async (req: Request, res: Response) =>
     catch (error)
     {
         console.error('Error in /get-topic-popularity:', error);
-        res.status(500).json({ error: 'Failed to get topic popularity' });
-    }
+        res.status(500).json({ error: 'Failed to get topic popularity' });    }
 });
+
+// Popular topics caching functions
+async function ensurePopularTopicsLoaded()
+{
+    const now = Date.now();
+    
+    // If cache is empty (null or empty array), wait for fresh data
+    if (!popularTopicsCache || popularTopicsCache.length === 0)
+    {
+        await refreshPopularTopicsCache();
+        return;
+    }
+    
+    // If cache exists with data but is stale, return cached data and refresh in background
+    if (now >= popularTopicsCacheExpiry && !isPopularTopicsRefreshing)
+    {
+        // Start background refresh without waiting
+        refreshPopularTopicsInBackground();
+    }
+}
+
+async function refreshPopularTopicsCache()
+{
+    try
+    {
+        isPopularTopicsRefreshing = true;
+        const popularityResults = await db.executeFunction('get_popular_topics', [20]);
+        popularTopicsCache = popularityResults || [];
+        popularTopicsCacheExpiry = Date.now() + CACHE_DURATION;
+        console.log(`Popular topics cache refreshed successfully. ${popularTopicsCache?.length || 0} topics cached.`);
+    }
+    catch (error)
+    {
+        console.error('Failed to refresh popular topics cache:', error);
+        // If we have old cached data and refresh fails, extend expiry by 1 minute to avoid constant retries
+        if (popularTopicsCache)
+        {
+            popularTopicsCacheExpiry = Date.now() + (60 * 1000); // 1 minute fallback
+        }
+        throw error;
+    }
+    finally
+    {
+        isPopularTopicsRefreshing = false;
+    }
+}
+
+function refreshPopularTopicsInBackground()
+{
+    refreshPopularTopicsCache().catch(error => {
+        console.error('Background popular topics cache refresh failed:', error);
+    });
+}
+
+// Initialize cache when module loads
+refreshPopularTopicsInBackground();
 
 export default router;
