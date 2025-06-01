@@ -306,7 +306,10 @@ class WebRTCConnectionManager
                 if (this.socket.id == null)
                 {
                     console.error('Socket connection failed. No socket ID received.');
+
+                    this.socket.disconnect();
                     this.socket = null;
+
                     this.#handleSocketClose();
                     return;
                 }
@@ -335,7 +338,9 @@ class WebRTCConnectionManager
 
                     this.#raiseEvent('socketConnectionTimeout');
 
+                    this.socket.disconnect();
                     this.socket = null;
+                    
                     this.#handleSocketClose();
 
                     resolve();
@@ -392,7 +397,7 @@ class WebRTCConnectionManager
         this.#startPeerConnectionTimeout();
     }
 
-    #handleSocketClose()
+    async #handleSocketClose()
     {
         if (this.peer == null) // We disconnect on purpose when a peer connection is established
         {
@@ -404,6 +409,12 @@ class WebRTCConnectionManager
                 console.warn(`Socket connection lost. Attempting to reconnect...`);
 
                 this.#raiseEvent('connectionLost');
+
+                this.socket.disconnect();
+                this.socket = null;
+
+                // wait for a short period before reconnecting
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
                 this.#connectToSocket();
             }
@@ -471,7 +482,8 @@ class WebRTCConnectionManager
                 config: { iceServers: iceServerConfig }
             });
         }
-          this.#setupPeerEventListeners();
+        
+        this.#setupPeerEventListeners();
         this.#raiseEvent('peerCreated');
     }
 
@@ -554,6 +566,7 @@ class WebRTCConnectionManager
         });
 
         this.socket.disconnect();// Disconnect from the socket server once the peer connection is established
+        this.socket = null;
         this.#raiseEvent('connectionReady');
     }
 
@@ -568,6 +581,8 @@ class WebRTCConnectionManager
         // Increment connection count to prevent delayed matchmaking from being called on the old connection
         this.connectionCount++;
         this.peer = null
+
+        this.socket.disconnect();
         this.socket = null;
 
         this.#raiseEvent('connectionClosed');
