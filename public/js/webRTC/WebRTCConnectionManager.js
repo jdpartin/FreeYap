@@ -12,6 +12,9 @@ class WebRTCConnectionManager
         this.partnerSocketId = null;
         this.socket = null;
 
+        // the stream must be added when the matchFound event is raised
+        this.stream = null;
+
         this.connectionReady = false;
 
         this.peerConnectionTimeoutStarted = false;
@@ -380,6 +383,8 @@ class WebRTCConnectionManager
 
     #handleMatchFound(isInitiator, matchedSocketId)
     {
+        this.#raiseEvent('matchFound');
+
         if (isInitiator)
         {
             this.#connectToPeer(matchedSocketId);
@@ -391,7 +396,6 @@ class WebRTCConnectionManager
         }
 
         this.#startPeerConnectionTimeout();
-        this.#raiseEvent('matchFound');
     }
 
     #handleSocketClose()
@@ -431,10 +435,21 @@ class WebRTCConnectionManager
     {
         this.partnerSocketId = partnerSocketId;
         
-        this.peer = new SimplePeer({
-            initiator: true,
-            trickle: true
-        });
+        if (this.stream)
+        {
+            this.peer = new SimplePeer({
+                initiator: true,
+                trickle: true,
+                stream: this.stream
+            });
+        }
+        else
+        {
+            this.peer = new SimplePeer({
+                initiator: true,
+                trickle: true
+            });
+        }
         
         this.#setupPeerEventListeners();
         this.#raiseEvent('peerCreated');
@@ -442,10 +457,21 @@ class WebRTCConnectionManager
 
     #createNonInitiatorPeer()
     {
-        this.peer = new SimplePeer({
-            initiator: false,
-            trickle: true
-        });
+        if (this.stream)
+        {
+            this.peer = new SimplePeer({
+                initiator: false,
+                trickle: true,
+                stream: this.stream
+            });
+        }
+        else
+        {
+            this.peer = new SimplePeer({
+                initiator: false,
+                trickle: true
+            });
+        }
         
         this.#setupPeerEventListeners();
         this.#raiseEvent('peerCreated');

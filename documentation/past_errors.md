@@ -94,3 +94,17 @@ Add new entries below this line.
 - **Cause:** WebRTC uses a process called "ICE candidate trickle" where multiple connection options are generated and sent individually to find the optimal path between peers.
 - **Resolution:** Enhanced logging to provide clearer information about the signaling process and added UI explanations to clarify that this behavior is normal and expected.
 - **Date:** May 20, 2025
+
+**Issue:** SimplePeer stream setup failure in WebRTC connections.
+- **Details:** Attempting to add local media streams to SimplePeer instances using `addStream()` or `emit('stream')` after peer creation was not working, preventing proper video and voice chat functionality.
+- **Cause:** SimplePeer requires the local stream to be provided in the constructor options at the time of peer creation. Adding streams after instantiation is not supported.
+- **Resolution:** Refactored the WebRTC connection flow by:
+  1. Moving the `match found` event in `webrtcConnectionManager` to fire when a peer is found but before the SimplePeer object is created
+  2. Adding a `stream` variable in the connection manager that is initially null
+  3. Allowing video and voice chat widgets to detect the `match found` event and add their stream to the connection manager
+  4. Using the stream in the SimplePeer constructor when creating the peer object
+  5. Repurposing the existing `peer created` event for functionality that previously used the `match found` event
+- **Date:** June 1, 2025
+
+
+

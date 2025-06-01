@@ -21,6 +21,11 @@ class VoiceChatWidget
         {
             this.#handleMatchFound();
         });
+
+        this.webRTCConnectionManager.on('peerCreated', () =>
+        {
+            this.#handlePeerCreated();
+        });
         
         this.webRTCConnectionManager.on('connectionReady', () =>
         {
@@ -37,6 +42,11 @@ class VoiceChatWidget
     }
 
     #handleMatchFound()
+    {
+        this.webRTCConnectionManager.stream = this.localStream;
+    }
+
+    #handlePeerCreated()
     {
         let peer = this.webRTCConnectionManager.GetPeer();
 
@@ -86,8 +96,6 @@ class VoiceChatWidget
     {
         // Ensure media is initialized before setting up voice transmission
         await this.MediaInitialization;
-        
-        this.#startVoiceTransmission();
 
         this.muteAudioBtn.disabled = false;
     }
@@ -96,20 +104,6 @@ class VoiceChatWidget
     {
         this.remoteStream = null;
         this.remoteAudioElement.srcObject = null;
-    }
-    
-    #startVoiceTransmission()
-    {
-        try 
-        {
-            let peer = this.webRTCConnectionManager.GetPeer();
-
-            peer.addStream(this.localStream);
-        }
-        catch (error)
-        {
-            console.error('VoiceChat: Failed to add local stream to peer:', error);
-        }
     }
     
     #toggleAudio(mute)

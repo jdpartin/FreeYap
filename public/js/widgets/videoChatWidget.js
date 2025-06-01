@@ -26,6 +26,11 @@ class VideoChatWidget
         {
             this.#handleMatchFound();
         });
+
+        this.webRTCConnectionManager.on('peerCreated', () =>
+        {
+            this.#handlePeerCreated();
+        });
         
         this.webRTCConnectionManager.on('connectionReady', () =>
         {
@@ -82,8 +87,6 @@ class VideoChatWidget
 
         let peer = this.webRTCConnectionManager.GetPeer();
 
-        this.#startVideoTransmission(peer);
-
         this.muteVideoBtn.disabled = false;
         this.muteAudioBtn.disabled = false;
     }
@@ -97,18 +100,6 @@ class VideoChatWidget
         this.muteVideoBtn.disabled = true;
         this.muteAudioBtn.disabled = true;
     }    
-    
-    #startVideoTransmission(peer)
-    {
-        try 
-        {
-            peer.addStream(this.localStream);
-        }
-        catch (error)
-        {
-            console.error('VideoChat: Failed to add local stream to peer:', error);
-        }
-    }
 
     #toggleVideo(mute)
     {
@@ -128,6 +119,11 @@ class VideoChatWidget
     }
 
     #handleMatchFound()
+    {
+        this.webRTCConnectionManager.stream = this.localStream;
+    }
+
+    #handlePeerCreated()
     {
         let peer = this.webRTCConnectionManager.GetPeer();
 

@@ -15,9 +15,9 @@ class TopicsWidget
         this.partnerTopicsListElement = document.getElementById('partner-topics-list');
         this.myTopicsListElement = document.getElementById('user-topics-list');
 
-        this.webRTCConnectionManager.on('matchFound', () =>
+        this.webRTCConnectionManager.on('peerCreated', () =>
         {
-            this.#handleMatchFound();
+            this.#handlePeerCreated();
         });
 
         this.webRTCConnectionManager.on('connectionReady', () =>
@@ -67,7 +67,7 @@ class TopicsWidget
         return this.myTopics;
     }
 
-    #handleMatchFound()
+    #handlePeerCreated()
     {
         // set up the topics message handler before the connection is established
         this.webRTCConnectionManager.GetPeer().on('data', async (data) =>
