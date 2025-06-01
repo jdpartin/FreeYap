@@ -43,7 +43,15 @@ class VoiceChatWidget
         peer.on('stream', (stream) =>
         {
             this.remoteStream = stream;
-            this.remoteAudioElement.srcObject = this.remoteStream;
+
+            if ('srcObject' in this.remoteAudioElement)
+            {
+                this.remoteAudioElement.srcObject = stream;
+            }
+            else
+            {
+                this.remoteAudioElement.src = window.URL.createObjectURL(stream); // for older browsers
+            }
         });
     }
     
@@ -56,7 +64,14 @@ class VoiceChatWidget
                 audio: true
             });            
             
-            this.localAudioElement.srcObject = this.localStream;
+            if ('srcObject' in this.localAudioElement)
+            {
+                this.localAudioElement.srcObject = this.localStream;
+            }
+            else
+            {
+                this.localAudioElement.src = window.URL.createObjectURL(this.localStream); // for older browsers
+            }
 
             return true;
         }
@@ -89,11 +104,7 @@ class VoiceChatWidget
         {
             let peer = this.webRTCConnectionManager.GetPeer();
 
-            // AI keeps changing this back to the wrong method
-            // peer.addStream(this.localStream); is INCORRECT
-            // The correct method is peer.emit('stream', this.localStream);
-            // This is why the AI instructions explicitly state to not modify undrelated code when making changes
-            peer.emit('stream', this.localStream);
+            peer.addStream(this.localStream);
         }
         catch (error)
         {

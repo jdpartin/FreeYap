@@ -57,8 +57,15 @@ class VideoChatWidget
                 },
                 audio: true
             });
-            
-            this.localVideoElement.srcObject = this.localStream;
+
+            if ('srcObject' in this.localVideoElement) 
+            {
+                this.localVideoElement.srcObject = this.localStream;
+            } 
+            else 
+            {
+                this.localVideoElement.src = window.URL.createObjectURL(this.localStream);
+            }
             
             return true;
         }
@@ -69,8 +76,10 @@ class VideoChatWidget
         }
     }
 
-    #handleConnectionReady()
+    async #handleConnectionReady()
     {
+        await this.MediaInitialization;
+
         let peer = this.webRTCConnectionManager.GetPeer();
 
         this.#startVideoTransmission(peer);
@@ -93,10 +102,7 @@ class VideoChatWidget
     {
         try 
         {
-            // AI keeps changing this back to the wrong method
-            // peer.addStream(this.localStream); is INCORRECT
-            // peer.emit('stream', this.localStream); is working
-            peer.emit('stream', this.localStream);
+            peer.addStream(this.localStream);
         }
         catch (error)
         {
@@ -106,20 +112,18 @@ class VideoChatWidget
 
     #toggleVideo(mute)
     {
-        if (this.localStream)
-        {
-            const videoTracks = this.localStream.getVideoTracks();
+        const videoTracks = this.localStream.getVideoTracks();
 
-            if (videoTracks.length > 0)
+        if (videoTracks.length > 0)
+        {
+            videoTracks.forEach(track =>
             {
-                videoTracks.forEach(track =>
-                {
-                    track.enabled = !mute;
-                });
-                
-                return true;
-            }
+                track.enabled = !mute;
+            });
+            
+            return true;
         }
+
         return false;
     }
 
@@ -130,30 +134,35 @@ class VideoChatWidget
         peer.on('stream', stream =>
         {
             this.remoteStream = stream;
-            this.remoteVideoElement.srcObject = this.remoteStream;
+
+            if ('srcObject' in this.remoteVideoElement)
+            {
+                this.remoteVideoElement.srcObject = stream
+            }
+            else
+            {
+                this.remoteVideoElement.src = window.URL.createObjectURL(stream) // for older browsers
+            }
         });
     }
 
     #toggleAudio(mute)
     {
-        if (this.localStream)
-        {
-            const audioTracks = this.localStream.getAudioTracks();
+        const audioTracks = this.localStream.getAudioTracks();
 
-            if (audioTracks.length > 0)
+        if (audioTracks.length > 0)
+        {
+            audioTracks.forEach(track =>
             {
-                audioTracks.forEach(track =>
-                {
-                    track.enabled = !mute;
-                });
-                
-                return true;
-            }
+                track.enabled = !mute;
+            });
+            
+            return true;
         }
 
         return false;
-    }    
-    
+    }
+
     #setupUIEventListeners()
     {
         this.muteVideoBtn.addEventListener('click', () =>
