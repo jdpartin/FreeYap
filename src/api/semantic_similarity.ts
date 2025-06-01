@@ -78,24 +78,30 @@ router.post('/bulk-embeddings', async (req: Request, res: Response) =>
             });
             return;
         }        
-        
-        console.log(`Getting bulk embeddings for ${cleanTopics.length} topics`);
+          console.log(`Getting bulk embeddings for ${cleanTopics.length} topics:`, cleanTopics);
 
         // Use the new bulk embeddings method from MatchmakingManager
         const bulkResults = await MatchmakingManager.getBulkEmbeddings(cleanTopics);
+        console.log('Bulk results from database:', bulkResults);
         
         const successful = bulkResults.filter(result => result.found && result.embedding);
         const missing = bulkResults.filter(result => !result.found);
+          console.log(`Found ${successful.length} in cache, ${missing.length} missing`);
 
-        // For missing topics, generate embeddings on demand
-        const additionalEmbeddings = [];
+        // Start with cached embeddings
+        const allSuccessful = successful.map(result => ({
+            topic: result.topic,
+            embedding: result.embedding
+        }));
         const failed = [];
         
+        // For missing topics, generate embeddings on demand and add directly to results
         for (const missingTopic of missing) {
             try {
                 console.log(`Generating embedding for missing topic: ${missingTopic.topic}`);
                 const embedding = await MatchmakingManager.getEmbedding(missingTopic.topic);
-                additionalEmbeddings.push({
+                console.log(`Generated embedding for ${missingTopic.topic}, length: ${embedding.length}`);
+                allSuccessful.push({
                     topic: missingTopic.topic,
                     embedding: embedding
                 });
@@ -107,22 +113,17 @@ router.post('/bulk-embeddings', async (req: Request, res: Response) =>
                 });
             }
         }
-
-        const allSuccessful = [...successful.map(result => ({
-            topic: result.topic,
-            embedding: result.embedding
-        })), ...additionalEmbeddings];
-
-        console.log(`Bulk embedding results: ${allSuccessful.length} successful, ${failed.length} failed`);res.status(200);
+        
+        console.log(`Bulk embedding results: ${allSuccessful.length} successful, ${failed.length} failed`);
+        console.log('All successful embeddings:', allSuccessful.map(e => ({ topic: e.topic, embeddingLength: e.embedding?.length })));
+        
+        res.status(200);
         res.json({
             success: true,
             total: cleanTopics.length,
-            successful: successful.length,
+            successful: allSuccessful.length,
             failed: failed.length,
-            embeddings: successful.map(result => ({
-                topic: result.topic,
-                embedding: result.embedding
-            })),
+            embeddings: allSuccessful,
             failures: failed,
             timestamp: new Date().toISOString()
         });

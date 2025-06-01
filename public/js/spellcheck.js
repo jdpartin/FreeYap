@@ -13,9 +13,52 @@ class FreeYapSpellChecker {
         this.typo = null;
         this.isInitialized = false;
         this.customWords = new Set(); // User-added words
+        this.contractions = this.initializeContractions();
         this.loadDictionary();
         this.loadCustomWords();
-    }    /**
+    }
+
+    /**
+     * Initialize contractions mapping for better handling
+     */
+    initializeContractions() {
+        return new Map([
+            // Standard contractions without apostrophes
+            ['dont', "don't"],
+            ['cant', "can't"],
+            ['wont', "won't"],
+            ['isnt', "isn't"],
+            ['arent', "aren't"],
+            ['wasnt', "wasn't"],
+            ['werent', "weren't"],
+            ['hasnt', "hasn't"],
+            ['havent', "haven't"],
+            ['hadnt', "hadn't"],
+            ['shouldnt', "shouldn't"],
+            ['couldnt', "couldn't"],
+            ['wouldnt', "wouldn't"],
+            ['didnt', "didn't"],
+            ['doesnt', "doesn't"],
+            ['thats', "that's"],
+            ['whats', "what's"],
+            ['hes', "he's"],
+            ['shes', "she's"],
+            ['its', "it's"],
+            ['youre', "you're"],
+            ['theyre', "they're"],
+            ['were', "we're"],
+            ['ive', "I've"],
+            ['youve', "you've"],
+            ['weve', "we've"],
+            ['theyve', "they've"],
+            ['ill', "I'll"],
+            ['youll', "you'll"],
+            ['well', "we'll"],
+            ['theyll', "they'll"],
+            ['im', "I'm"],
+            ['lets', "let's"]
+        ]);
+    }/**
      * Load Hunspell dictionary using typo-js
      */
     async loadDictionary() {
@@ -87,9 +130,7 @@ class FreeYapSpellChecker {
         
         this.isInitialized = true;
         console.log('✓ Fallback spell checker initialized');
-    }
-
-    /**
+    }    /**
      * Check if a word is spelled correctly
      */
     isCorrect(word) {
@@ -107,9 +148,13 @@ class FreeYapSpellChecker {
         // Check if it's a single letter
         if (cleanWord.length === 1) return true;
 
+        // Check if it's a contraction without apostrophe
+        if (this.contractions.has(cleanWord)) return true;
+
         // Use typo-js if available
         if (this.typo) {
-            return this.typo.check(cleanWord);
+            // Check both lowercase and capitalized versions to handle proper nouns
+            return this.typo.check(cleanWord) || this.typo.check(cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1));
         }
 
         // Use fallback dictionary
@@ -118,9 +163,7 @@ class FreeYapSpellChecker {
         }
 
         return true; // Default to correct if nothing is loaded
-    }
-
-    /**
+    }    /**
      * Get suggestions for a misspelled word
      */
     getSuggestions(word) {
@@ -128,10 +171,16 @@ class FreeYapSpellChecker {
         
         if (cleanWord.length === 0) return [];
 
+        // Check if it's a contraction and suggest the proper form
+        if (this.contractions.has(cleanWord)) {
+            return [this.contractions.get(cleanWord)];
+        }
+
         // Use typo-js if available
         if (this.typo) {
             const suggestions = this.typo.suggest(cleanWord);
-            return suggestions.slice(0, 5); // Return top 5 suggestions
+            // Convert all suggestions to lowercase to maintain consistency
+            return suggestions.slice(0, 5).map(suggestion => suggestion.toLowerCase());
         }
 
         // Use fallback suggestions
@@ -284,15 +333,14 @@ class FreeYapSpellChecker {
             // First, get words that start with the input
             const startsWith = [];
             const contains = [];
-            
-            for (const word in wordlist) {
+              for (const word in wordlist) {
                 if (suggestions.length >= maxSuggestions * 2) break; // Get more than needed for filtering
                 
                 const lowerWord = word.toLowerCase();
                 if (lowerWord.startsWith(cleanInput)) {
-                    startsWith.push(word);
+                    startsWith.push(lowerWord); // Store lowercase version
                 } else if (lowerWord.includes(cleanInput)) {
-                    contains.push(word);
+                    contains.push(lowerWord); // Store lowercase version
                 }
             }
             
@@ -318,6 +366,16 @@ class FreeYapSpellChecker {
             suggestions.push(...startsWith.slice(0, maxSuggestions));
             if (suggestions.length < maxSuggestions) {
                 suggestions.push(...contains.slice(0, maxSuggestions - suggestions.length));
+            }        }        // Include contractions that match the input
+        for (const [contracted, full] of this.contractions) {
+            if (suggestions.length >= maxSuggestions) break;
+            
+            // If user types "dont", suggest both "dont" and "don't"
+            if (contracted.startsWith(cleanInput) && !suggestions.includes(contracted)) {
+                suggestions.unshift(contracted); // Add the non-apostrophe version
+            }
+            if (full.toLowerCase().startsWith(cleanInput) && !suggestions.includes(full)) {
+                suggestions.unshift(full); // Add the proper apostrophe version
             }
         }
 
@@ -325,10 +383,10 @@ class FreeYapSpellChecker {
         for (const word of this.customWords) {
             if (suggestions.length >= maxSuggestions) break;
             if (word.toLowerCase().startsWith(cleanInput) && !suggestions.includes(word)) {
-                suggestions.unshift(word); // Add custom words at the beginning
+                suggestions.unshift(word); // Add custom words at the beginning (already lowercase in storage)
             }
-        }        // Filter out very short words and common words for better suggestions
-        const finalSuggestions = suggestions
+        }// Filter out very short words and common words for better suggestions
+        const finalSuggestions = [...new Set(suggestions)] // Remove duplicates since we're using lowercase
             .filter(word => word.length >= 3)
             .filter(word => !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'way', 'she', 'use', 'say', 'way'].includes(word.toLowerCase()))
             .slice(0, maxSuggestions);

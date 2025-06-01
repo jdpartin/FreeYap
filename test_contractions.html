@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Contractions - FreeYap Spell Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-word {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .correct { background-color: #d4edda; border-color: #c3e6cb; }
+        .incorrect { background-color: #f8d7da; border-color: #f5c6cb; }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .suggestions {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FreeYap Spell Checker - Contraction Test</h1>
+        
+        <h2>Testing Contractions</h2>
+        <p>These words should all be marked as <strong>correct</strong> now:</p>
+        
+        <div id="test-results"></div>
+        
+        <h2>Interactive Test</h2>
+        <p>Type contractions without apostrophes to test:</p>
+        <input type="text" id="test-input" placeholder="Type 'dont', 'cant', 'wont', etc...">
+        <div id="live-results"></div>
+    </div>
+
+    <script src="/js/typo.js"></script>
+    <script src="/js/spellcheck.js"></script>
+    <script>
+        // Test words that should be considered correct
+        const testWords = [
+            'dont', 'cant', 'wont', 'isnt', 'arent', 'wasnt', 'werent',
+            'hasnt', 'havent', 'hadnt', 'shouldnt', 'couldnt', 'wouldnt',
+            'didnt', 'doesnt', 'thats', 'whats', 'hes', 'shes', 'its',
+            'youre', 'theyre', 'were', 'ive', 'youve', 'weve', 'theyve',
+            'ill', 'youll', 'well', 'theyll', 'im', 'lets'
+        ];
+
+        function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            if (!window.freeYapSpellChecker) {
+                resultsDiv.innerHTML = '<p style="color: red;">Spell checker not loaded yet. Waiting...</p>';
+                setTimeout(runTests, 1000);
+                return;
+            }
+            
+            let html = '';
+            let correctCount = 0;
+            
+            testWords.forEach(word => {
+                const isCorrect = window.freeYapSpellChecker.isCorrect(word);
+                const suggestions = window.freeYapSpellChecker.getSuggestions(word);
+                
+                if (isCorrect) correctCount++;
+                
+                html += `
+                    <div class="test-word ${isCorrect ? 'correct' : 'incorrect'}">
+                        <strong>${word}</strong>: ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                        ${suggestions.length > 0 ? `<div class="suggestions">Suggestions: ${suggestions.join(', ')}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            html = `<p><strong>Results: ${correctCount}/${testWords.length} words marked as correct</strong></p>` + html;
+            resultsDiv.innerHTML = html;
+        }
+
+        // Interactive testing
+        document.getElementById('test-input').addEventListener('input', function(e) {
+            const word = e.target.value.trim();
+            const resultsDiv = document.getElementById('live-results');
+            
+            if (!word || !window.freeYapSpellChecker) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            const isCorrect = window.freeYapSpellChecker.isCorrect(word);
+            const suggestions = window.freeYapSpellChecker.getSuggestions(word);
+            const wordSuggestions = window.freeYapSpellChecker.getWordSuggestions(word);
+            
+            resultsDiv.innerHTML = `
+                <div class="test-word ${isCorrect ? 'correct' : 'incorrect'}">
+                    <strong>${word}</strong>: ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                    ${suggestions.length > 0 ? `<div class="suggestions">Spell suggestions: ${suggestions.join(', ')}</div>` : ''}
+                    ${wordSuggestions.length > 0 ? `<div class="suggestions">Autocomplete suggestions: ${wordSuggestions.join(', ')}</div>` : ''}
+                </div>
+            `;
+        });
+
+        // Start testing after a short delay to allow spell checker to initialize
+        setTimeout(runTests, 2000);
+    </script>
+</body>
+</html>
