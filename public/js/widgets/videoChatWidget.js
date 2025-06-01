@@ -202,8 +202,6 @@ class VideoChatWidget
             videoElement.muted = true;
             videoElement.setAttribute('muted', 'true');
         }
-        
-        console.log('VideoChat: Initialized video element with mobile attributes:', videoElement.id);
     }
 }
 
@@ -715,8 +713,6 @@ effectButtons.forEach(button => {
             
             targetMenu.classList.toggle('active');
         }
-        
-        console.log(`${effectType} menu toggled`);
     });
 });
 });

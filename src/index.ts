@@ -107,6 +107,40 @@ app.post('/my-ip', (req, res) => {
   res.send({ ip });
 });
 
+// Get ICE server configuration endpoint
+app.post('/ice-servers', (req, res) => {
+  const iceServers: Array<{ urls: string; username?: string; credential?: string }> = [
+    // Google STUN servers (primary)
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    
+    // Additional reliable STUN servers as fallbacks
+    { urls: 'stun:stun.stunprotocol.org:3478' },
+    { urls: 'stun:stun.voiparound.com' },
+    { urls: 'stun:stun.voipbuster.com' },
+    { urls: 'stun:stun.voipstunt.com' },
+    { urls: 'stun:stun.voxgratia.org' },
+    
+    // OpenRelay STUN servers
+    { urls: 'stun:openrelay.metered.ca:80' },
+    { urls: 'stun:stun.relay.metered.ca:80' }
+  ];
+
+  // Add TURN server if credentials are available
+  if (process.env.EXPRESS_TURN_URL && process.env.EXPRESS_TURN_USERNAME && process.env.EXPRESS_TURN_PASSWORD) {
+    iceServers.push({
+      urls: `turn:${process.env.EXPRESS_TURN_URL}`,
+      username: process.env.EXPRESS_TURN_USERNAME,
+      credential: process.env.EXPRESS_TURN_PASSWORD
+    });
+  }
+
+  res.send({ iceServers });
+});
+
 server.listen(PORT, () => {
   console.log(`FreeYap server running at http://localhost:${PORT}`);
 });

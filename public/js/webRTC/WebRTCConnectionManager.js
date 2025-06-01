@@ -211,7 +211,6 @@ class WebRTCConnectionManager
         if (topicsParam)
         {
             topics = JSON.parse(decodeURIComponent(topicsParam));
-            console.log('Extracted topics from URL:', topics);
         }
 
         return topics;
@@ -265,11 +264,6 @@ class WebRTCConnectionManager
                 console.error('Socket is not connected. Cannot start delayed matchmaking.');
                 return;
             }
-
-            console.log(`Starting delayed matchmaking. 
-                Socket ID: ${this.socket.id},
-                Topics: ${topics.length > 0 ? topics.join(', ') : 'None'},
-            `);
 
             this.matchmakingAPIClient.delayedMatchmaking(this.socket.id, chatMode, topics);
         }
@@ -365,34 +359,34 @@ class WebRTCConnectionManager
         this.socket.on('close', () => {
             this.#handleSocketClose();
         });
-    }
-
-    #handleSignal(fromSocketId, data)
+    }    
+    
+    async #handleSignal(fromSocketId, data)
     {
         if (!this.peer)
         {
             this.partnerSocketId = fromSocketId;
-            this.#createNonInitiatorPeer();
+            await this.#createNonInitiatorPeer();
             this.peer.signal(data);
         }
         else if (fromSocketId === this.partnerSocketId)
         {
             this.peer.signal(data);
         }
-    }
-
-    #handleMatchFound(isInitiator, matchedSocketId)
+    }    
+    
+    async #handleMatchFound(isInitiator, matchedSocketId)
     {
         this.#raiseEvent('matchFound');
 
         if (isInitiator)
         {
-            this.#connectToPeer(matchedSocketId);
+            await this.#connectToPeer(matchedSocketId);
         }
         else
         {
             this.partnerSocketId = matchedSocketId;
-            this.#createNonInitiatorPeer();
+            await this.#createNonInitiatorPeer();
         }
 
         this.#startPeerConnectionTimeout();
@@ -428,48 +422,78 @@ class WebRTCConnectionManager
 
     //#endregion
 
-    //#region Peer Connection (WebRTC)
+    //#region Peer Connection (WebRTC)    
+    async #getICEServerConfiguration()
+    {
+        try {
+            const response = await fetch('/ice-servers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
 
-
-    #connectToPeer(partnerSocketId)
+            const data = await response.json();
+            return data.iceServers;
+        } catch (error) {
+            console.error('Failed to fetch ICE server configuration, using fallback STUN servers:', error);
+            
+            // Fallback to basic STUN servers if the endpoint fails
+            return [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun.stunprotocol.org:3478' }
+            ];
+        }
+    }    
+    
+    async #connectToPeer(partnerSocketId)
     {
         this.partnerSocketId = partnerSocketId;
         
+        const iceServerConfig = await this.#getICEServerConfiguration();
+        
         if (this.stream)
         {
             this.peer = new SimplePeer({
                 initiator: true,
                 trickle: true,
-                stream: this.stream
+                stream: this.stream,
+                config: { iceServers: iceServerConfig }
             });
         }
         else
         {
             this.peer = new SimplePeer({
                 initiator: true,
-                trickle: true
+                trickle: true,
+                config: { iceServers: iceServerConfig }
             });
         }
-        
-        this.#setupPeerEventListeners();
+          this.#setupPeerEventListeners();
         this.#raiseEvent('peerCreated');
     }
 
-    #createNonInitiatorPeer()
+    async #createNonInitiatorPeer()
     {
+        const iceServerConfig = await this.#getICEServerConfiguration();
+        
         if (this.stream)
         {
             this.peer = new SimplePeer({
                 initiator: false,
                 trickle: true,
-                stream: this.stream
+                stream: this.stream,
+                config: { iceServers: iceServerConfig }
             });
         }
         else
         {
             this.peer = new SimplePeer({
                 initiator: false,
-                trickle: true
+                trickle: true,
+                config: { iceServers: iceServerConfig }
             });
         }
         

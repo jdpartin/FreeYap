@@ -93,11 +93,9 @@ class EmailService {
                 replyTo: userEmail || undefined
             });
 
-            console.log('Contact email sent successfully:', info.messageId);
             return { success: true };
 
         } catch (error) {
-            console.error('Failed to send contact email:', error);
             return { 
                 success: false, 
                 error: error instanceof Error ? error.message : 'Unknown error' 
@@ -123,7 +121,6 @@ class EmailService {
                 }
             });
 
-            console.log('Report email sent successfully to help@freeyap.com:', info.messageId);
             return { success: true };
 
         } catch (error) {
@@ -139,7 +136,6 @@ class EmailService {
     async testConnection(): Promise<boolean> {
         try {
             await this.transporter.verify();
-            console.log('Email service is ready');
             return true;
         } catch (error) {
             console.error('Email service connection failed:', error);

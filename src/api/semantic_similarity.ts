@@ -78,15 +78,12 @@ router.post('/bulk-embeddings', async (req: Request, res: Response) =>
             });
             return;
         }        
-          console.log(`Getting bulk embeddings for ${cleanTopics.length} topics:`, cleanTopics);
 
         // Use the new bulk embeddings method from MatchmakingManager
         const bulkResults = await MatchmakingManager.getBulkEmbeddings(cleanTopics);
-        console.log('Bulk results from database:', bulkResults);
-        
+
         const successful = bulkResults.filter(result => result.found && result.embedding);
         const missing = bulkResults.filter(result => !result.found);
-          console.log(`Found ${successful.length} in cache, ${missing.length} missing`);
 
         // Start with cached embeddings
         const allSuccessful = successful.map(result => ({
@@ -98,24 +95,19 @@ router.post('/bulk-embeddings', async (req: Request, res: Response) =>
         // For missing topics, generate embeddings on demand and add directly to results
         for (const missingTopic of missing) {
             try {
-                console.log(`Generating embedding for missing topic: ${missingTopic.topic}`);
                 const embedding = await MatchmakingManager.getEmbedding(missingTopic.topic);
-                console.log(`Generated embedding for ${missingTopic.topic}, length: ${embedding.length}`);
+                
                 allSuccessful.push({
                     topic: missingTopic.topic,
                     embedding: embedding
                 });
             } catch (error) {
-                console.error(`Failed to generate embedding for ${missingTopic.topic}:`, error);
                 failed.push({
                     topic: missingTopic.topic,
                     error: error instanceof Error ? error.message : 'Failed to generate embedding'
                 });
             }
         }
-        
-        console.log(`Bulk embedding results: ${allSuccessful.length} successful, ${failed.length} failed`);
-        console.log('All successful embeddings:', allSuccessful.map(e => ({ topic: e.topic, embeddingLength: e.embedding?.length })));
         
         res.status(200);
         res.json({
@@ -165,8 +157,6 @@ router.post('/compare-similarity', async (req: Request, res: Response) =>
             return;
         }
 
-        console.log(`Comparing semantic similarity: "${cleanWord1}" vs "${cleanWord2}"`);
-
         // Get embeddings for both words using the MatchmakingManager's private method
         // We'll create a public method for this
         let embedding1: number[];
@@ -191,8 +181,9 @@ router.post('/compare-similarity', async (req: Request, res: Response) =>
 
         // Convert to percentage and round to 2 decimal places
         const similarityPercentage = Math.round(similarity * 10000) / 100;
+        
+        res.status(200);
 
-        console.log(`Similarity score: ${similarity} (${similarityPercentage}%)`);        res.status(200);
         res.json({
             word1: cleanWord1,
             word2: cleanWord2,

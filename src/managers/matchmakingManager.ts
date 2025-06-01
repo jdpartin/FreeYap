@@ -219,8 +219,6 @@ class MatchmakingManager
                 throw new Error('Both socket IDs are required to trigger a connection.');
             }
 
-            console.log(`Triggering connection between ${socketId} and ${matchedSocketId}`);
-
             // delete both from queue
             await this.#removeFromQueue(socketId);
             await this.#removeFromQueue(matchedSocketId);

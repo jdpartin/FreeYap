@@ -16,7 +16,6 @@ class DatabaseManager
             apiKey: process.env.QDRANT_API_KEY || ''
         };
         this.vectorDbClient = new QdrantClient(qdrantConfig);
-        console.log('Vector database initialized successfully.');
 
         this.pool = new Pool({
             connectionString: process.env.RENDER_DATABASE_URL,
@@ -117,7 +116,6 @@ class DatabaseManager
                     const embeddingResult = await this.executeFunction('get_topic_embedding', { topicText: topic }) as { topic: string; embedding: number[] }[];
                     
                     if (!embeddingResult || embeddingResult.length === 0 || !embeddingResult[0].embedding) {
-                        console.log(`No embedding found for topic: ${topic}`);
                         return { topic, matches: [] };
                     }
 
@@ -179,7 +177,7 @@ class DatabaseManager
     {
         try
         {
-            console.log('Connected to the relational database successfully.');
+            
         }
         catch (err)
         {
@@ -192,7 +190,7 @@ class DatabaseManager
     {
         try
         {
-            console.log('Relational database connection closed successfully.');
+            
         }
         catch (err)
         {
@@ -254,7 +252,6 @@ class DatabaseManager
                 console.warn(`Warning: Vector deletion response status: ${response?.status || 'unknown'}`);
             }
 
-            console.log(`Deleted vectors for socketId: ${socketId} from collection: ${collectionName}`);
             return response;
         }
         catch (err)

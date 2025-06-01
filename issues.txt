@@ -1,21 +1,8 @@
-Home page
-
-When adding a topic the spell check is correcting proper nouns if they are not capitalized, 
-however, we are forcing lowercase words so it will always error
-
-The spell check is able to insert a non-lowercase word as a topic
-
 
 Text Chat
 
-There is an issue with the element that holds the chat messages not being all the way down creating a gap between
-it's bottom and the bottom of the chat window
-
-The gif search does not actually search, there appears to just be placeholder gifs there, we need to implement a full gif library
-
-We need an emoji library for chat
-
-We need all chat pages to implement the same text chat functionality, maybe put it in a module.
-
 fetching embeddings could be made more efficient by having each client keep up with their embeddings for 
-their topics and passing them over webrtc
+their topics and passing them over webrtc. The issue is that embeddings are large and would require multiple
+messages to send, we dont have a system to support multi-part messages yet
+
+Report Illegal use button is not well styled on mobile and hard to use, footer cuts off part of it

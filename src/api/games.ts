@@ -55,24 +55,15 @@ router.post('/get-multiplayer-games-by-category', async (req: Request, res: Resp
 {
     try
     {
-        const { category, searchTerm = "", limit = 10 } = req.body;        await getAllGames();
-
-        console.log(`Total games in cache: ${gamesCache?.length || 0}`);
+        const { category, searchTerm = "", limit = 10 } = req.body;        
         
-        // Debug: Show first few games and their tags
-        if (gamesCache && gamesCache.length > 0) {
-            console.log('Sample games:');
-            gamesCache.slice(0, 3).forEach((game, index) => {
-                console.log(`  ${index + 1}. "${game.title}" - Tags: "${game.tags}"`);
-            });
-        }
+        await getAllGames();
 
         let filteredGames = [...(gamesCache || [])];// Filter by category if provided
         if (category && category.trim() !== "")
         {
             const categoryLower = category.toLowerCase();
-            console.log(`Filtering by category: "${categoryLower}"`);
-            
+
             filteredGames = filteredGames.filter(game => {
                 if (!game.tags) return false;
                 
@@ -81,15 +72,11 @@ router.post('/get-multiplayer-games-by-category', async (req: Request, res: Resp
                 const gameTags = tagsArray.map((tag: string) => tag.trim().toLowerCase());
                 const hasCategory = gameTags.includes(categoryLower);
                 
-                if (hasCategory) {
-                    console.log(`Game "${game.title}" matches category. Tags: [${gameTags.join(', ')}]`);
-                }
-                
                 return hasCategory;
             });
             
-            console.log(`Found ${filteredGames.length} games for category "${categoryLower}"`);
         }// Apply search filter if provided
+        
         if (searchTerm && searchTerm.trim() !== "")
         {
             const searchLower = searchTerm.toLowerCase();
