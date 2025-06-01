@@ -12,22 +12,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">  <!-- Font Awesome Icons -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=<%= process.env.GA_MEASUREMENT_ID %>"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PPLW8J7N5C"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', '<%= process.env.GA_MEASUREMENT_ID || "G-XXXXXXXXXX" %>', {
-      // Privacy-focused configuration
-      anonymize_ip: true,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-      // Cookie settings
-      cookie_flags: 'SameSite=Lax;Secure',
-      // Don't send referrer info
-      custom_parameter_validation: false
-    });
+
+    gtag('config', 'G-PPLW8J7N5C');
   </script>
 
   <link rel="stylesheet" href="/styles.css">
@@ -69,9 +61,11 @@
       <!-- Ad content will be dynamically loaded by AdManager -->
     </div>
     
-    <!-- Native banner ad below existing ad -->
-    <script async="async" data-cfasync="false" src="//orepassport.com/419cdfa97b51673d43cb11349547981d/invoke.js"></script>
-    <div id="container-419cdfa97b51673d43cb11349547981d"></div>
+    <!-- Native banner ad below existing ad - only loads on desktop due to parent container media query -->
+    <div class="ad-box text-center" data-ad-container="fixed-ad-left-bottom">
+      <script async="async" data-cfasync="false" src="//orepassport.com/419cdfa97b51673d43cb11349547981d/invoke.js"></script>
+      <div id="container-419cdfa97b51673d43cb11349547981d"></div>
+    </div>
   </div>
 
   <div class="fixed-ad-right">
