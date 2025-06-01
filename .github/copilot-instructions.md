@@ -13,6 +13,38 @@ This project is called FreeYap, a Node.js-based anonymous chat platform. Users c
 - **JavaScript**: Client-side scripting (phasing out server-side).
 - **Qdrant**: Vector database for matching/search.
 
+## Getting Started:
+
+### Prerequisites:
+- Node.js installed
+- npm package manager
+- Required environment variables configured (.env file)
+
+### Starting the Application:
+1. **Install Dependencies** (if not already done):
+   ```powershell
+   npm install
+   ```
+
+2. **Build the TypeScript Project**:
+   ```powershell
+   npm run build
+   ```
+
+3. **Start the Application**:
+   ```powershell
+   npm start
+   ```
+   - This runs `node dist/index.js`
+   - Application will start on port 3000 by default
+   - Access at: http://localhost:3000
+
+### Development Notes:
+- The project uses TypeScript source files in `src/` directory
+- Built JavaScript files are output to `dist/` directory
+- Always run `npm run build` after making changes to TypeScript files
+- If port 3000 is in use, check for existing running instances
+
 ## Guidelines:
 
 ### General:

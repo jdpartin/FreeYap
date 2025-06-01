@@ -53,7 +53,7 @@ setupWebRTCSignaling(io);
 
 // Routes
 app.get('/', (req: Request, res: Response) => {
-  res.render('index', { title: 'FreeYap Home' });
+  res.render('index', { title: 'FreeYap Home', isHomePage: true });
 });
 
 app.get('/about', (req: Request, res: Response) => {

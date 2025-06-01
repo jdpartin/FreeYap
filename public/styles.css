@@ -772,19 +772,22 @@ body {
   margin: 0 5px;
   max-width: 468px;
   width: 100%;
-  min-height: 60px; /* Ensure minimum height for loading state */
+  min-height: 70px; /* Increased to accommodate larger text */
 }
 
 /* Placeholder text styling for mobile ads */
 .mobile-ad-box .ad-placeholder {
-  font-size: 9px;
+  font-size: 16px;
   color: #999;
   margin: 0;
-  padding: 4px 8px;
-  line-height: 1.1;
+  padding: 8px;
+  line-height: 1.3;
   text-align: center;
-  max-height: 30px;
-  overflow: hidden;
+  min-height: 50px;
+}
+
+.underline {
+  text-decoration: underline;
 }
 
 .ad-box {
@@ -808,12 +811,47 @@ body {
 
 /* Left sidebar ad containers (smaller) */
 .fixed-ad-left .ad-box {
-  min-height: 320px; /* Accommodate 300px ad height + description + padding */
+  min-height: 320px; /* Back to original size for main ad */
+  margin-bottom: 0; /* No margin at bottom */
+  border-bottom-left-radius: 0; /* Remove bottom-left radius */
+  border-bottom-right-radius: 0; /* Remove bottom-right radius */
 }
 
-/* Special styling for native ad container */
-.fixed-ad-left .ad-box[data-ad-container="fixed-ad-left-bottom"] {
-  min-height: 270px; /* Smaller for native banner ads */
+/* Native ad container - appears as continuation of main ad box */
+.fixed-ad-left .ad-box-native {
+  background: #fff;
+  border-radius: 0 0 4px 4px; /* Only bottom corners rounded */
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+  padding: 5px;
+  width: 160px;
+  min-height: 60px;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -2px; /* Stronger overlap to hide any gap */
+  border: 1px solid #f8f9fa;
+  border-top: none; /* No top border to create seamless connection */
+  position: relative; /* Allow z-index manipulation if needed */
+}
+
+/* Ensure no spacing between ad elements */
+.fixed-ad-left .ad-box > *,
+.fixed-ad-left .ad-box-native > * {
+  margin: 0;
+  padding: 0;
+}
+
+.fixed-ad-left .ad-box-native script {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.fixed-ad-left .ad-box-native div[id^="container-"] {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Native ad container styling */
@@ -821,6 +859,13 @@ body {
   width: 100% !important;
   max-width: 160px;
   text-align: center;
+}
+
+.ad-description {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 8px;
+  line-height: 1.2;
 }
 
 .ad-box iframe {
@@ -890,12 +935,23 @@ body {
     padding-top: 66px; /* 60px ad + 6px spacing */
     padding-bottom: 56px; /* 50px ad + 6px spacing */
   }
+  
+  /* Remove padding on home page since ads are hidden */
+  body.home-page {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 }
 
 /* Ensure mobile banners are only visible on mobile */
 @media (max-width: 1399px) {
   body {
-    padding-bottom: 60px; /* Account for mobile banner bottom ad */
+    padding-bottom: 80px; /* Account for larger mobile banner bottom ad */
+  }
+  
+  /* Remove padding on home page since ads are hidden */
+  body.home-page {
+    padding-bottom: 0;
   }
 }
 
