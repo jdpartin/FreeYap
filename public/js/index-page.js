@@ -492,8 +492,17 @@ document.querySelectorAll('.chat-interface-card').forEach(button => {
     button.addEventListener('click', (event) => {
         event.preventDefault();
         const chatMode = button.getAttribute('href');
-        const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
-        window.location.href = `${chatMode}?${queryParams}`;
+        
+        // Check if there's text in the topic input field
+        const inputText = topicInput.value.trim();
+        if (inputText !== '' && topics.length < 10) {
+            // Process the topic input before navigating
+            procesTopicAndNavigate(inputText, chatMode);
+        } else {
+            // No input text, navigate directly with existing topics
+            const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+            window.location.href = `${chatMode}?${queryParams}`;
+        }
     });
 });
 // Fetch and display popular topics
@@ -631,4 +640,192 @@ function checkTopicSpelling(topic) {
         misspelledWords: misspelledWords,
         suggestions: allSuggestions.slice(0, 5) // Limit to 5 suggestions max
     };
+}
+
+// Function to process topic input and navigate to chat mode
+function procesTopicAndNavigate(inputText, chatMode) {
+    const originalTopic = inputText;
+    const topic = originalTopic.toLowerCase(); // Force to lowercase
+    
+    // Check if topic already exists (case-insensitive)
+    if (topics.some(existingTopic => existingTopic.toLowerCase() === topic)) {
+        // Clear input and navigate with existing topics
+        topicInput.value = '';
+        addTopicBtn.classList.add('d-none');
+        updateInputIcon('');
+        const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+        window.location.href = `${chatMode}?${queryParams}`;
+        return;
+    }
+
+    // Check spelling if spell checker is available
+    if (window.freeYapSpellChecker && window.freeYapSpellChecker.isInitialized) {
+        const spellCheckResult = checkTopicSpelling(topic);
+        if (spellCheckResult.hasErrors && spellCheckResult.suggestions.length > 0) {
+            // Show spell check dialog with navigation callback
+            showSpellCheckDialogWithNavigation(originalTopic, topic, spellCheckResult.suggestions, chatMode);
+            return;
+        }
+    }
+
+    // No spelling errors, add topic and navigate
+    addTopicToListAndNavigate(topic, chatMode);
+}
+
+// Function to add topic and navigate to chat mode
+function addTopicToListAndNavigate(topic, chatMode) {
+    // Add the topic to the list
+    addTopicToList(topic);
+    
+    // Clear the input
+    topicInput.value = '';
+    addTopicBtn.classList.add('d-none');
+    updateInputIcon('');
+    
+    // Navigate to chat mode with updated topics
+    const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+    window.location.href = `${chatMode}?${queryParams}`;
+}
+
+// Modified spell check dialog that includes navigation functionality
+function showSpellCheckDialogWithNavigation(originalTopic, lowercaseTopic, suggestions, chatMode) {
+    // Create modal backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    // Create modal dialog
+    const modal = document.createElement('div');
+    modal.className = 'spell-check-modal';
+    modal.style.cssText = `
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        animation: modalFadeIn 0.2s ease-out;
+    `;
+
+    // Add animation keyframes if not already present
+    if (!document.querySelector('#spellCheckModalStyles')) {
+        const style = document.createElement('style');
+        style.id = 'spellCheckModalStyles';
+        style.textContent = `
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spell-check-btn {
+            padding: 8px 16px;
+            margin: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .spell-check-btn:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+        .spell-check-btn.primary {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .spell-check-btn.primary:hover {
+            background: #0056b3;
+            border-color: #004085;
+        }
+        .spell-check-btn.secondary {
+            background: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+        .spell-check-btn.secondary:hover {
+            background: #545b62;
+            border-color: #4e555b;
+        }
+        `;
+        document.head.appendChild(style);
+    }
+
+    let modalContent = `
+        <h5 style="margin-bottom: 16px; color: #333;">Possible Spelling Error</h5>
+        <p style="margin-bottom: 16px; color: #666;">
+        The topic "<strong>${originalTopic}</strong>" might be misspelled.
+        </p>
+    `;
+
+    if (suggestions.length > 0) {
+        modalContent += `
+        <p style="margin-bottom: 12px; color: #666; font-size: 14px;">Did you mean:</p>
+        <div style="margin-bottom: 20px;">
+        `;
+        
+        suggestions.slice(0, 3).forEach(suggestion => {
+        modalContent += `
+            <button class="spell-check-btn suggestion-btn" data-suggestion="${suggestion}" style="display: block; width: 100%; text-align: left; margin-bottom: 4px;">
+            ${suggestion}
+            </button>
+        `;
+        });
+        
+        modalContent += `</div>`;
+    }
+
+    modalContent += `
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button class="spell-check-btn cancel-btn">Cancel</button>
+        <button class="spell-check-btn secondary use-original-btn">Use "${lowercaseTopic}"</button>
+        </div>
+    `;
+
+    modal.innerHTML = modalContent;
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    // Add event listeners
+    modal.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        if (e.target.classList.contains('suggestion-btn')) {
+            const suggestion = e.target.dataset.suggestion;
+            addTopicToListAndNavigate(suggestion, chatMode);
+            document.body.removeChild(backdrop);
+        } else if (e.target.classList.contains('use-original-btn')) {
+            addTopicToListAndNavigate(lowercaseTopic, chatMode);
+            document.body.removeChild(backdrop);
+        } else if (e.target.classList.contains('cancel-btn')) {
+            document.body.removeChild(backdrop);
+        }
+    });
+
+    // Close on backdrop click
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+            document.body.removeChild(backdrop);
+        }
+    });
+
+    // Close on Escape key
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(backdrop);
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
 }
