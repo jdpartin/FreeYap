@@ -663,3 +663,23 @@ class MessageAcknowledgmentEnforcer
         });
     }
 }
+
+// Set up beforeunload event to close the connection when the page is unloaded
+window.addEventListener('beforeunload', () =>
+{
+    if (window.webRTCConnectionManager)
+    {
+        if (window.webRTCConnectionManager.peer)
+        {
+            window.webRTCConnectionManager.peer.destroy();
+            window.webRTCConnectionManager.peerIP = null;
+            window.webRTCConnectionManager.partnerSocketId = null;
+        }
+
+        if (window.webRTCConnectionManager.socket)
+        {
+            window.webRTCConnectionManager.socket.disconnect();
+            window.webRTCConnectionManager.socket = null;
+        }
+    }
+});
