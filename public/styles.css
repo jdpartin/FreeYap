@@ -584,10 +584,10 @@ body {
   box-shadow: 0 4px 12px rgba(255, 77, 109, 0.4);
 }
 
-/* Partner topics - complementary gradient */
+/* Partner topics - matching user topics gradient */
 .partner-topics .topic-bubble {
-  background: linear-gradient(135deg, #ff7e7e 0%, #ffbb7a 100%);
-  box-shadow: 0 2px 8px rgba(255, 126, 126, 0.3);
+  background: linear-gradient(135deg, var(--primary) 0%, #ff8095 100%);
+  box-shadow: 0 2px 8px rgba(255, 77, 109, 0.3);
 }
 
 .partner-topics .topic-bubble:hover {

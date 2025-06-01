@@ -126,8 +126,8 @@ if (isUserTopic) {
     
     badge.appendChild(removeBtn);
 } else {
-    // Add click functionality for popular topics (only on the text, not the whole badge)
-    topicText.addEventListener('click', (e) => {
+    // Add click functionality for popular topics (on the entire badge)
+    badge.addEventListener('click', (e) => {
     e.stopPropagation();
     const lowercaseTopicName = topicName.toLowerCase();
     
@@ -486,13 +486,15 @@ if (topicInput.value.trim() === '') {
 
 // Add topic when Add button is clicked
 addTopicBtn.addEventListener('click', addTopic);
-document.querySelectorAll('.main-btn').forEach(button => {
-button.addEventListener('click', (event) => {
-    event.preventDefault();
-    const chatMode = button.getAttribute('href');
-    const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
-    window.location.href = `${chatMode}?${queryParams}`;
-});
+
+// Add event listeners to chat interface cards
+document.querySelectorAll('.chat-interface-card').forEach(button => {
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        const chatMode = button.getAttribute('href');
+        const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+        window.location.href = `${chatMode}?${queryParams}`;
+    });
 });
 // Fetch and display popular topics
 async function fetchPopularTopics() {

@@ -3,34 +3,21 @@ class TopicsWidget
     constructor(webRTCConnectionManager)
     {
         this.webRTCConnectionManager = webRTCConnectionManager;
+        this.semanticSimilarityAPIClient = new SemanticSimilarityAPIClient();
 
-        this.messageType = 'topics-display';
-
+        this.messageType = 'topics-display';        // These are both maps topic: embedding
         this.peerTopics = null;
-        this.myTopics = this.#getTopicsFromURL();
+        this.myTopics = null;
 
         this.connectionLostAndMaxAttempts = false;
+        this.needsMyTopicsRerender = false;
 
         this.partnerTopicsListElement = document.getElementById('partner-topics-list');
         this.myTopicsListElement = document.getElementById('user-topics-list');
 
         this.webRTCConnectionManager.on('matchFound', () =>
         {
-            // set up the topics message handler before the connection is established
-            this.webRTCConnectionManager.GetPeer().on('data', (data) =>
-            {
-                const parsedData = JSON.parse(data.toString());
-
-                if (parsedData.type === 'request-topics')
-                {
-                    this.webRTCConnectionManager.SendMessage({
-                        messageType: 'send-topics',
-                        messageObject: { topics: this.myTopics }
-                    });
-                }
-                // we dont need to handle the acknowledgment message type here, 
-                // it is handled by the SendMessage method
-            });
+            this.#handleMatchFound();
         });
 
         this.webRTCConnectionManager.on('connectionReady', () =>
@@ -48,7 +35,59 @@ class TopicsWidget
             this.#handleConnectionLostAndMaxAttempts();
         });
 
+        window.topicsWidget = this; // Expose for debugging
+
+        this.Initialization = this.#initialize();
+    }
+
+    async #initialize()
+    {
+        this.myTopics = await this.#getMyTopicsAndEmbeddings();
         this.#updateTopicsUI();
+    }
+    
+    async #getMyTopicsAndEmbeddings()
+    {
+        if (this.myTopics != null && this.myTopics.size > 0)
+        {
+            return this.myTopics; // Already fetched
+        }
+
+        const topics = this.#getTopicsFromURL();
+        
+        const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
+
+        // Convert to Map: topic -> embedding
+        this.myTopics = new Map();
+
+        topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
+            this.myTopics.set(obj.topic, obj.embedding);
+        });
+
+        return this.myTopics;
+    }
+
+    #handleMatchFound()
+    {
+        // set up the topics message handler before the connection is established
+        this.webRTCConnectionManager.GetPeer().on('data', async (data) =>
+        {
+            const parsedData = JSON.parse(data.toString());
+
+            if (parsedData.type === 'request-topics')
+            {
+                await this.Initialization;// Ensure my topics are initialized before sending
+
+                console.log('Received request for topics from peer. My topics:', this.myTopics);
+
+                this.webRTCConnectionManager.SendMessage({
+                    messageType: 'send-topics',
+                    messageObject: { topics: [...this.myTopics.keys()] }
+                });
+            }
+            // we dont need to handle the acknowledgment message type here, 
+            // it is handled by the SendMessage method
+        });
     }
 
     #handleConnectionLostAndMaxAttempts()
@@ -74,35 +113,102 @@ class TopicsWidget
             {
                 console.error('Error parsing topics from URL:', e);
             }
-        }
-
+        }        
+        
         return topics;
+    }    /**
+     * Gets a color based on similarity score
+     * @param {number} similarity - Cosine similarity score (0 to 1, representing percentage directly)
+     * @returns {string} CSS color class or inline style
+     */
+    #getSimilarityColor(similarity)
+    {
+        // Cosine similarity is already in 0-1 range representing percentage directly
+        if (similarity >= 0.95) return 'similarity-very-high'; // Excellent match - green (95%+)
+        if (similarity >= 0.85) return 'similarity-high'; // Good match - blue/teal (85%+)
+        if (similarity >= 0.70) return 'similarity-medium'; // Decent match - yellow (70%+)
+        if (similarity >= 0.50) return 'similarity-low'; // Weak match - orange (50%+)
+        return 'similarity-very-low'; // Poor match - red (below 50%)
+    }    /**
+     * Gets fallback inline styles if CSS classes aren't available
+     */
+    #getSimilarityStyle(similarity)
+    {
+        // Just return empty string to avoid overriding text colors - let CSS classes handle styling
+        return '';
     }
 
-    async #updateTopicsUI()
+    /**
+     * Gets plain language description for similarity level
+     * @param {number} similarity - Cosine similarity score (0 to 1)
+     * @returns {string} Plain language description
+     */
+    #getSimilarityDescription(similarity)
     {
-        var animationDelay = 100; // Delay in milliseconds for animation effect
-
-        if (this.myTopicsListElement.innerHTML === '')
+        if (similarity >= 0.95) return 'strongly related to';
+        if (similarity >= 0.85) return 'closely related to'; 
+        if (similarity >= 0.70) return 'may be related to';
+        if (similarity >= 0.50) return 'somewhat related to';
+        return 'vaguely related to';
+    }
+    
+    #renderMyTopics()
+    {
+        this.myTopicsListElement.innerHTML = '';
+        
+        if (this.myTopics && this.myTopics.size > 0)
         {
-            if (this.myTopics.length > 0)
+            let similarityMap = null;
+            let sortedMyTopics = [...this.myTopics];
+            
+            // If we have peer topics, calculate similarities for color coding and sorting
+            if (this.peerTopics && this.peerTopics.size > 0)
             {
-                for (const topic of this.myTopics)
+                try
                 {
-                    this.myTopicsListElement.innerHTML += `<div class="topic-bubble">${topic}</div>`;
-                    //await new Promise(resolve => setTimeout(resolve, animationDelay));
+                    similarityMap = this.semanticSimilarityAPIClient.CrossCompareSimilarity(this.myTopics, this.peerTopics);
+                    
+                    // Sort my topics by similarity (highest first)
+                    sortedMyTopics.sort((a, b) => {
+                        const similarityA = similarityMap.has(a[0]) ? similarityMap.get(a[0]).similarity : -1;
+                        const similarityB = similarityMap.has(b[0]) ? similarityMap.get(b[0]).similarity : -1;
+                        return similarityB - similarityA;
+                    });
                 }
-            }
-            else
+                catch (error)
+                {
+                    console.error('Error calculating topic similarities:', error);
+                }
+            }            for (let i = 0; i < sortedMyTopics.length; i++)
             {
-                this.myTopicsListElement.innerHTML = '<div class="topics-empty">No Topics</div>';
+                const [topic] = sortedMyTopics[i];
+                let topicHtml = `<div class="topic-bubble wave-topic`;                if (similarityMap && similarityMap.has(topic))
+                {
+                    const match = similarityMap.get(topic);
+                    const colorClass = this.#getSimilarityColor(match.similarity);
+                    const style = this.#getSimilarityStyle(match.similarity);
+                    const description = this.#getSimilarityDescription(match.similarity);
+                    
+                    topicHtml += ` ${colorClass}" style="${style}; animation-delay: ${i * 0.1}s;" title="This topic is ${description} partner's '${match.topic}'"`;
+                }
+                else
+                {
+                    topicHtml += `" style="animation-delay: ${i * 0.1}s;"`;
+                }
+                
+                topicHtml += `>${topic}</div>`;
+                this.myTopicsListElement.innerHTML += topicHtml;
             }
         }
-        
-        if (this.connectionLostAndMaxAttempts)
-            return;
+        else
+        {
+            this.myTopicsListElement.innerHTML = '<div class="topics-empty">No Topics</div>';
+        }
+    }
 
-        if (this.peerTopics == null || this.peerTopics.length === 0)
+    #renderPeerTopics()
+    {
+        if (this.peerTopics == null || this.peerTopics.size === 0)
         {
             let peer = this.webRTCConnectionManager.GetPeer();
 
@@ -119,23 +225,95 @@ class TopicsWidget
         {
             this.partnerTopicsListElement.innerHTML = '';
 
-            for (const topic of this.peerTopics)
+            let similarityMap = null;
+            let sortedPeerTopics = [...this.peerTopics];
+            
+            // Calculate similarities for color coding and sorting partner topics
+            if (this.myTopics && this.myTopics.size > 0)
             {
-                this.partnerTopicsListElement.innerHTML += `<div class="topic-bubble">${topic}</div>`;
-                //await new Promise(resolve => setTimeout(resolve, animationDelay));
+                try
+                {
+                    similarityMap = this.semanticSimilarityAPIClient.CrossCompareSimilarity(this.peerTopics, this.myTopics);
+                    
+                    // Sort peer topics by similarity (highest first)
+                    sortedPeerTopics.sort((a, b) => {
+                        const similarityA = similarityMap.has(a[0]) ? similarityMap.get(a[0]).similarity : -1;
+                        const similarityB = similarityMap.has(b[0]) ? similarityMap.get(b[0]).similarity : -1;
+                        return similarityB - similarityA;
+                    });
+                }
+                catch (error)
+                {
+                    console.error('Error calculating topic similarities:', error);
+                }
+            }            for (let i = 0; i < sortedPeerTopics.length; i++)
+            {
+                const [topic] = sortedPeerTopics[i];
+                let topicHtml = `<div class="topic-bubble wave-topic`;
+                  if (similarityMap && similarityMap.has(topic))
+                {
+                    const match = similarityMap.get(topic);
+                    const colorClass = this.#getSimilarityColor(match.similarity);
+                    const style = this.#getSimilarityStyle(match.similarity);
+                    const description = this.#getSimilarityDescription(match.similarity);
+                    
+                    topicHtml += ` ${colorClass}" style="${style}; animation-delay: ${i * 0.1}s;" title="This topic is ${description} your '${match.topic}'"`;
+                }
+                else
+                {
+                    topicHtml += `" style="animation-delay: ${i * 0.1}s;"`;
+                }
+                
+                topicHtml += `>${topic}</div>`;
+                this.partnerTopicsListElement.innerHTML += topicHtml;
             }
         }
     }
 
+    async #updateTopicsUI()
+    {
+        // Only render my topics if they haven't been rendered yet
+        if (this.myTopicsListElement.innerHTML === '')
+        {
+            this.#renderMyTopics();
+        }
+          if (this.connectionLostAndMaxAttempts)
+            return;
+
+        // Always update peer topics (they change based on connection state)
+        this.#renderPeerTopics();
+    }
+    
     #handleConnectionReady()
     {
         this.webRTCConnectionManager.SendMessage({
             messageType: 'request-topics',
             acknowledgmentMessageType: 'send-topics',
             requireAcknowledgment: true,
-            callbackFunction: (data) =>
+            callbackFunction: async (data) =>
             {
-                this.peerTopics = data.topics;
+                const topics = data.topics || [];
+
+                if (topics.length === 0)
+                {
+                    console.warn('Topics response received but no topics found for peer.');
+                    this.peerTopics = new Map();
+                    this.#updateTopicsUI();
+                    return;
+                }
+
+                const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
+
+                console.log('Received topics and embeddings from peer:', topicsAndEmbeddingsResponse.embeddings);
+
+                this.peerTopics = new Map();
+
+                topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
+                    this.peerTopics.set(obj.topic, obj.embedding);
+                });
+                
+                // Trigger re-render of my topics with similarity data
+                this.#renderMyTopics();
                 this.#updateTopicsUI();
             }
         });
@@ -144,6 +322,8 @@ class TopicsWidget
     #handleConnectionClosed()
     {
         this.peerTopics = null;
+        // Re-render my topics without similarity data
+        this.#renderMyTopics();
         this.#updateTopicsUI();
     }
 }

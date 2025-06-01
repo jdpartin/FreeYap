@@ -8,24 +8,19 @@ class VoiceChatWidget
         this.messageType = 'voice-chat';
         
         this.localStream = null;
-        this.remoteStream = null;        this.muteAudioBtn = document.getElementById('mute-audio-btn');
+        this.remoteStream = null;        
+
+        this.muteAudioBtn = document.getElementById('mute-audio-btn');
         this.localAudioElement = document.getElementById('local-audio');
         this.remoteAudioElement = document.getElementById('remote-audio');
-
-        // Audio analysis properties
-        this.audioContext = null;
-        this.localAnalyser = null;
-        this.remoteAnalyser = null;
-        this.localIconContainer = null;
-        this.remoteIconContainer = null;
-        this.volumeAnalysisActive = false;        // Make this widget instance available globally for other modules
+        
+        // Make this widget instance available globally for other modules
         window.voiceChatWidget = this;
-        
-        // Dispatch an event when the widget is initialized
-        document.dispatchEvent(new Event('voiceChatWidgetInitialized'));
-        
-        // Ensure local audio stays muted to prevent feedback
-        this.#enforceLocalAudioMuted();
+
+        this.webRTCConnectionManager.on('matchFound', () =>
+        {
+            this.#handleMatchFound();
+        });
         
         this.webRTCConnectionManager.on('connectionReady', () =>
         {
@@ -38,25 +33,30 @@ class VoiceChatWidget
         });
 
         this.#setupUIEventListeners();
-        this.#setupAudioIconContainers();
         this.MediaInitialization = this.#initializeMedia();
-    }    
+    }
+
+    #handleMatchFound()
+    {
+        let peer = this.webRTCConnectionManager.GetPeer();
+
+        peer.on('stream', (stream) =>
+        {
+            this.remoteStream = stream;
+            this.remoteAudioElement.srcObject = this.remoteStream;
+        });
+    }
     
     async #initializeMedia()
     {
         try
-        {            this.localStream = await navigator.mediaDevices.getUserMedia({
+        {            
+            this.localStream = await navigator.mediaDevices.getUserMedia({
                 video: false,
                 audio: true
-            });            // Assign local stream to local audio element and ensure it's muted
-            if (this.localAudioElement) {
-                this.localAudioElement.srcObject = this.localStream;
-                this.localAudioElement.muted = true; // Critical: Prevent feedback
-                console.log('VoiceChat: Local audio element configured with muted stream to prevent feedback');
-            }
-
-            // Initialize audio analysis after getting the stream
-            this.#initializeAudioAnalysis();
+            });            
+            
+            this.localAudioElement.srcObject = this.localStream;
 
             return true;
         }
@@ -67,122 +67,12 @@ class VoiceChatWidget
         }
     }
 
-    #setupAudioIconContainers()
-    {
-        // Get references to the audio icon containers
-        const audioWrappers = document.querySelectorAll('.audio-wrapper');
-        if (audioWrappers.length >= 2)
-        {
-            this.localIconContainer = audioWrappers[0].querySelector('.audio-icon-container');
-            this.remoteIconContainer = audioWrappers[1].querySelector('.audio-icon-container');
-        }
-    }    #initializeAudioAnalysis()
-    {
-        try
-        {
-            // Create audio context
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Set up local audio analysis
-            if (this.localStream)
-            {
-                const localSource = this.audioContext.createMediaStreamSource(this.localStream);
-                this.localAnalyser = this.audioContext.createAnalyser();
-                this.localAnalyser.fftSize = 256;
-                
-                // CRITICAL: Only connect to analyser, NOT to destination to prevent feedback
-                localSource.connect(this.localAnalyser);
-                // DO NOT connect to this.audioContext.destination - this would cause feedback!
-                
-                // Start volume analysis
-                this.volumeAnalysisActive = true;
-                this.#analyzeVolume();
-            }
-        }
-        catch (error)
-        {
-            console.error('VoiceChat: Failed to initialize audio analysis:', error);
-        }
-    }
-
-    #analyzeVolume()
-    {
-        if (!this.volumeAnalysisActive || !this.localAnalyser)
-        {
-            return;
-        }
-
-        const bufferLength = this.localAnalyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        const checkVolume = () =>
-        {
-            if (!this.volumeAnalysisActive)
-            {
-                return;
-            }
-
-            this.localAnalyser.getByteFrequencyData(dataArray);
-            
-            // Calculate average volume
-            let sum = 0;
-            for (let i = 0; i < bufferLength; i++)
-            {
-                sum += dataArray[i];
-            }
-            const averageVolume = sum / bufferLength;
-            
-            // Update local icon based on volume
-            this.#updateVolumeVisualization(this.localIconContainer, averageVolume);
-
-            // Continue analysis
-            requestAnimationFrame(checkVolume);
-        };
-
-        checkVolume();
-    }
-
-    #updateVolumeVisualization(iconContainer, volume)
-    {
-        if (!iconContainer)
-        {
-            return;
-        }
-
-        // Remove all volume classes
-        iconContainer.classList.remove('volume-silent', 'volume-low', 'volume-medium', 'volume-high', 'volume-peak');
-
-        // Determine volume level and apply appropriate class
-        if (volume < 5)
-        {
-            iconContainer.classList.add('volume-silent');
-        }
-        else if (volume < 15)
-        {
-            iconContainer.classList.add('volume-low');
-        }
-        else if (volume < 30)
-        {
-            iconContainer.classList.add('volume-medium');
-        }
-        else if (volume < 50)
-        {
-            iconContainer.classList.add('volume-high');
-        }
-        else
-        {
-            iconContainer.classList.add('volume-peak');
-        }
-    }    
-      async #handleConnectionReady()
+    async #handleConnectionReady()
     {
         // Ensure media is initialized before setting up voice transmission
         await this.MediaInitialization;
         
-        let peer = this.webRTCConnectionManager.GetPeer();
-
-        this.#setupVoiceChannel(peer);
-        this.#startVoiceTransmission(peer);
+        this.#startVoiceTransmission();
 
         this.muteAudioBtn.disabled = false;
     }
@@ -190,156 +80,40 @@ class VoiceChatWidget
     #handleConnectionClosed()
     {
         this.remoteStream = null;
-
-        // Stop volume analysis
-        this.volumeAnalysisActive = false;
-
-        // Reset volume visualizations
-        if (this.localIconContainer)
-        {
-            this.localIconContainer.classList.remove('volume-silent', 'volume-low', 'volume-medium', 'volume-high', 'volume-peak');
-        }
-        if (this.remoteIconContainer)
-        {
-            this.remoteIconContainer.classList.remove('volume-silent', 'volume-low', 'volume-medium', 'volume-high', 'volume-peak');
-        }        // Stop local audio tracks
-        if (this.localStream)
-        {
-            this.localStream.getTracks().forEach(track => track.stop());
-            this.localStream = null;
-        }
-
-        // Clear local audio element
-        if (this.localAudioElement)
-        {
-            this.localAudioElement.srcObject = null;
-            this.localAudioElement.muted = true; // Ensure it stays muted
-        }
+        this.remoteAudioElement.srcObject = null;
     }
+    
+    #startVoiceTransmission()
+    {
+        try 
+        {
+            let peer = this.webRTCConnectionManager.GetPeer();
 
-    #setupVoiceChannel(peer)
-    {
-        peer.on('stream', (stream) =>
-        {
-            this.remoteStream = stream;
-            this.remoteAudioElement.srcObject = stream;
-            
-            // Set up remote audio analysis
-            this.#setupRemoteAudioAnalysis(stream);
-        });
-    }    #setupRemoteAudioAnalysis(stream)
-    {
-        try
-        {
-            if (this.audioContext && stream)
-            {
-                const remoteSource = this.audioContext.createMediaStreamSource(stream);
-                this.remoteAnalyser = this.audioContext.createAnalyser();
-                this.remoteAnalyser.fftSize = 256;
-                
-                // CRITICAL: Only connect to analyser, NOT to destination
-                remoteSource.connect(this.remoteAnalyser);
-                // DO NOT connect to this.audioContext.destination
-                
-                // Start remote volume analysis
-                this.#analyzeRemoteVolume();
-            }
+            // AI keeps changing this back to the wrong method
+            // peer.addStream(this.localStream); is INCORRECT
+            // The correct method is peer.emit('stream', this.localStream);
+            // This is why the AI instructions explicitly state to not modify undrelated code when making changes
+            peer.emit('stream', this.localStream);
         }
         catch (error)
         {
-            console.error('VoiceChat: Failed to set up remote audio analysis:', error);
-        }
-    }
-
-    #analyzeRemoteVolume()
-    {
-        if (!this.volumeAnalysisActive || !this.remoteAnalyser)
-        {
-            return;
-        }
-
-        const bufferLength = this.remoteAnalyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        const checkRemoteVolume = () =>
-        {
-            if (!this.volumeAnalysisActive || !this.remoteAnalyser)
-            {
-                return;
-            }
-
-            this.remoteAnalyser.getByteFrequencyData(dataArray);
-            
-            // Calculate average volume
-            let sum = 0;
-            for (let i = 0; i < bufferLength; i++)
-            {
-                sum += dataArray[i];
-            }
-            const averageVolume = sum / bufferLength;
-            
-            // Update remote icon based on volume
-            this.#updateVolumeVisualization(this.remoteIconContainer, averageVolume);
-
-            // Continue analysis
-            requestAnimationFrame(checkRemoteVolume);
-        };
-
-        checkRemoteVolume();
-    }    
-    
-    #startVoiceTransmission(peer)
-    {
-        if (this.localStream)
-        {
-            try 
-            {
-                // Use the correct SimplePeer API to add the local stream
-                peer.addStream(this.localStream);
-                console.log('VoiceChat: Local audio stream added to peer connection');
-            }
-            catch (error)
-            {
-                console.error('VoiceChat: Failed to add local stream to peer:', error);
-            }
-        }
-        else
-        {
-            console.warn('VoiceChat: No local stream available to transmit - media may not be initialized yet');
+            console.error('VoiceChat: Failed to add local stream to peer:', error);
         }
     }
     
     #toggleAudio(mute)
     {
-        if (this.localStream)
+        const audioTracks = this.localStream.getAudioTracks();
+
+        if (audioTracks.length > 0)
         {
-            const audioTracks = this.localStream.getAudioTracks();
-
-            if (audioTracks.length > 0)
+            audioTracks.forEach(track =>
             {
-                audioTracks.forEach(track =>
-                {
-                    track.enabled = !mute;
-                });
-                
-                // Update local icon visual state
-                if (this.localIconContainer)
-                {
-                    if (mute)
-                    {
-                        this.localIconContainer.classList.add('muted');
-                        this.localIconContainer.classList.remove('volume-silent', 'volume-low', 'volume-medium', 'volume-high', 'volume-peak');
-                    }
-                    else
-                    {
-                        this.localIconContainer.classList.remove('muted');
-                    }
-                }
-                
-                return true;
-            }
+                track.enabled = !mute;
+            });
+            
+            return true;
         }
-
         return false;
     }
       
@@ -358,62 +132,7 @@ class VoiceChatWidget
                 this.muteAudioBtn.innerHTML = isCurrentlyMuted ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
             }
         });
-    }    #enforceLocalAudioMuted()
-    {
-        if (this.localAudioElement)
-        {
-            // Set initial muted state
-            this.localAudioElement.muted = true;
-            
-            // Add event listener to prevent unmuting
-            this.localAudioElement.addEventListener('volumechange', () =>
-            {
-                if (!this.localAudioElement.muted)
-                {
-                    console.warn('VoiceChat: Preventing local audio unmute to avoid feedback');
-                    this.localAudioElement.muted = true;
-                }
-            });
-            
-            // Periodically check and enforce muted state
-            setInterval(() =>
-            {
-                if (this.localAudioElement && !this.localAudioElement.muted)
-                {
-                    console.warn('VoiceChat: Re-enforcing local audio muted state');
-                    this.localAudioElement.muted = true;
-                }
-            }, 1000); // Check every second
-        }
-    }
-
-    // Cleanup method for proper resource management
-    destroy()
-    {
-        this.volumeAnalysisActive = false;
-        
-        if (this.audioContext && this.audioContext.state !== 'closed')
-        {
-            this.audioContext.close();
-        }
-        
-        if (this.localStream)
-        {
-            this.localStream.getTracks().forEach(track => track.stop());
-        }
-
-        // Clear audio elements
-        if (this.localAudioElement)
-        {
-            this.localAudioElement.srcObject = null;
-            this.localAudioElement.muted = true;
-        }
-        
-        if (this.remoteAudioElement)
-        {
-            this.remoteAudioElement.srcObject = null;
-        }
-    }
+    }    
 }
 
 

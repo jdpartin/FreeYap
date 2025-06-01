@@ -325,10 +325,6 @@
   box-shadow: 0 4px 12px rgba(255, 79, 122, 0.15);
 }
 
-.topic-bubble-popular .topic-text {
-  cursor: pointer;
-}
-
 .topic-bubble .popularity-icon {
   margin-right: 0.375rem;
   opacity: 1;
