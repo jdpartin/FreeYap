@@ -81,7 +81,8 @@
     border: 1px solid #ccc;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    height: 300px;
+    height: 400px; /* Increased height for better content visibility */
+    max-height: 55vh; /* Slightly increased max-height */
 }
 
 /* Tab headers */
@@ -476,6 +477,185 @@ emoji-picker::part(wrapper) {
     line-height: 1.4;
 }
 
+/* Ice Breaker Styles */
+/* Ice Breaker Sections - Updated to match home page design using only primary red color */
+.ice-breaker-compatibility-section,
+.ice-breaker-template-section,
+.ice-breaker-games-section,
+.ice-breaker-starters-section {
+    background: linear-gradient(135deg, rgba(255, 79, 122, 0.05), rgba(255, 128, 149, 0.03)) !important;
+    border: 1px solid rgba(255, 79, 122, 0.15) !important;
+    border-radius: 12px !important;
+    padding: 1.25rem !important;
+    margin-bottom: 1.5rem !important;
+    box-shadow: 0 4px 15px rgba(255, 79, 122, 0.08);
+    transition: all 0.3s ease;
+}
+
+.ice-breaker-compatibility-section:hover,
+.ice-breaker-template-section:hover,
+.ice-breaker-games-section:hover,
+.ice-breaker-starters-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 79, 122, 0.12);
+    border-color: rgba(255, 79, 122, 0.25) !important;
+}
+
+.ice-breaker-item {
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 79, 122, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    color: #495057;
+    position: relative;
+    overflow: hidden;
+}
+
+.ice-breaker-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 79, 122, 0.08), transparent);
+    transition: left 0.6s ease;
+}
+
+.ice-breaker-item:hover::before {
+    left: 100%;
+}
+
+.ice-breaker-item:hover {
+    background: linear-gradient(135deg, rgba(255, 79, 122, 0.12), rgba(255, 79, 122, 0.06));
+    border-color: rgba(255, 79, 122, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 79, 122, 0.15);
+    color: var(--primary);
+}
+
+.ice-breaker-item:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(255, 79, 122, 0.1);
+}
+
+/* Button styling for template generation */
+#generate-template-btn {
+    background: linear-gradient(135deg, var(--primary), var(--primary-gradient-end));
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(255, 79, 122, 0.2);
+    transition: all 0.3s ease;
+}
+
+#generate-template-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 79, 122, 0.3);
+    background: linear-gradient(135deg, var(--primary-gradient-end), var(--primary));
+}
+
+/* Section titles styling */
+.ice-breaker-compatibility-section h6,
+.ice-breaker-template-section h6,
+.ice-breaker-games-section h6,
+.ice-breaker-starters-section h6 {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #212529; /* Standard dark text color */
+}
+
+/* Section descriptions */
+.ice-breaker-compatibility-section p,
+.ice-breaker-template-section p,
+.ice-breaker-games-section p {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #6c757d; /* Standard muted text color */
+    margin-bottom: 1rem;
+}
+
+/* Generated message display styles */
+#generated-message-container {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.generated-message-wrapper {
+    transition: all 0.3s ease;
+    background-color: #f8f9fa !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.generated-message-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-gradient-end, #ff6b89));
+}
+
+.generated-message-content {
+    font-weight: 500;
+    line-height: 1.5;
+    color: #212529;
+    font-size: 0.95rem;
+}
+
+.generated-message-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 79, 122, 0.3);
+    border-color: var(--primary) !important;
+}
+
+.generated-message-wrapper:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(255, 79, 122, 0.2);
+}
+
+/* Ice breaker deprecated sections - keeping for backwards compatibility */
+.ice-breaker-ai-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #e8f4fd;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+}
+
+.ice-breaker-recommended-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.ice-breaker-fun-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+}
+
 /* Mobile responsive rules */
 @media (max-width: 768px) {
     /* Hide games tab on mobile and tablet devices */
@@ -491,6 +671,12 @@ emoji-picker::part(wrapper) {
     .mobile-game-message {
         display: flex !important;
     }
+    
+    /* Adjust popup height for mobile */
+    #custom-popup {
+        height: 300px;
+        max-height: 45vh;
+    }
 }
 
 /* Very small mobile devices */
@@ -503,4 +689,85 @@ emoji-picker::part(wrapper) {
         font-size: 16px; /* Slightly smaller icons on mobile */
         padding: 8px;
     }
+    
+    /* Further adjust popup height for very small screens */
+    #custom-popup {
+        height: 250px;
+        max-height: 40vh;
+    }
+}
+
+/* Compatibility Score Styles */
+.compatibility-score-container {
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.compatibility-score-container:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.compatibility-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.compatibility-percentage {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.compatibility-level {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.compatibility-description {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.compatibility-loading {
+    padding: 1rem;
+    color: var(--bs-secondary);
+}
+
+.compatibility-loading .spinner-border {
+    width: 1rem;
+    height: 1rem;
+}
+
+.compatibility-error {
+    padding: 1rem;
+    color: var(--bs-secondary);
+}
+
+.compatibility-waiting {
+    padding: 1rem;
+    color: var(--bs-secondary);
+}
+
+.compatibility-waiting i {
+    font-size: 1.2rem;
+}
+
+/* Color variations for different compatibility levels */
+.text-primary .compatibility-score-container {
+    border-color: var(--primary);
+}
+
+.text-success .compatibility-score-container {
+    border-color: var(--bs-success);
+}
+
+.text-warning .compatibility-score-container {
+    border-color: var(--bs-warning);
+}
+
+.text-secondary .compatibility-score-container {
+    border-color: var(--bs-secondary);
 }

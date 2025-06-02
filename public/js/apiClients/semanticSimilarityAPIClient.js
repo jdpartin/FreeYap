@@ -61,7 +61,8 @@ class SemanticSimilarityAPIClient
             throw error;
         }
     }    
-      /**
+    
+    /**
      * Finds the most semantically similar topic pairs from two Maps.
      * Takes two Maps where keys are topics and values are embeddings.
      * Returns a Map where keys are topics from topicsA and values are objects containing
@@ -139,5 +140,44 @@ class SemanticSimilarityAPIClient
         }
 
         return dotProduct / (normA * normB);
+    }
+
+    CalculateAverageVector(embeddings)
+    {
+        if (!Array.isArray(embeddings) || embeddings.length === 0)
+        {
+            throw new Error('Embeddings must be a non-empty array');
+        }
+
+        const vectorLength = embeddings[0].length;
+        const averageVector = new Array(vectorLength).fill(0);
+
+        for (const embedding of embeddings)
+        {
+            if (embedding.length !== vectorLength)
+            {
+                throw new Error('All embeddings must have the same length');
+            }
+
+            for (let i = 0; i < vectorLength; i++)
+            {
+                averageVector[i] += embedding[i];
+            }
+        }
+
+        for (let i = 0; i < vectorLength; i++)
+        {
+            averageVector[i] /= embeddings.length;
+        }
+
+        return averageVector;
+    }
+
+    CalculateAverageSimilarity(topicsVectorsA, topicsVectorsB)
+    {
+        const averageVectorA = this.CalculateAverageVector(topicsVectorsA);
+        const averageVectorB = this.CalculateAverageVector(topicsVectorsB);
+
+        return this.CalculateCosineSimilarity(averageVectorA, averageVectorB);
     }
 }

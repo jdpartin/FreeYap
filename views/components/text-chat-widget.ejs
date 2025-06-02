@@ -3,14 +3,15 @@
 <div class="container text-chat-container p-0">
     <div class="row justify-content-center">
         <div class="col-12">
-            <div class="card shadow-sm chat-card">                <!-- Chat header with controls -->
+            <div class="card shadow-sm chat-card">                
+                  <!-- Chat header with controls -->
                 <div class="card-header text-white d-flex justify-content-between align-items-center chat-header">                    <span id="chat-session-title">
                         <% if (typeof showLogo !== 'undefined' && showLogo) { %>
                             <img src="/images/logo_white.png" class="logo-image" alt="FreeYap Logo"> FreeYap.com
                         <% } else { %>
                             <i class="bi bi-chat-dots-fill" style="font-size: 120%;"></i>
                         <% } %>
-                    </span>
+                    </span>                    
                 </div>
                 
                 <!-- Chat messages area -->
@@ -48,6 +49,9 @@
                                 <button class="tab-btn" data-tab="games" title="Games">
                                     <i class="bi bi-controller"></i>
                                 </button>
+                                <button class="tab-btn" data-tab="ice-breakers" title="Break the Ice">
+                                    <img src="/images/icebreaker_icon_black.png" alt="Ice Breaker" style="height: 1.3rem;transform:translateY(-3px);">
+                                </button>
                                 <!-- Utilities tab hidden for now -->
                                 <button class="tab-btn" data-tab="utilities" title="Utilities" style="display:none;">
                                     <i class="bi bi-tools"></i>
@@ -72,15 +76,78 @@
                                 <div id="stickers-tab" class="tab-pane scrollable_div tab-pane-with-padding">
                                     <input type="text" id="sticker-search-bar" placeholder="Search stickers...">
                                     <div id="sticker-container"></div>
-                                </div>
-
-                                <!-- Games Tab -->
+                                </div>                                <!-- Games Tab -->
                                 <div id="games-tab" class="tab-pane scrollable_div tab-pane-with-padding">
                                     <input type="text" id="game-search-bar" placeholder="Search games from OnlineGames.io...">
                                     <select id="game-category-select">
                                         <option value="">Select Category</option>
                                     </select>
                                     <div id="game-container"></div>
+                                </div>                                <!-- Ice Breakers Tab -->
+                                <div id="ice-breakers-tab" class="tab-pane scrollable_div tab-pane-with-padding">
+                                    <div class="ice-breaker-content">
+                                        <h6 class="text-center mb-3">Break the Ice!</h6>                                      <div id="ice-breaker-container">
+                                              <!-- Compatibility score section -->
+                                            <div class="ice-breaker-compatibility-section mb-4 p-3">
+                                                <h6 class="mb-2" style="font-weight: bold;">💝 Topic Compatibility</h6>
+                                                <p class="mb-3" style="font-size: 0.9rem;">How well your topics align with each other</p>
+                                                <div id="compatibility-score-display">
+                                                    <!-- Compatibility score will be displayed here -->
+                                                </div>
+                                            </div>                                            <!-- Template-based message section -->
+                                            <div class="ice-breaker-template-section mb-4 p-3">
+                                                <h6 class="mb-2" style="font-weight: bold;">📝 Personalized Introduction</h6>
+                                                <p class="mb-3" style="font-size: 0.9rem;">Create a custom introduction message based on your shared topics</p>
+                                                <button class="btn btn-primary btn-sm me-2 mb-2" id="generate-template-btn">
+                                                    <i class="bi bi-pencil"></i> Create Introduction
+                                                </button>
+                                                  <!-- Generated message display area -->
+                                                <div id="generated-message-container" style="display: none;" class="mt-3">
+                                                    <div class="generated-message-wrapper p-3 border rounded" style="cursor: pointer; background-color: var(--bs-light); border-color: var(--primary) !important;">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <span class="text-muted small">
+                                                                Generated Message
+                                                            </span>
+                                                            <span class="text-muted small">
+                                                                <i class="bi bi-cursor-text"></i> Click to send
+                                                            </span>
+                                                        </div>
+                                                        <div id="generated-message-text" class="generated-message-content">
+                                                            <!-- Generated message will appear here -->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><!-- Suggested games section -->
+                                            <div class="ice-breaker-games-section mb-4 p-3">
+                                                <h6 class="mb-2" style="font-weight: bold;">🎮 Games for You Both</h6>
+                                                <p class="mb-3" style="font-size: 0.9rem;">Games selected based on your shared topics</p>
+                                                <div id="suggested-games-container">
+                                                    <!-- Games will be populated here -->
+                                                </div>                                            </div>
+
+                                            <!-- Conversation starters section -->
+                                            <div class="ice-breaker-starters-section mb-4">
+                                                <h6 class="mb-3" style="font-weight: bold;">💬 Classic Conversation Starters</h6>
+                                                
+                                                <div class="ice-breaker-item" data-question="What's your favorite way to spend a weekend?">What's your favorite way to spend a weekend?</div>
+                                                <div class="ice-breaker-item" data-question="If you could travel anywhere right now, where would you go?">If you could travel anywhere right now, where would you go?</div>
+                                                <div class="ice-breaker-item" data-question="What's the best book or movie you've experienced recently?">What's the best book or movie you've experienced recently?</div>
+                                                <div class="ice-breaker-item" data-question="What hobby did you pick up during quarantine?">What hobby did you pick up during quarantine?</div>
+                                                <div class="ice-breaker-item" data-question="What's your go-to comfort food?">What's your go-to comfort food?</div>
+                                                <div class="ice-breaker-item" data-question="If you could have dinner with anyone, who would it be?">If you could have dinner with anyone, who would it be?</div>
+                                                <div class="ice-breaker-item" data-question="What's something you're really passionate about?">What's something you're really passionate about?</div>
+                                                <div class="ice-breaker-item" data-question="What's the most interesting place you've ever visited?">What's the most interesting place you've ever visited?</div>
+                                                <div class="ice-breaker-item" data-question="What's your favorite season and why?">What's your favorite season and why?</div>
+                                                <div class="ice-breaker-item" data-question="If you could learn any skill instantly, what would it be?">If you could learn any skill instantly, what would it be?</div>
+                                                <div class="ice-breaker-item" data-question="What's your favorite way to stay active?">What's your favorite way to stay active?</div>
+                                                <div class="ice-breaker-item" data-question="What's the best advice you've ever received?">What's the best advice you've ever received?</div>
+                                                <div class="ice-breaker-item" data-question="What's something that always makes you laugh?">What's something that always makes you laugh?</div>
+                                                <div class="ice-breaker-item" data-question="What's your dream job?">What's your dream job?</div>
+                                                <div class="ice-breaker-item" data-question="What's the most spontaneous thing you've ever done?">What's the most spontaneous thing you've ever done?</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <!-- Utilities Tab -->

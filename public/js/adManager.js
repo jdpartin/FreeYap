@@ -53,13 +53,14 @@ class AdManager
         
         this.refreshTimers = {};
         this.isInitialized = false;
-    }
-
+    }    
+    
     /**
      * Initialize the ad system
      */
     init()
     {
+        return; // TEMPORARY: Prevent ads from loading - remove this line to re-enable ads
         if (this.isInitialized) return;
         
         // Load primary ad immediately

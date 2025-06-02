@@ -66,6 +66,15 @@ This project is called FreeYap, a Node.js-based anonymous chat platform. Users c
 3. Use CommonJS modules.
 4. **CRITICAL**: Always add a new line before function declarations to avoid placing them inside comments or beside closing brackets. This prevents syntax errors and maintains proper code structure.
 
+### Styling Guidelines:
+1. **Primary Color Only**: Use `var(--primary)` (#ff4f7a) red exclusively. No blues, greens, or purples unless special exceptions.
+2. **Gradients**: Use `linear-gradient(135deg, var(--primary), var(--primary-gradient-end))` for consistency.
+3. **Hover Effects**: Include `transform: translateY(-2px)` and enhanced `box-shadow` on interactive elements.
+4. **Border Radius**: Use 8px-12px for modern card styling.
+5. **Transitions**: Apply `transition: all 0.3s ease` for smooth interactions.
+6. **Spacing**: Use `1.25rem` padding, `1.5rem` margins for consistent layout.
+7. **Typography**: `font-weight: 700` for headings, `font-weight: 500` for interactive text.
+
 ### Validation & Error Handling:
 1. Validate API inputs.
 2. Implement robust error handling.

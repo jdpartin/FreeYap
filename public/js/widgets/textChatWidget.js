@@ -24,18 +24,14 @@ class TextChatWidget
         this.webRTCConnectionManager.on('connectionClosed', () =>
         {
             this.#handleConnectionClosed();
-        });
-
-        this.sendButton.addEventListener('click', () =>    
+        });        this.sendButton.addEventListener('click', () =>    
         {
             const message = this.chatInput.value;
             if (message.trim())
             {
                 this.SendMessage(message);
             }
-        });
-
-        window.textChatWidget = this;
+        });        window.textChatWidget = this;
     }
 
     SendMessage(message)
@@ -360,9 +356,8 @@ class TextChatWidget
                                              </div>`;
         
         this.isFirstMessage = true; // Reset for new connection
-    }
-
-    #handleConnectionClosed()
+    }    
+      #handleConnectionClosed()
     {
         this.chatInput.disabled = true;
         this.sendButton.disabled = true;
@@ -372,8 +367,159 @@ class TextChatWidget
                                                 <h5>Welcome to FreeYap!</h5>
                                                 <p>You can chat here once you're connected to a partner.</p>
                                              </div>`;
+          this.isFirstMessage = true; // Reset for new connection        // Reset ice breaker button to original state
+        const generateTemplateBtn = document.getElementById('generate-template-btn');
+        if (generateTemplateBtn) {
+            generateTemplateBtn.innerHTML = '<i class="bi bi-pencil"></i> Create Introduction';
+            generateTemplateBtn.removeAttribute('data-mode');
+        }
         
-        this.isFirstMessage = true; // Reset for new connection
+        // Clear compatibility score display
+        this.clearCompatibilityScore();
+        
+        // Hide generated message container
+        const container = document.getElementById('generated-message-container');
+        if (container) {
+            container.style.display = 'none';
+        }
+
+        // Reset ice-breaker tab state
+        this.#resetIceBreakerTab();
+        
+        // Close media selector popup
+        this.#closeMediaSelectorPopup();
+    }
+
+    /**
+     * Reset ice-breaker tab to initial state when connection closes
+     * @private
+     */
+    #resetIceBreakerTab()
+    {
+        // Reset ice-breaker container initialization state
+        const iceBreakerContainer = document.getElementById('ice-breaker-container');
+        if (iceBreakerContainer) {
+            iceBreakerContainer.removeAttribute('data-initialized');
+        }
+
+        // Reset suggested games container population state
+        const suggestedGamesContainer = document.getElementById('suggested-games-container');
+        if (suggestedGamesContainer) {
+            suggestedGamesContainer.removeAttribute('data-populated');
+            suggestedGamesContainer.innerHTML = '<p class="text-muted text-center">Games will appear here when you connect with someone.</p>';
+        }
+    }
+
+    /**
+     * Close the media selector popup when connection closes
+     * @private
+     */
+    #closeMediaSelectorPopup()
+    {
+        const customPopup = document.getElementById('custom-popup');
+        if (customPopup) {
+            customPopup.style.display = 'none';
+        }
+    }
+
+    updateCompatibilityScore()
+    {
+        const compatibilityDisplay = document.getElementById('compatibility-score-display');
+        if (!compatibilityDisplay) 
+        {
+            console.warn('Compatibility score display element not found');
+            return;
+        }
+
+        try 
+        {
+            const score = getTopicCompatabilityScore();
+            
+            if (score === '' || score === null || score === undefined) 
+            {
+                // No score available yet - show loading state
+                compatibilityDisplay.innerHTML = `
+                    <div class="compatibility-loading text-center">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2 text-muted">Calculating compatibility...</span>
+                    </div>
+                `;
+                return;
+            }
+
+            // Convert score to percentage and determine compatibility level
+            const percentage = Math.round(score * 100);
+            let compatibilityLevel = '';
+            let compatibilityColor = '';
+            let compatibilityIcon = '';
+
+            if (percentage >= 80) 
+            {
+                compatibilityLevel = 'Excellent Match!';
+                compatibilityColor = 'success';
+                compatibilityIcon = '🔥';
+            } 
+            else if (percentage >= 60) 
+            {
+                compatibilityLevel = 'Great Match!';
+                compatibilityColor = 'primary';
+                compatibilityIcon = '⭐';
+            } 
+            else if (percentage >= 40) 
+            {
+                compatibilityLevel = 'Good Match';
+                compatibilityColor = 'warning';
+                compatibilityIcon = '👍';
+            } 
+            else 
+            {
+                compatibilityLevel = 'Different Interests';
+                compatibilityColor = 'secondary';
+                compatibilityIcon = '🤝';
+            }
+
+            // Update the display with the score
+            compatibilityDisplay.innerHTML = `
+                <div class="compatibility-score-container">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="compatibility-icon">${compatibilityIcon}</span>
+                        <div class="compatibility-percentage text-${compatibilityColor} fw-bold fs-5">
+                            ${percentage}%
+                        </div>
+                    </div>
+                    <div class="compatibility-level text-${compatibilityColor} fw-semibold">
+                        ${compatibilityLevel}
+                    </div>
+                    <div class="compatibility-description text-muted small mt-1">
+                        Based on ${window.topicsWidget?.myTopics?.size || 0} of your topics and ${window.topicsWidget?.peerTopics?.size || 0} of theirs
+                    </div>
+                </div>
+            `;
+        } 
+        catch (error) 
+        {
+            console.error('Error updating compatibility score:', error);
+            compatibilityDisplay.innerHTML = `
+                <div class="compatibility-error text-center text-muted">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <span class="ms-1">Unable to calculate compatibility</span>
+                </div>
+            `;
+        }
+    }    clearCompatibilityScore()
+    {
+        const compatibilityDisplay = document.getElementById('compatibility-score-display');
+        if (compatibilityDisplay) 
+        {
+            compatibilityDisplay.innerHTML = `
+                <div class="compatibility-waiting text-center text-muted">
+                    <i class="bi bi-heart"></i>
+                    <span class="ms-1">Connect to see compatibility</span>
+                </div>
+            `;
+        }
     }
 }
 
@@ -719,14 +865,34 @@ function putGamesInContainer(gameResult)
 function initializeMediaTabSwitching()
 {
     const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-
-    tabButtons.forEach(button => {
+    const tabPanes = document.querySelectorAll('.tab-pane');    tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetTab = button.getAttribute('data-tab');
-            
-            // Remove active class from all buttons and panes
-            tabButtons.forEach(btn => btn.classList.remove('active'));
+              // Remove active class from all buttons and panes
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                
+                // Reset ice-breakers icon to black when deactivating
+                if (btn.getAttribute('data-tab') === 'ice-breakers') {
+                    const img = btn.querySelector('img');
+                    if (img) {
+                        img.src = '/images/icebreaker_icon_black.png';
+                    }
+                    
+                    // Reset the generate button when leaving ice-breakers tab
+                    const generateTemplateBtn = document.getElementById('generate-template-btn');
+                    if (generateTemplateBtn) {
+                        generateTemplateBtn.innerHTML = '<i class="bi bi-pencil"></i> Create Introduction';
+                        generateTemplateBtn.removeAttribute('data-mode');
+                    }
+                    
+                    // Hide generated message container
+                    const container = document.getElementById('generated-message-container');
+                    if (container) {
+                        container.style.display = 'none';
+                    }
+                }
+            });
             tabPanes.forEach(pane => {
                 pane.style.display = 'none';
                 pane.classList.remove('active');
@@ -734,17 +900,24 @@ function initializeMediaTabSwitching()
             
             // Add active class to clicked button and corresponding pane
             button.classList.add('active');
+            
+            // Change ice-breakers icon to white when activating
+            if (targetTab === 'ice-breakers') {
+                const img = button.querySelector('img');
+                if (img) {
+                    img.src = '/images/icebreaker_icon_white.png';
+                }
+            }
+            
             const targetPane = document.getElementById(targetTab + '-tab');
             if (targetPane) {
                 targetPane.style.display = 'block';
                 targetPane.classList.add('active');
-            }
-
-            // Initialize emoji picker when emojis tab is selected
+            }            // Initialize emoji picker when emojis tab is selected
             if (targetTab === 'emojis')
             {
                 initializeEmojiPicker();
-            }
+            }            
             else if (targetTab === 'gifs')
             {
                 initializeGifPicker();
@@ -756,6 +929,10 @@ function initializeMediaTabSwitching()
             else if (targetTab === 'games')
             {
                 initializeGamesPicker();
+            }
+            else if (targetTab === 'ice-breakers')
+            {
+                initializeIceBreakerPicker();
             }
         });
     });
@@ -789,3 +966,489 @@ function addChatEnterKeyListener()
         }
     });
 }
+
+function initializeIceBreakerPicker()
+{
+    // Check if event listeners are already attached to prevent duplicate initialization
+    const iceBreakerContainer = document.getElementById('ice-breaker-container');
+    if (!iceBreakerContainer || iceBreakerContainer.hasAttribute('data-initialized')) {
+        return;
+    }
+    
+    // Mark as initialized
+    iceBreakerContainer.setAttribute('data-initialized', 'true');
+    
+    // Set up event listeners for AI-powered message buttons
+    const generateTemplateBtn = document.getElementById('generate-template-btn');
+    if (generateTemplateBtn) {
+        generateTemplateBtn.addEventListener('click', () => {
+            const originalHtml = generateTemplateBtn.innerHTML;
+            generateTemplateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';
+            generateTemplateBtn.disabled = true;
+            
+            setTimeout(() => {
+                try {
+                    // Generate the personalized introduction message
+                    const introMessage = createPeerIntroductionMessage();
+                    
+                    // Reset button state
+                    generateTemplateBtn.innerHTML = originalHtml;
+                    generateTemplateBtn.disabled = false;
+                    
+                    if (introMessage) {
+                        displayGeneratedMessage(introMessage);
+                        // Change button to regenerate mode
+                        updateButtonToRegenerateMode(generateTemplateBtn);
+                    } else {
+                        alert('Unable to generate a personalized message at this time. Please try again when you\'re connected to a partner.');
+                    }
+                } catch (error) {
+                    console.error('Error generating introduction message:', error);
+                    generateTemplateBtn.innerHTML = originalHtml;
+                    generateTemplateBtn.disabled = false;
+                    alert('An error occurred while generating your message. Please try again.');
+                }
+            }, 800); // Shorter delay for better UX
+        });
+    }
+    
+    const topicInsightsBtn = document.getElementById('topic-insights-btn');
+    if (topicInsightsBtn) {
+        topicInsightsBtn.addEventListener('click', () => {
+            alert('Topic Insights coming soon! This will show your compatibility score and shared interest analysis.');
+        });
+    }
+    
+    // Set up event listeners for recommended content buttons
+    const recommendedGifsBtn = document.getElementById('recommended-gifs-btn');
+    if (recommendedGifsBtn) {
+        recommendedGifsBtn.addEventListener('click', () => {
+            alert('Smart GIF recommendations coming soon! Based on your shared interests semantic analysis.');
+        });
+    }
+    
+    const recommendedStickersBtn = document.getElementById('recommended-stickers-btn');
+    if (recommendedStickersBtn) {
+        recommendedStickersBtn.addEventListener('click', () => {
+            alert('Smart Sticker recommendations coming soon! Perfectly matched to your combined interests.');
+        });
+    }
+    
+    const recommendedGamesBtn = document.getElementById('recommended-games-btn');
+    if (recommendedGamesBtn) {
+        recommendedGamesBtn.addEventListener('click', () => {
+            alert('Smart Game recommendations coming soon! Games you\'ll both love based on your interests.');
+        });
+    }
+    
+    const compatibilityBtn = document.getElementById('compatibility-btn');
+    if (compatibilityBtn) {
+        compatibilityBtn.addEventListener('click', () => {
+            alert('Compatibility Score coming soon! See how well your interests align with a detailed breakdown.');
+        });
+    }
+    
+    // Set up event listeners for conversation starter items
+    const iceBreakerItems = document.querySelectorAll('.ice-breaker-item[data-question]');
+    iceBreakerItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const question = item.getAttribute('data-question');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            
+            if (chatInput && !chatInput.disabled && question) {
+                chatInput.value = question;
+                if (!sendButton.disabled) {
+                    sendButton.click();
+                }
+                
+                // Close the popup after sending
+                const popup = document.getElementById('custom-popup');
+                if (popup) {
+                    popup.style.display = 'none';
+                }
+            }
+        });
+    });
+    
+    // Set up event listeners for fun interactive feature buttons
+    const quickPollBtn = document.getElementById('quick-poll-btn');
+    if (quickPollBtn) {
+        quickPollBtn.addEventListener('click', () => {
+            alert('Quick Poll feature coming soon! Create instant polls to learn about each other.');
+        });
+    }
+    
+    const wouldYouRatherBtn = document.getElementById('would-you-rather-btn');
+    if (wouldYouRatherBtn) {
+        wouldYouRatherBtn.addEventListener('click', () => {
+            alert('Would You Rather questions coming soon! Fun dilemmas based on your interests.');
+        });
+    }
+      
+    const factShareBtn = document.getElementById('fact-share-btn');
+    if (factShareBtn) {
+        factShareBtn.addEventListener('click', () => {
+            alert('Fun Facts sharing coming soon! Discover interesting facts about your shared topics.');
+        });
+    }
+
+    // Update compatibility score when ice-breakers tab is first opened
+    if (window.textChatWidget) {
+        window.textChatWidget.updateCompatibilityScore();
+    }
+
+    populateGamesForYouBoth(); // Populate games for both users based on shared topics
+}
+
+async function populateGamesForYouBoth()
+{
+    const suggestedGamesContainer = document.getElementById('suggested-games-container');
+    
+    if (!suggestedGamesContainer)
+    {
+        console.error('Suggested games container not found');
+        return;
+    }
+
+    // Check if already populated to avoid re-populating
+    if (suggestedGamesContainer.hasAttribute('data-populated'))
+    {
+        return;
+    }
+
+    // Mark as being populated
+    suggestedGamesContainer.setAttribute('data-populated', 'true');
+
+    // Show loading state
+    suggestedGamesContainer.innerHTML = `
+        <div class="text-center p-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="sr-only">Loading games...</span>
+            </div>
+            <div class="mt-2 text-muted">Finding perfect games for you both...</div>
+        </div>
+    `;
+
+    try
+    {
+        // Get shared topics keywords for game matching
+        let keywords = [];
+        
+        if (window.topicsWidget && window.topicsWidget.topicSimilarityMap)
+        {
+            // Extract keywords from shared topics
+            const topicMap = window.topicsWidget.topicSimilarityMap;
+            keywords = Array.from(topicMap.keys());
+            
+            // Also include the matched topics
+            Array.from(topicMap.values()).forEach(match => {
+                if (match.topic && !keywords.includes(match.topic))
+                {
+                    keywords.push(match.topic);
+                }
+            });
+
+            console.log('Shared topics keywords:', keywords);
+        }
+
+        // If no shared topics, get some popular multiplayer games
+        if (keywords.length === 0)
+        {
+            const fallbackGames = await gamesAPIClient.getMultiplayerGames('', 5);
+            displaySuggestedGames(fallbackGames.data || [], false);
+            return;
+        }
+
+        // Get best matching games using our new endpoint
+        const matchingGameResponse = await gamesAPIClient.getBestMatchingMultiplayerGames(keywords, 5);
+        
+        if (matchingGameResponse.success && matchingGameResponse.data)
+        {
+            displaySuggestedGames(matchingGameResponse.data, true);
+        }
+        else
+        {
+            // Fallback to random popular games
+            const fallbackGames = await gamesAPIClient.getMultiplayerGames('', 3);
+            displaySuggestedGames(fallbackGames.data || [], false);
+        }
+    }
+    catch (error)
+    {
+        console.error('Error populating games for you both:', error);
+        suggestedGamesContainer.innerHTML = `
+            <div class="text-center p-3 text-muted">
+                <i class="bi bi-exclamation-circle"></i>
+                <div>Unable to load game suggestions right now</div>
+            </div>
+        `;
+    }
+}
+
+function displaySuggestedGames(games, isPersonalized)
+{
+    const suggestedGamesContainer = document.getElementById('suggested-games-container');
+    
+    if (!games || games.length === 0)
+    {
+        suggestedGamesContainer.innerHTML = `
+            <div class="text-center p-3 text-muted">
+                <i class="bi bi-controller"></i>
+                <div>No games found - try the Games tab for more options!</div>
+            </div>
+        `;
+        return;
+    }
+
+    const gameElements = games.map(game => {
+        // Escape HTML characters for safe display
+        const escapedTitle = (game.title || 'Untitled Game')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+            
+        const escapedDescription = (game.description || 'No description available')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Truncate description for display
+        const maxLength = 80;
+        const truncatedDescription = escapedDescription.length > maxLength 
+            ? escapedDescription.substring(0, maxLength) + '...' 
+            : escapedDescription;
+
+        return `
+            <div class="suggested-game-item mb-2 p-2 border rounded" 
+                 style="cursor: pointer; transition: all 0.3s ease; border-color: rgba(255, 79, 122, 0.2) !important;"
+                 data-embed-url="${game.embed}"
+                 data-game-title="${escapedTitle}"
+                 onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(255, 79, 122, 0.15)'; this.style.borderColor='var(--primary)';"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.borderColor='rgba(255, 79, 122, 0.2)';">
+                <div class="d-flex align-items-center">
+                    <img src="${game.image}" 
+                         alt="${escapedTitle}"
+                         class="rounded me-2"
+                         style="width: 50px; height: 50px; object-fit: cover;"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjBGMkY1Ii8+CjxwYXRoIGQ9Ik0yNSAyNUwyMCAyMFYzMEwyNSAyNVoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+';">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1" style="font-size: 0.85rem; font-weight: 600; color: var(--primary);">${escapedTitle}</h6>
+                        <p class="mb-0 text-muted" style="font-size: 0.75rem; line-height: 1.3;">${truncatedDescription}</p>
+                    </div>
+                    <i class="bi bi-play-circle text-primary ms-2" style="font-size: 1.2rem;"></i>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const headerText = isPersonalized 
+        ? '<i class="bi bi-heart text-danger"></i> Perfect matches based on your interests!'
+        : '<i class="bi bi-star text-warning"></i> Popular multiplayer games';
+
+    suggestedGamesContainer.innerHTML = `
+        <div class="mb-2 text-center">
+            <small class="text-muted">${headerText}</small>
+        </div>
+        ${gameElements}
+    `;
+
+    // Add click event listeners to suggested game items
+    const gameItems = suggestedGamesContainer.querySelectorAll('.suggested-game-item');
+    gameItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const embedUrl = item.getAttribute('data-embed-url');
+            const gameTitle = item.getAttribute('data-game-title');
+            
+            if (embedUrl && window.textChatWidget)
+            {
+                window.textChatWidget.SendGame(embedUrl);
+                
+                // Close the popup after sending
+                const popup = document.getElementById('custom-popup');
+                if (popup)
+                {
+                    popup.style.display = 'none';
+                }
+            }
+        });
+    });
+}
+
+function createPeerIntroductionMessage()
+{
+    if (!window.topicsWidget || !window.topicsWidget.semanticSimilarityAPIClient)
+    {
+        console.error('Topics Widget or Semantic Similarity API Client is not initialized.');
+        return '';
+    }
+
+    var semanticSimilarityAPIClient = window.topicsWidget.semanticSimilarityAPIClient;
+
+    /*Example value:
+     * Map {
+     *   "programming" => { topic: "coding", similarity: 0.87 },
+     *   "music" => { topic: "songs", similarity: 0.72 },
+     *   "sports" => { topic: "basketball", similarity: 0.65 },
+     *   "cooking" => { topic: "recipes", similarity: 0.81 }
+     * }
+     */    var topicsMapping = window.topicsWidget.topicSimilarityMap;
+
+    // Message templates for when there are no shared topics
+    const noSharedTopicsMessages = [
+        "Hey! Looks like we have different interests - perfect chance to learn something new! What's something you're passionate about?",
+        "Hi there! We seem to have totally different vibes - I love that! What's one thing you're really into?",
+        "Hey! Different interests = great conversations! What's something you could talk about for hours?",
+        "Nice to meet you! I'm curious - what's been keeping you excited lately?",
+        "Hey! Variety is the spice of life - what's something you're into that might surprise me?"
+    ];
+
+    // Check if we have any topic mappings to work with
+    if (!topicsMapping || topicsMapping.size === 0)
+    {
+        const randomIndex = Math.floor(Math.random() * noSharedTopicsMessages.length);
+        return noSharedTopicsMessages[randomIndex];
+    }
+
+    // get the entry with the highest similarity score
+    var bestMatch = Array.from(topicsMapping.entries()).reduce((best, current) => {
+        return current[1].similarity > best[1].similarity ? current : best;
+    });
+    
+    // Create a message based on the best match
+
+    // Message templates for identical topics
+    const identicalTopicMessages = [
+        (topic) => `Hey! I see we're both into ${topic}! What got you started with it?`,
+        (topic) => `Cool, another ${topic} enthusiast! What's your favorite thing about it lately?`,
+        (topic) => `Nice! We both love ${topic}. Any recent discoveries or favorites you'd recommend?`,
+        (topic) => `Sweet! Fellow ${topic} fan here. What's something about it that others might not know?`,
+        (topic) => `Awesome! We both like ${topic}. What's been your latest obsession with it?`,
+        (topic) => `Hey there! ${topic} is great - what's your current favorite thing about it?`
+    ];
+
+    // Message templates for similar but different topics
+    const similarTopicMessages = [
+        (topic1, topic2) => `Hey! I love ${topic1} and I see you're into ${topic2} - I bet there's some cool overlap there. What connects them for you?`,
+        (topic1, topic2) => `Cool! ${topic1} and ${topic2} have some interesting similarities. Which one got you hooked first?`,
+        (topic1, topic2) => `Nice! We've got ${topic1} and ${topic2} in common. Ever noticed how they complement each other?`,
+        (topic1, topic2) => `Hey there! ${topic1} meets ${topic2} - sounds like we have similar tastes! What's your current favorite in either area?`,
+        (topic1, topic2) => `Sweet! ${topic1} and ${topic2} - great combo! What's something exciting happening in either world lately?`,
+        (topic1, topic2) => `Awesome! I'm into ${topic1} and you like ${topic2}. Any chance there's some crossover between them?`
+    ];
+
+    // if the words are identical
+    if (bestMatch[0] === bestMatch[1].topic)
+    {
+        const randomIndex = Math.floor(Math.random() * identicalTopicMessages.length);
+        return identicalTopicMessages[randomIndex](bestMatch[0]);
+    }
+    else
+    {
+        const randomIndex = Math.floor(Math.random() * similarTopicMessages.length);
+        return similarTopicMessages[randomIndex](bestMatch[0], bestMatch[1].topic);
+    }
+}
+
+function displayGeneratedMessage(message)
+{
+    const container = document.getElementById('generated-message-container');
+    const messageText = document.getElementById('generated-message-text');
+    const messageWrapper = container?.querySelector('.generated-message-wrapper');
+    
+    if (!container || !messageText || !messageWrapper) {
+        console.error('Generated message display elements not found');
+        return;
+    }
+    
+    // Display the message
+    messageText.textContent = message;
+    container.style.display = 'block';
+    
+    // Add click event listener to send the message
+    messageWrapper.onclick = function() {
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        
+        if (chatInput && !chatInput.disabled && message) {
+            // Set the message in the input field
+            chatInput.value = message;
+            
+            // Send the message if the send button is enabled
+            if (sendButton && !sendButton.disabled) {
+                sendButton.click();
+            }
+            
+            // Hide the generated message container after sending
+            container.style.display = 'none';
+              // Reset button to original state
+            const generateTemplateBtn = document.getElementById('generate-template-btn');
+            if (generateTemplateBtn) {
+                generateTemplateBtn.innerHTML = '<i class="bi bi-pencil"></i> Create Introduction';
+                generateTemplateBtn.removeAttribute('data-mode');
+            }
+            
+            // Close the popup after sending
+            const popup = document.getElementById('custom-popup');
+            if (popup) {
+                popup.style.display = 'none';
+            }
+        }
+    };
+    
+    // Add hover effects for better UX
+    messageWrapper.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 4px 12px rgba(255, 79, 122, 0.3)';
+        this.style.borderColor = 'var(--primary)';
+    });
+    
+    messageWrapper.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+        this.style.borderColor = 'var(--primary)';
+    });
+}
+
+function updateButtonToRegenerateMode(button)
+{
+    button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Regenerate';
+    button.setAttribute('data-mode', 'regenerate');
+}
+
+function resetButtonToOriginalMode(button)
+{
+    button.innerHTML = '<i class="bi bi-pencil"></i> Create Introduction';
+    button.removeAttribute('data-mode');
+}
+
+function getTopicCompatabilityScore()
+{
+    if (!window.topicsWidget || !window.topicsWidget.semanticSimilarityAPIClient)
+    {
+        console.error('Topics Widget or Semantic Similarity API Client is not initialized.');
+        return '';
+    }
+
+    var topicsWidget = window.topicsWidget;
+    var semanticSimilarityAPIClient = topicsWidget.semanticSimilarityAPIClient;
+
+    // Check if both topic maps exist and have embeddings
+    if (!topicsWidget.myTopics || !topicsWidget.peerTopics || 
+        topicsWidget.myTopics.size === 0 || topicsWidget.peerTopics.size === 0)
+    {
+        console.log('Missing topic data for compatibility calculation');
+        return '';
+    }
+
+    console.log('Calculating compatibility score for topics:', topicsWidget.myTopics, topicsWidget.peerTopics);
+
+    // Convert Map values to arrays for the CalculateAverageSimilarity function
+    const myTopicEmbeddings = Array.from(topicsWidget.myTopics.values());
+    const peerTopicEmbeddings = Array.from(topicsWidget.peerTopics.values());
+
+    return semanticSimilarityAPIClient.CalculateAverageSimilarity(myTopicEmbeddings, peerTopicEmbeddings);
+}
+

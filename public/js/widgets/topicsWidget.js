@@ -16,6 +16,8 @@ class TopicsWidget
         this.myEmbeddingsReady = false;
         this.peerEmbeddingsReady = false;
 
+        this.topicSimilarityMap = null;
+
         this.connectionLostAndMaxAttempts = false;
         this.needsMyTopicsRerender = false;
 
@@ -88,9 +90,7 @@ class TopicsWidget
                 this.myTopics = new Map();
                 topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
                     this.myTopics.set(obj.topic, obj.embedding);
-                });
-
-                this.myEmbeddingsReady = true;
+                });                this.myEmbeddingsReady = true;
 
                 // Re-render with embeddings if peer topics are also ready
                 if (this.peerEmbeddingsReady)
@@ -103,11 +103,11 @@ class TopicsWidget
                 console.error('Error fetching my topic embeddings:', error);
                 this.myEmbeddingsReady = false;
             }
-        }
+        }        
         else
         {
             this.myEmbeddingsReady = true; // No topics to process
-        }    }
+        }}
 
     #handlePeerCreated()
     {
@@ -129,14 +129,14 @@ class TopicsWidget
             else if (parsedData.type === 'send-topics')
             {
                 // Handle incoming topics from peer
-                const topics = parsedData.topics || [];
-
+                const topics = parsedData.topics || [];                
                 if (topics.length === 0)
                 {
                     console.warn('Received empty topics from peer.');
                     this.peerTopics = new Map();
                     this.peerEmbeddingsReady = true;
                     this.#updateTopicsUI();
+                    
                     return;
                 }
 
@@ -151,7 +151,7 @@ class TopicsWidget
                     });
 
                     this.peerEmbeddingsReady = true;
-
+                    
                     // Re-render with similarity data if my embeddings are ready
                     if (this.myEmbeddingsReady)
                     {
@@ -194,7 +194,9 @@ class TopicsWidget
         }        
         
         return topics;
-    }    /**
+    }    
+    
+    /**
      * Gets a color based on similarity score
      * @param {number} similarity - Cosine similarity score (0 to 1, representing percentage directly)
      * @returns {string} CSS color class or inline style
@@ -207,7 +209,9 @@ class TopicsWidget
         if (similarity >= 0.70) return 'similarity-medium'; // Decent match - yellow (70%+)
         if (similarity >= 0.50) return 'similarity-low'; // Weak match - orange (50%+)
         return 'similarity-very-low'; // Poor match - red (below 50%)
-    }    /**
+    }    
+    
+    /**
      * Gets fallback inline styles if CSS classes aren't available
      */
     #getSimilarityStyle(similarity)
@@ -317,6 +321,8 @@ class TopicsWidget
                 {
                     similarityMap = this.semanticSimilarityAPIClient.CrossCompareSimilarity(this.peerTopics, this.myTopics);
                     
+                    this.topicSimilarityMap = similarityMap;
+
                     // Sort peer topics by similarity (highest first)
                     sortedPeerTopics.sort((a, b) => {
                         const similarityA = similarityMap.has(a[0]) ? similarityMap.get(a[0]).similarity : -1;
@@ -334,7 +340,8 @@ class TopicsWidget
             {
                 const [topic] = sortedPeerTopics[i];
                 let topicHtml = `<div class="topic-bubble wave-topic`;
-                  if (similarityMap && similarityMap.has(topic))
+
+                if (similarityMap && similarityMap.has(topic))
                 {
                     const match = similarityMap.get(topic);
                     const colorClass = this.#getSimilarityColor(match.similarity);
@@ -352,7 +359,9 @@ class TopicsWidget
                 this.partnerTopicsListElement.innerHTML += topicHtml;
             }
         }
-    }    async #updateTopicsUI()
+    }        
+    
+    async #updateTopicsUI()
     {
         if (this.connectionLostAndMaxAttempts)
             return;
@@ -368,9 +377,12 @@ class TopicsWidget
             acknowledgmentMessageType: 'send-topics',
             requireAcknowledgment: true
         });
-    }    #handleConnectionClosed()
+    }    
+    
+    #handleConnectionClosed()
     {
         this.peerTopics = null;
+        this.topicSimilarityMap = null;
         this.peerEmbeddingsReady = false;
         // Re-render my topics without similarity data (back to basic view)
         this.#renderBasicTopics();

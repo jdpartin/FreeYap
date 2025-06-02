@@ -99,5 +99,35 @@ class GamesAPIClient
                 data: []
             };
         }
+    }    async getBestMatchingMultiplayerGames(keywords = [], limit = 10)
+    {
+        try
+        {
+            const response = await fetch(`${this.baseUrl}/get-best-matching-multiplayer-games`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ keywords, limit })
+            });
+
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Fetched best matching multiplayer games:', data);
+            return data;
+        }
+        catch (error)
+        {
+            console.error('Error fetching best matching multiplayer games:', error);
+            return {
+                success: false,
+                error: 'Failed to fetch best matching multiplayer games',
+                data: []
+            };
+        }
     }
 }

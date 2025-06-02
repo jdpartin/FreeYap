@@ -156,6 +156,108 @@ router.post('/get-multiplayer-game-categories', async (req: Request, res: Respon
     }
 });
 
+router.post('/get-best-matching-multiplayer-games', async (req: Request, res: Response): Promise<void> =>
+{
+    try
+    {
+        const { keywords = [], limit = 10 } = req.body;        
+        
+        if (!Array.isArray(keywords) || keywords.length === 0)
+        {
+            res.status(400).json({
+                success: false,
+                error: 'Keywords array is required and must not be empty',
+                data: []
+            });
+            return;
+        }
+
+        await ensureGamesLoaded();        
+        
+        if (!gamesCache || gamesCache.length === 0)
+        {
+            res.status(200).json({
+                success: true,
+                data: [],
+                message: 'No multiplayer games available'
+            });
+            return;
+        }
+
+        // Calculate keyword match scores for each game
+        const gamesWithScores = gamesCache.map(game => {
+            let score = 0;
+            const keywordsLower = keywords.map(k => k.toLowerCase());
+            
+            // Check title matches
+            if (game.title)
+            {
+                const titleLower = game.title.toLowerCase();
+                keywordsLower.forEach(keyword => {
+                    if (titleLower.includes(keyword))
+                    {
+                        score += 2; // Title matches get higher weight
+                    }
+                });
+            }
+
+            // Check description matches
+            if (game.description)
+            {
+                const descriptionLower = game.description.toLowerCase();
+                keywordsLower.forEach(keyword => {
+                    if (descriptionLower.includes(keyword))
+                    {
+                        score += 1; // Description matches get standard weight
+                    }
+                });
+            }
+
+            // Check tags matches
+            if (game.tags)
+            {
+                const tagsLower = game.tags.toLowerCase();
+                keywordsLower.forEach(keyword => {
+                    if (tagsLower.includes(keyword))
+                    {
+                        score += 1.5; // Tags matches get medium weight
+                    }
+                });
+            }
+
+            return { ...game, matchScore: score };
+        });        // Filter games with at least one match and sort by score
+        const matchingGames = gamesWithScores
+            .filter(game => game.matchScore > 0)
+            .sort((a, b) => b.matchScore - a.matchScore);
+
+        // Apply limit to the results
+        const limitedGames = matchingGames.slice(0, limit);
+
+        // Remove the matchScore from the response data but include it in metadata
+        const gamesData = limitedGames.map(game => {
+            const { matchScore, ...gameData } = game;
+            return { ...gameData, matchScore };
+        });
+
+        res.status(200).json({
+            success: true,
+            data: gamesData,
+            total: matchingGames.length,
+            returned: gamesData.length
+        });
+    }
+    catch (error)
+    {
+        console.error('Error in /get-best-matching-multiplayer-games:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to find best matching multiplayer games',
+            data: []
+        });
+    }
+});
+
 async function getAllGames()
 {
     let now = Date.now();
