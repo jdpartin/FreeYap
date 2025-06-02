@@ -5,6 +5,29 @@ class WebRTCConnectionManager
 
     constructor()
     {
+        this.EventTypes = Object.freeze({
+            // Matchmaking Events
+            MATCH_FOUND: 'matchFound',
+            RETRY_MATCHMAKING_STARTED: 'retryMatchmakingStarted',
+            RETRY_MATCHMAKING_ERROR: 'retryMatchmakingError',
+            MATCHMAKING_ERROR: 'matchmakingError',
+
+            // Peer Connection Events
+            CONNECTION_READY: 'connectionReady',
+            CONNECTION_CLOSED: 'connectionClosed',
+            CONNECTION_ERROR: 'connectionError',
+            CONNECTION_LOST: 'connectionLost',
+            CONNECTION_LOST_MAX_ATTEMPTS: 'connectionLostMaxAttempts',
+            PEER_TIMEOUT: 'peerTimeout',
+            PEER_CREATED: 'peerCreated',
+
+            // Socket Connection Events
+            SOCKET_CONNECTED: 'socketConnected',
+            SOCKET_CONNECTION_ERROR: 'socketConnectionError',
+            SOCKET_CONNECTION_TIMEOUT: 'socketConnectionTimeout',
+            MAX_RECONNECT_ATTEMPTS_REACHED: 'maxReconnectAttemptsReached'
+        });
+        
         this.eventTarget = new EventTarget();// EventTarget for custom events
 
         this.peer = null;
@@ -16,6 +39,7 @@ class WebRTCConnectionManager
         this.stream = null;
 
         this.connectionReady = false;
+        this.peerIsUsingTURN = false; // Indicates if the peer is using a TURN server for connection
 
         this.peerConnectionTimeoutStarted = false;
 
@@ -153,11 +177,18 @@ class WebRTCConnectionManager
     GetPeerIP()
     {
         return this.peerIP;
-    }
-
-    GetMyIP()
+    }    GetMyIP()
     {
         return this.myIP;
+    }
+    
+    /**
+     * Returns whether the peer connection is using TURN servers.
+     * Listen for TURN_USAGE_READY event to know when this value is accurate.
+     */
+    IsPeerUsingTURN()
+    {
+        return this.peerIsUsingTURN;
     }    
     
     CloseConnection()
@@ -216,12 +247,12 @@ class WebRTCConnectionManager
         try 
         {
             await this.#connectToSocket();
-            this.#raiseEvent('retryMatchmakingStarted');
+            this.#raiseEvent(this.EventTypes.RETRY_MATCHMAKING_STARTED);
         }
         catch (error)
         {
             console.error('Error during matchmaking retry:', error);
-            this.#raiseEvent('retryMatchmakingError');
+            this.#raiseEvent(this.EventTypes.RETRY_MATCHMAKING_ERROR);
         }
     }    
     
@@ -298,7 +329,7 @@ class WebRTCConnectionManager
                         && this.peer.destroyed === false)
                     {
                         this.CloseConnection();
-                        this.#raiseEvent('peerTimeout');
+                        this.#raiseEvent(this.EventTypes.PEER_TIMEOUT);
                     }
                     resolve();
                 }, 10000);
@@ -309,9 +340,15 @@ class WebRTCConnectionManager
     //#region Events
 
 
-    #raiseEvent(eventName)
+    #raiseEvent(eventEnumValue)
     {
-        const event = new Event(eventName);
+        if (!Object.values(this.EventTypes).includes(eventEnumValue))
+        {
+            console.error(`Invalid event type: ${eventEnumValue}`);
+            return;
+        }
+
+        const event = new Event(eventEnumValue);
         this.eventTarget.dispatchEvent(event);
     }
 
@@ -344,7 +381,7 @@ class WebRTCConnectionManager
             if (this.chatMode == null)
             {
                 console.error('Chat mode is not set. Cannot start matchmaking.');
-                this.#raiseEvent('matchmakingError');
+                this.#raiseEvent(this.EventTypes.MATCHMAKING_ERROR);
                 return;
             }
 
@@ -361,7 +398,7 @@ class WebRTCConnectionManager
         {
             console.error('Socket ID is null. Cannot join matchmaking queue. Attempting to reconnect...');
             this.connectionCount++; // Invalidate any pending delayed matchmaking
-            this.#raiseEvent('matchmakingError');
+            this.#raiseEvent(this.EventTypes.MATCHMAKING_ERROR);
             
             // Try to reconnect and retry matchmaking
             try 
@@ -486,7 +523,7 @@ class WebRTCConnectionManager
                     }
 
                     this.#setupSocketListeners();
-                    this.#raiseEvent('socketConnected');
+                    this.#raiseEvent(this.EventTypes.SOCKET_CONNECTED);
 
                     if (matchmake && this.chatMode)
                     {
@@ -500,7 +537,7 @@ class WebRTCConnectionManager
                 {
                     console.error('Socket connection error:', error);
                     this.connectionCount++; // Invalidate any pending delayed matchmaking
-                    this.#raiseEvent('socketConnectionError');
+                    this.#raiseEvent(this.EventTypes.SOCKET_CONNECTION_ERROR);
                     resolve(); // Don't reject, let the retry logic handle it
                 });
 
@@ -517,7 +554,7 @@ class WebRTCConnectionManager
             catch (error)
             {
                 console.error('Error creating socket connection:', error);
-                this.#raiseEvent('socketConnectionError');
+                this.#raiseEvent(this.EventTypes.SOCKET_CONNECTION_ERROR);
                 resolve(); // Don't reject, let the retry logic handle it
             }
         });
@@ -528,13 +565,15 @@ class WebRTCConnectionManager
         let currentSocketConnectionCount = this.socketConnectionCount; 
 
         return new Promise((resolve) => {
-            setTimeout(() => {                if (this.socket && !this.peer && this.socketConnectionCount == currentSocketConnectionCount
+            setTimeout(() => {                
+                
+                if (this.socket && !this.peer && this.socketConnectionCount == currentSocketConnectionCount
                     && (!this.socket.connected || this.socket.id == null))
                 {
                     console.error('Socket connection timed out.');
                     this.connectionCount++; // Invalidate any pending delayed matchmaking
 
-                    this.#raiseEvent('socketConnectionTimeout');
+                    this.#raiseEvent(this.EventTypes.SOCKET_CONNECTION_TIMEOUT);
 
                     this.socket.disconnect();
                     this.socket = null;
@@ -582,7 +621,7 @@ class WebRTCConnectionManager
     {
         this.connectionCount++; // Increment connection count to prevent delayed matchmaking from being called on the old connection
 
-        this.#raiseEvent('matchFound');
+        this.#raiseEvent(this.EventTypes.MATCH_FOUND);
 
         if (isInitiator)
         {
@@ -608,7 +647,7 @@ class WebRTCConnectionManager
             {
                 console.warn(`Socket connection lost. Attempting to reconnect... (Attempt ${this.socketConnectionLostCount}/${this.socketConnectionLostThreshold})`);
 
-                this.#raiseEvent('connectionLost');
+                this.#raiseEvent(this.EventTypes.CONNECTION_LOST);
 
                 this.socket?.disconnect();
                 this.socket = null;
@@ -632,11 +671,9 @@ class WebRTCConnectionManager
             {
                 console.error(`Socket connection lost. Reached maximum reconnect attempts (${this.socketConnectionLostThreshold}).`);
                 
-                this.#raiseEvent('connectionClosed');
-                this.#raiseEvent('connectionLostMaxAttempts');
-                
-                // Provide user with options instead of just an alert
-                this.#raiseEvent('maxReconnectAttemptsReached');
+                this.#raiseEvent(this.EventTypes.CONNECTION_CLOSED);
+                this.#raiseEvent(this.EventTypes.CONNECTION_LOST_MAX_ATTEMPTS);
+                this.#raiseEvent(this.EventTypes.MAX_RECONNECT_ATTEMPTS_REACHED);
             }
         }
     }
@@ -695,7 +732,7 @@ class WebRTCConnectionManager
         }
         
         this.#setupPeerEventListeners();
-        this.#raiseEvent('peerCreated');
+        this.#raiseEvent(this.EventTypes.PEER_CREATED);
     }
 
     async #createNonInitiatorPeer()
@@ -721,7 +758,7 @@ class WebRTCConnectionManager
         }
         
         this.#setupPeerEventListeners();
-        this.#raiseEvent('peerCreated');
+        this.#raiseEvent(this.EventTypes.PEER_CREATED);
     }
 
     #setupPeerEventListeners()
@@ -767,11 +804,14 @@ class WebRTCConnectionManager
     #handlePeerSignal(data)
     {
         this.socket.emit('signal', { toSocketId: this.partnerSocketId, data });
-    }
-
+    }    
+    
     #handlePeerConnect()
     {
         this.connectionReady = true;
+
+        // Start proper TURN detection after connection is established
+        this.#detectTURNUsage();
 
         // Handle IP address exchange
         this.SendMessage({
@@ -790,12 +830,13 @@ class WebRTCConnectionManager
             this.socket = null;
         }
 
-        this.#raiseEvent('connectionReady');
-    }    
-      #handlePeerError(err)
+        this.#raiseEvent(this.EventTypes.CONNECTION_READY);
+    }
+      
+    #handlePeerError(err)
     {
         console.error('Peer error:', err);
-        this.#raiseEvent('connectionError');
+        this.#raiseEvent(this.EventTypes.CONNECTION_ERROR);
         
         // Increment connection count to invalidate delayed matchmaking regardless of recovery attempt
         this.connectionCount++;
@@ -805,6 +846,84 @@ class WebRTCConnectionManager
         {
             console.warn('Peer error during connection setup, attempting to restart connection...');
             this.CloseConnection();
+        }    }
+    
+    /**
+     * Detects if the peer connection is using TURN servers by analyzing the active ICE candidate pair.
+     * This method provides accurate TURN detection by examining the actual connection path,
+     * not just the configuration.
+     */
+    async #detectTURNUsage()
+    {
+        this.peerIsUsingTURN = false;
+
+        if (!this.peer || !this.peer._pc)
+        {
+            console.warn('Cannot detect TURN usage: peer connection not available');
+            return;
+        }
+
+        try 
+        {
+            // Wait a moment for ICE connection to stabilize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const stats = await this.peer._pc.getStats();
+            
+            for (const report of stats.values())
+            {
+                // Look for the selected candidate pair (the active connection)
+                if (report.type === 'candidate-pair' && report.state === 'succeeded')
+                {
+                    // Get the local and remote candidate details
+                    const localCandidate = [...stats.values()].find(
+                        stat => stat.type === 'local-candidate' && stat.id === report.localCandidateId
+                    );
+                    const remoteCandidate = [...stats.values()].find(
+                        stat => stat.type === 'remote-candidate' && stat.id === report.remoteCandidateId
+                    );
+
+                    if (localCandidate && remoteCandidate)
+                    {
+                        // Check if either candidate is using TURN (relay type)
+                        const localUsingTURN = localCandidate.candidateType === 'relay';
+                        const remoteUsingTURN = remoteCandidate.candidateType === 'relay';
+                        
+                        this.peerIsUsingTURN = localUsingTURN || remoteUsingTURN;
+                        
+                        console.log(`TURN Detection Results:`, {
+                            localCandidateType: localCandidate.candidateType,
+                            remoteCandidateType: remoteCandidate.candidateType,
+                            localAddress: localCandidate.address || localCandidate.ip,
+                            remoteAddress: remoteCandidate.address || remoteCandidate.ip,
+                            usingTURN: this.peerIsUsingTURN
+                        });
+                        
+                        return;
+                    }
+                }
+            }
+            
+            // Fallback: if no succeeded candidate pair found, check for any relay candidates
+            let hasRelayCandidate = false;
+            for (const report of stats.values())
+            {
+                if ((report.type === 'local-candidate' || report.type === 'remote-candidate') && 
+                    report.candidateType === 'relay')
+                {
+                    hasRelayCandidate = true;
+                    break;
+                }
+            }
+            
+            this.peerIsUsingTURN = hasRelayCandidate;
+            console.log(`TURN Detection (fallback): ${this.peerIsUsingTURN ? 'TURN detected' : 'Direct/STUN connection'}`);
+        }
+        catch (error)
+        {
+            console.error('Error during TURN detection:', error);
+            // Default to false if detection fails
+            this.peerIsUsingTURN = false;
         }
     }
     
@@ -824,7 +943,7 @@ class WebRTCConnectionManager
             this.socket = null;
         }
 
-        this.#raiseEvent('connectionClosed');
+        this.#raiseEvent(this.EventTypes.CONNECTION_CLOSED);
         this.#connectToSocket();
     }
 

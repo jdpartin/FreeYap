@@ -68,10 +68,13 @@ class VoiceChatWidget
     async #initializeMedia()
     {
         try
-        {            
+        {
+            // voice chat keeps audio bitrate limit all the time even off turn       
             this.localStream = await navigator.mediaDevices.getUserMedia({
                 video: false,
-                audio: true
+                audio: {
+                    bitrate: { ideal: 128000, max: 256000 } // 128kbps ideal, 256kbps max
+                }
             });            
             
             if ('srcObject' in this.localAudioElement)

@@ -37,6 +37,11 @@ class VideoChatWidget
             this.#handleConnectionReady();
         });
 
+        this.webRTCConnectionManager.on('connectionReady', () =>
+        {
+            this.#handleConnectionReady();
+        });
+
         this.webRTCConnectionManager.on('connectionClosed', () =>
         {
             this.#handleConnectionClosed();
@@ -58,9 +63,12 @@ class VideoChatWidget
                 video: {
                     width: { ideal: 640 },
                     height: { ideal: 480 },
-                    facingMode: 'user'
+                    facingMode: 'user',
+                    bitrate: { ideal: 1500000, max: 2500000 } // 1.5Mbps ideal, 2.5Mbps max
                 },
-                audio: true
+                audio: {
+                    bitrate: { ideal: 128000, max: 256000 } // 128kbps ideal, 256kbps max
+                }
             });
 
             if ('srcObject' in this.localVideoElement) 
@@ -80,26 +88,68 @@ class VideoChatWidget
             return false;
         }
     }
-
+    
     async #handleConnectionReady()
     {
         await this.MediaInitialization;
 
-        let peer = this.webRTCConnectionManager.GetPeer();
+        if (!this.webRTCConnectionManager.peerIsUsingTURN)
+        {
+            let peer = this.webRTCConnectionManager.GetPeer();
+
+            const senders = peer.getSenders();
+            
+            for (const sender of senders)
+            {
+                if (sender.track)
+                {
+                    const params = sender.getParameters();
+                    
+                    if (params.encodings && params.encodings.length > 0)
+                    {
+                        params.encodings.forEach(encoding =>
+                        {
+                            delete encoding.maxBitrate;
+                            
+                            if (sender.track.kind === 'video')
+                            {
+                                delete encoding.maxFramerate;
+                                encoding.scaleResolutionDownBy = 1;
+                            }
+                        });
+                        
+                        await sender.setParameters(params);
+                    }
+                }
+            }
+        }
 
         this.muteVideoBtn.disabled = false;
         this.muteAudioBtn.disabled = false;
     }
 
-    #handleConnectionClosed()
+    async #handleConnectionClosed()
     {
         this.remoteStream = null;
-
         this.remoteVideoElement.srcObject = null;
-
         this.muteVideoBtn.disabled = true;
         this.muteAudioBtn.disabled = true;
-    }    
+
+        if (this.localStream)
+        {
+            const videoTracks = this.localStream.getVideoTracks();
+
+            for (const track of videoTracks)
+            {
+                await track.applyConstraints({
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'user',
+                    bitrate: { ideal: 1500000, max: 2500000 } // Reset to original 1.5Mbps ideal, 2.5Mbps max
+                });
+            }
+        }
+    }
 
     #toggleVideo(mute)
     {
