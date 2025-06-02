@@ -224,7 +224,6 @@ async function refreshGamesCache()
             return tagsArray.some((tag: string) => tag.trim().toLowerCase() === 'multiplayer');
         });
           cacheExpiry = Date.now() + CACHE_DURATION;
-        console.log(`Games cache refreshed successfully. ${gamesCache?.length || 0} multiplayer games cached.`);
     }
     catch (error)
     {

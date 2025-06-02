@@ -204,13 +204,11 @@ async function refreshTrendingGifsCache(limit: number = 20)
     try
     {
         isTrendingGifsRefreshing = true;
-        console.log('Fetching trending GIFs from Giphy API...');
         const results = await GiphyManager.GetTrendingGifs(limit);
         
         // Extract the data array from the Giphy API response
         trendingGifsCache = results?.data || results;
         trendingGifsCacheExpiry = Date.now() + CACHE_DURATION;
-        console.log(`Trending GIFs cache refreshed successfully. ${trendingGifsCache?.length || 0} GIFs cached.`);
     }
     catch (error)
     {
@@ -260,13 +258,11 @@ async function refreshTrendingStickersCache(limit: number = 20)
     try
     {
         isTrendingStickersRefreshing = true;
-        console.log('Fetching trending stickers from Giphy API...');
         const results = await GiphyManager.GetTrendingStickers(limit);
         
         // Extract the actual stickers data from the nested response
         trendingStickersCache = results?.data || results;
         trendingStickersCacheExpiry = Date.now() + CACHE_DURATION;
-        console.log(`Trending stickers cache refreshed successfully. ${trendingStickersCache?.length || 0} stickers cached.`);
     }
     catch (error)
     {

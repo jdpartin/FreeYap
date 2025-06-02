@@ -46,7 +46,7 @@ class WebRTCConnectionManager
      * Listeners need to be set up before the connection is ready
      * Dont forget to wait for connectionReady before sending messages.
      * Dont pass the ackEnf variable, it is for retries.
-     */
+     */    
     SendMessage({
         messageType, 
         messageObject = null, 
@@ -91,34 +91,58 @@ class WebRTCConnectionManager
                     }
                 });
         */
-        if (requireAcknowledgment)
+        
+        if (!this.peer)
         {
-            ackEnf ??= new MessageAcknowledgmentEnforcer(
-                messageType, 
-                messageObject, 
-                callbackFunction,
-                requireAcknowledgment, 
-                acknowledgmentMessageType,
-                acknowledgmentTimeoutMS,
-                maxRetries,
-                this
-            );
-
-            this.peer.on('data', (data) => 
-            {
-                const parsedData = JSON.parse(data.toString());
-
-                if (parsedData.type === acknowledgmentMessageType)
-                {
-                    ackEnf.ReceiveCallback(parsedData);
-                }
-            });
+            console.error('Cannot send message: peer connection not established');
+            return false;
         }
 
-        this.peer.send(JSON.stringify({
-            type: messageType,
-            ...messageObject
-        }));
+        try 
+        {
+            if (requireAcknowledgment)
+            {
+                ackEnf ??= new MessageAcknowledgmentEnforcer(
+                    messageType, 
+                    messageObject, 
+                    callbackFunction,
+                    requireAcknowledgment, 
+                    acknowledgmentMessageType,
+                    acknowledgmentTimeoutMS,
+                    maxRetries,
+                    this
+                );
+
+                this.peer.on('data', (data) => 
+                {
+                    try 
+                    {
+                        const parsedData = JSON.parse(data.toString());
+
+                        if (parsedData.type === acknowledgmentMessageType)
+                        {
+                            ackEnf.ReceiveCallback(parsedData);
+                        }
+                    }
+                    catch (error)
+                    {
+                        console.error('Error parsing acknowledgment data:', error);
+                    }
+                });
+            }
+
+            this.peer.send(JSON.stringify({
+                type: messageType,
+                ...messageObject
+            }));
+            
+            return true;
+        }
+        catch (error)
+        {
+            console.error('Error sending message:', error);
+            return false;
+        }
     }
 
     GetPeer()
@@ -134,20 +158,106 @@ class WebRTCConnectionManager
     GetMyIP()
     {
         return this.myIP;
-    }
-
+    }    
+    
     CloseConnection()
     {
-        this.peer.destroy();
+        if (this.peer)
+        {
+            this.peer.destroy();
+        }
+        this.peer = null;
         this.peerIP = null;
         this.partnerSocketId = null;
+        this.connectionReady = false;
+        this.peerConnectionTimeoutStarted = false;
+
         this.#connectToSocket();
         //this.#raiseEvent('closed'); No need to call this because peer.destroy() will call it
-    }
-
+    }    
+    
     async StartMatchmaking(chatMode)
     {
         this.#startMatchmaking(chatMode);
+    }
+
+    /**
+     * Forces a retry of matchmaking - useful when user is stuck in a bad state
+     */
+    async RetryMatchmaking()
+    {
+        // Reset connection state
+        if (this.peer)
+        {
+            this.peer.destroy();
+            this.peer = null;
+        }
+        
+        this.connectionReady = false;
+        this.peerConnectionTimeoutStarted = false;
+        this.peerIP = null;
+        this.partnerSocketId = null;
+        this.connectionCount++;
+        
+        // Reset socket connection lost count to allow fresh attempts
+        this.socketConnectionLostCount = 0;
+        
+        // Disconnect and reconnect socket
+        if (this.socket)
+        {
+            this.socket.disconnect();
+            this.socket = null;
+        }
+        
+        try 
+        {
+            await this.#connectToSocket();
+            this.#raiseEvent('retryMatchmakingStarted');
+        }
+        catch (error)
+        {
+            console.error('Error during matchmaking retry:', error);
+            this.#raiseEvent('retryMatchmakingError');
+        }
+    }    
+    
+    /**
+     * Checks if the user is in a state where they need to retry matchmaking
+     */
+    IsStuckState()
+    {
+        return (
+            // No socket connection and exceeded retry threshold
+            (this.socket == null && this.socketConnectionLostCount > this.socketConnectionLostThreshold) ||
+            // Socket exists but no ID
+            (this.socket && this.socket.id == null) ||
+            // No peer and no socket
+            (!this.peer && this.socket == null) ||
+            // Socket not connected
+            (this.socket && !this.socket.connected)
+        );
+    }
+
+    /**
+     * Gets the current connection status for debugging
+     */
+    GetConnectionStatus()
+    {
+        return {
+            hasSocket: !!this.socket,
+            socketId: this.socket?.id || null,
+            socketConnected: this.socket?.connected || false,
+            hasPeer: !!this.peer,
+            connectionReady: this.connectionReady,
+            socketConnectionLostCount: this.socketConnectionLostCount,
+            connectionCount: this.connectionCount,
+            socketConnectionCount: this.socketConnectionCount,
+            isStuck: this.IsStuckState(),
+            chatMode: this.chatMode,
+            partnerSocketId: this.partnerSocketId,
+            peerIP: this.peerIP,
+            myIP: this.myIP
+        };
     }
 
     on(eventName, callback)
@@ -214,8 +324,8 @@ class WebRTCConnectionManager
         }
 
         return topics;
-    }
-
+    }    
+    
     async #startMatchmaking(chatMode = null)
     {
         await this.initialization;
@@ -225,6 +335,7 @@ class WebRTCConnectionManager
             if (this.chatMode == null)
             {
                 console.error('Chat mode is not set. Cannot start matchmaking.');
+                this.#raiseEvent('matchmakingError');
                 return;
             }
 
@@ -237,31 +348,53 @@ class WebRTCConnectionManager
 
         let topics = this.#getTopicsFromURL();
 
-        if (this.socket.id == null)
+        if (this.socket == null || this.socket.id == null)
         {
-            console.error('Socket ID is null. Cannot join matchmaking queue.');
-            return;
+            console.error('Socket ID is null. Cannot join matchmaking queue. Attempting to reconnect...');
+            this.#raiseEvent('matchmakingError');
+            
+            // Try to reconnect and retry matchmaking
+            try 
+            {
+                await this.#connectToSocket();
+            }
+            catch (error)
+            {
+                console.error('Error reconnecting socket for matchmaking:', error);
+                return;
+            }
         }
-
-        this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, topics);
-
-        this.#delayedMatchmakingRoutine(chatMode, topics);
-    }
-
+        else
+        {
+            this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, topics);
+            this.#delayedMatchmakingRoutine(chatMode, topics);
+        }
+    }    
+    
     async #delayedMatchmakingRoutine(chatMode, topics = [])
     {
         var connectionCount = this.connectionCount;
 
-        // Matchmaking stagger to prevent race conditions: 50% chance for 9 or 10 seconds
+        // Matchmaking stagger to prevent race conditions
         let matchmakingDelay = (Math.random() * 1000) + 9000;// Random delay between 9 and 10 seconds
         await new Promise(resolve => setTimeout(resolve, matchmakingDelay));
 
         // Only connect if no peer connection exists and the connection count has not changed
         if (!this.peer && this.connectionCount === connectionCount)
         {
-            if (this.socket.id == null)
+            if (this.socket == null || this.socket.id == null)
             {
-                console.error('Socket is not connected. Cannot start delayed matchmaking.');
+                console.error('Socket is not connected. Cannot start delayed matchmaking. Attempting to reconnect...');
+                
+                // Try to reconnect and retry delayed matchmaking
+                try 
+                {
+                    await this.#connectToSocket();
+                }
+                catch (error)
+                {
+                    console.error('Error reconnecting socket for delayed matchmaking:', error);
+                }
                 return;
             }
 
@@ -273,55 +406,107 @@ class WebRTCConnectionManager
     //#endregion
 
     //#region Socket Connection (Server Communication)
-
-
     async #connectToSocket(matchmake = true)
     {
-        this.socketConnectionCount++;
-
-        if (!this.myIP)
+        if (this.socket && this.socket.connected && this.socket.id != null)
         {
-            // we only need the ip of the first connection, so we can skip this if we already have it
-            const response = await fetch(`/my-ip`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
-            });
+            console.warn('Socket is already connected. No need to reconnect.');
 
-            const data = await response.json();
+            // doesnt hurt to start matchmaking again just in case
+            if (matchmake)
+            {
+                this.#startMatchmaking(this.chatMode);
+            }
 
-            this.myIP = data.ip;
+            return Promise.resolve();
         }
 
-        return new Promise((resolve) =>
+        this.socketConnectionCount++;
+
+        try 
         {
-            this.socket = io();
-
-            this.#startSocketTimeoutCounter();
-
-            this.socket.on('connect', () =>
+            if (!this.myIP)
             {
-                if (this.socket.id == null)
+                // we only need the ip of the first connection, so we can skip this if we already have it
+                const response = await fetch(`/my-ip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok)
                 {
-                    console.error('Socket connection failed. No socket ID received.');
-
-                    this.socket.disconnect();
-                    this.socket = null;
-
-                    this.#handleSocketClose();
-                    return;
+                    throw new Error(`Failed to fetch IP: ${response.status} ${response.statusText}`);
                 }
 
-                this.#setupSocketListeners();
-                this.#raiseEvent('socketConnected');
+                const data = await response.json();
+                this.myIP = data.ip;
+            }
+        }
+        catch (error)
+        {
+            console.error('Failed to fetch IP address:', error);
+            // Continue without IP for now, it will be retried later
+        }
 
-                if (matchmake)
-                    this.#startMatchmaking();
+        return new Promise((resolve, reject) =>
+        {
+            try 
+            {
+                this.socket = io();
 
-                resolve();
-            });
+                this.#startSocketTimeoutCounter();
+
+                this.socket.on('connect', () =>
+                {
+                    if (this.socket.id == null)
+                    {
+                        console.error('Socket connection failed. No socket ID received.');
+
+                        this.socket.disconnect();
+                        this.socket = null;
+
+                        this.#handleSocketClose();
+                        resolve(); // Don't reject, let the retry logic handle it
+                        return;
+                    }
+
+                    this.#setupSocketListeners();
+                    this.#raiseEvent('socketConnected');
+
+                    if (matchmake && this.chatMode)
+                    {
+                        this.#startMatchmaking();
+                    }
+
+                    resolve();
+                });
+
+                this.socket.on('connect_error', (error) =>
+                {
+                    console.error('Socket connection error:', error);
+                    this.#raiseEvent('socketConnectionError');
+                    resolve(); // Don't reject, let the retry logic handle it
+                });
+
+                this.socket.on('disconnect', (reason) =>
+                {
+                    console.warn('Socket disconnected:', reason);
+                    if (reason === 'io server disconnect')
+                    {
+                        // The disconnection was initiated by the server, reconnect manually
+                        this.socket.connect();
+                    }
+                });
+            }
+            catch (error)
+            {
+                console.error('Error creating socket connection:', error);
+                this.#raiseEvent('socketConnectionError');
+                resolve(); // Don't reject, let the retry logic handle it
+            }
         });
     }
 
@@ -395,8 +580,8 @@ class WebRTCConnectionManager
         }
 
         this.#startPeerConnectionTimeout();
-    }
-
+    }    
+    
     async #handleSocketClose()
     {
         if (this.peer == null) // We disconnect on purpose when a peer connection is established
@@ -406,26 +591,37 @@ class WebRTCConnectionManager
 
             if (this.socketConnectionLostCount <= this.socketConnectionLostThreshold)
             {
-                console.warn(`Socket connection lost. Attempting to reconnect...`);
+                console.warn(`Socket connection lost. Attempting to reconnect... (Attempt ${this.socketConnectionLostCount}/${this.socketConnectionLostThreshold})`);
 
                 this.#raiseEvent('connectionLost');
 
-                this.socket.disconnect();
+                this.socket?.disconnect();
                 this.socket = null;
 
                 // wait for a short period before reconnecting
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
-                this.#connectToSocket();
+                try 
+                {
+                    await this.#connectToSocket();
+                    // Reset connection lost count on successful reconnection
+                    this.socketConnectionLostCount = 0;
+                }
+                catch (error)
+                {
+                    console.error('Failed to reconnect socket:', error);
+                    // Don't reset the count, let it try again or reach the threshold
+                }
             }
             else
             {
                 console.error(`Socket connection lost. Reached maximum reconnect attempts (${this.socketConnectionLostThreshold}).`);
                 
-                window.alert('Connection lost. Please refresh the page to try again.');
-                
                 this.#raiseEvent('connectionClosed');
                 this.#raiseEvent('connectionLostMaxAttempts');
+                
+                // Provide user with options instead of just an alert
+                this.#raiseEvent('maxReconnectAttemptsReached');
             }
         }
     }
@@ -529,18 +725,24 @@ class WebRTCConnectionManager
 
         this.peer.on('close', () => {
             this.#handlePeerClose();
-        });
-
-        // Handle IP address exchange
+        });        // Handle IP address exchange
         this.peer.on('data', (data) =>
         {
-            const parsedData = JSON.parse(data.toString());
+            try 
+            {
+                const parsedData = JSON.parse(data.toString());
 
-            if (parsedData.type === 'request-ip')            {
-                this.SendMessage({
-                    messageType: 'send-ip',
-                    messageObject: { ip: this.myIP }
-                });
+                if (parsedData.type === 'request-ip')
+                {
+                    this.SendMessage({
+                        messageType: 'send-ip',
+                        messageObject: { ip: this.myIP }
+                    });
+                }
+            }
+            catch (error)
+            {
+                console.error('Error parsing peer data:', error);
             }
         });
     }
@@ -570,21 +772,32 @@ class WebRTCConnectionManager
             this.socket.disconnect();
             this.socket = null;
         }
-        
-        this.#raiseEvent('connectionReady');
-    }
 
+        this.#raiseEvent('connectionReady');
+    }    
+    
     #handlePeerError(err)
     {
         console.error('Peer error:', err);
         this.#raiseEvent('connectionError');
-    }
-
+        
+        // If peer error occurs during connection attempts, try to recover
+        if (!this.connectionReady && this.peer)
+        {
+            console.warn('Peer error during connection setup, attempting to restart connection...');
+            this.CloseConnection();
+        }
+    }    
+    
     #handlePeerClose()
     {
         // Increment connection count to prevent delayed matchmaking from being called on the old connection
         this.connectionCount++;
-        this.peer = null
+        this.peer = null;
+        this.connectionReady = false;
+        this.peerConnectionTimeoutStarted = false;
+        this.peerIP = null;
+        this.partnerSocketId = null;
 
         if (this.socket)
         {
@@ -605,8 +818,7 @@ class WebRTCConnectionManager
 
 
 class MessageAcknowledgmentEnforcer
-{
-    constructor(
+{    constructor(
         messageType, 
         messageObject, 
         callbackFunction,
@@ -628,33 +840,47 @@ class MessageAcknowledgmentEnforcer
 
         this.receivedCallback = false;
         this.retryCount = 0;
+        this.createdAt = Date.now();
 
         if (this.requireAcknowledgment)
         {
             this.#startTimeout();
         }
-    }
-
-    ReceiveCallback(data)
+    }ReceiveCallback(data)
     {
         if (!this.receivedCallback) 
         {
             this.receivedCallback = true;
-
+            const responseTime = Date.now();
+            
             if (this.callbackFunction && typeof this.callbackFunction === 'function')
             {
-                this.callbackFunction(data);
+                try 
+                {
+                    this.callbackFunction(data);
+                }
+                catch (error)
+                {
+                    console.error(`[MessageAck] Error executing callback function for ${this.messageType}:`, error);
+                }
             }
         }
     }
-
+    
     async #startTimeout()
     {
+        const timeoutStart = Date.now();
+
         return new Promise((resolve, reject) => {
             setTimeout(() => {
+                const timeoutEnd = Date.now();
+                const actualTimeout = timeoutEnd - timeoutStart;
+                
                 if (!this.receivedCallback && this.retryCount < this.maxRetries)
                 {
-                    this.retryCount++;                    this.webRTCConnectionManager.SendMessage({
+                    this.retryCount++;
+
+                    const sendResult = this.webRTCConnectionManager.SendMessage({
                         messageType: this.messageType,
                         messageObject: this.messageObject,
                         callbackFunction: this.callbackFunction,
@@ -664,7 +890,25 @@ class MessageAcknowledgmentEnforcer
                         maxRetries: this.maxRetries,
                         ackEnf: this
                     });
+                    
+                    if (!sendResult)
+                    {
+                        console.error(`[MessageAck] Failed to send retry message for ${this.messageType}`);
+                    }
                 }
+                else if (!this.receivedCallback && this.retryCount >= this.maxRetries)
+                {
+                    console.error(`[MessageAck] FINAL FAILURE - Message acknowledgment failed after ${this.maxRetries} retries`);
+                    console.error(`[MessageAck] Failure Details:`);
+                    console.error(`  - Message Type: ${this.messageType}`);
+                    console.error(`  - Expected Ack Type: ${this.acknowledgmentMessageType}`);
+                    console.error(`  - Total Attempts: ${this.retryCount}`);
+                    console.error(`  - Timeout Duration: ${this.acknowledgmentTimeoutMS}ms`);
+                    console.error(`  - Final Wait Time: ${actualTimeout}ms`);
+                    console.error(`  - Message Object:`, this.messageObject);
+                    console.error(`  - Connection State:`, this.webRTCConnectionManager.GetConnectionStatus());
+                }
+                
                 resolve();
             }, this.acknowledgmentTimeoutMS);
         });

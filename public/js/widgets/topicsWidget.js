@@ -5,7 +5,9 @@ class TopicsWidget
         this.webRTCConnectionManager = webRTCConnectionManager;
         this.semanticSimilarityAPIClient = new SemanticSimilarityAPIClient();
 
-        this.messageType = 'topics-display';        // These are both maps topic: embedding
+        this.messageType = 'topics-display';        
+        
+        // These are both maps topic: embedding
         this.peerTopics = null;
         this.myTopics = null;
 
@@ -55,14 +57,17 @@ class TopicsWidget
 
         const topics = this.#getTopicsFromURL();
         
-        const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
+        if (topics.length > 0)
+        {
+            const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
 
-        // Convert to Map: topic -> embedding
-        this.myTopics = new Map();
+            // Convert to Map: topic -> embedding
+            this.myTopics = new Map();
 
-        topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
-            this.myTopics.set(obj.topic, obj.embedding);
-        });
+            topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
+                this.myTopics.set(obj.topic, obj.embedding);
+            });
+        }
 
         return this.myTopics;
     }
@@ -78,13 +83,44 @@ class TopicsWidget
             {
                 await this.Initialization;// Ensure my topics are initialized before sending
 
+                var topics = [];
+
+                if (this.myTopics && this.myTopics.size > 0)
+                {
+                    topics = [...this.myTopics.keys()];
+                }
+
                 this.webRTCConnectionManager.SendMessage({
                     messageType: 'send-topics',
-                    messageObject: { topics: [...this.myTopics.keys()] }
+                    messageObject: { topics: topics }
                 });
             }
-            // we dont need to handle the acknowledgment message type here, 
-            // it is handled by the SendMessage method
+            else if (parsedData.type === 'send-topics')
+            {
+                // Handle incoming topics from peer
+                const topics = parsedData.topics || [];
+
+                if (topics.length === 0)
+                {
+                    console.warn('Received empty topics from peer.');
+                    this.peerTopics = new Map();
+                    this.#renderMyTopics();
+                    this.#updateTopicsUI();
+                    return;
+                }
+
+                const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
+
+                this.peerTopics = new Map();
+
+                topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
+                    this.peerTopics.set(obj.topic, obj.embedding);
+                });
+
+                // Trigger re-render of my topics with similarity data
+                this.#renderMyTopics();
+                this.#updateTopicsUI();
+            }
         });
     }
 
@@ -181,7 +217,9 @@ class TopicsWidget
             for (let i = 0; i < sortedMyTopics.length; i++)
             {
                 const [topic] = sortedMyTopics[i];
-                let topicHtml = `<div class="topic-bubble wave-topic`;                if (similarityMap && similarityMap.has(topic))
+                let topicHtml = `<div class="topic-bubble wave-topic`;                
+                
+                if (similarityMap && similarityMap.has(topic))
                 {
                     const match = similarityMap.get(topic);
                     const colorClass = this.#getSimilarityColor(match.similarity);
@@ -278,7 +316,8 @@ class TopicsWidget
         {
             this.#renderMyTopics();
         }
-          if (this.connectionLostAndMaxAttempts)
+
+        if (this.connectionLostAndMaxAttempts)
             return;
 
         // Always update peer topics (they change based on connection state)
@@ -290,31 +329,7 @@ class TopicsWidget
         this.webRTCConnectionManager.SendMessage({
             messageType: 'request-topics',
             acknowledgmentMessageType: 'send-topics',
-            requireAcknowledgment: true,
-            callbackFunction: async (data) =>
-            {
-                const topics = data.topics || [];
-
-                if (topics.length === 0)
-                {
-                    console.warn('Topics response received but no topics found for peer.');
-                    this.peerTopics = new Map();
-                    this.#updateTopicsUI();
-                    return;
-                }
-
-                const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
-
-                this.peerTopics = new Map();
-
-                topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
-                    this.peerTopics.set(obj.topic, obj.embedding);
-                });
-                
-                // Trigger re-render of my topics with similarity data
-                this.#renderMyTopics();
-                this.#updateTopicsUI();
-            }
+            requireAcknowledgment: true
         });
     }
 

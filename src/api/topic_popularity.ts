@@ -82,7 +82,6 @@ async function refreshPopularTopicsCache()
         const popularityResults = await db.executeFunction('get_popular_topics', [20]);
         popularTopicsCache = popularityResults || [];
         popularTopicsCacheExpiry = Date.now() + CACHE_DURATION;
-        console.log(`Popular topics cache refreshed successfully. ${popularTopicsCache?.length || 0} topics cached.`);
     }
     catch (error)
     {

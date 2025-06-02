@@ -291,12 +291,10 @@ class MatchmakingManager
 
             if (mismatchedTopicResult && mismatchedTopicResult.length > 0 && mismatchedTopicResult[0].get_oldest_topic_user)
             {
-                const mismatchedTopicUser = mismatchedTopicResult[0].get_oldest_topic_user;
+                const mappedUserSocketId = mismatchedTopicResult[0].get_oldest_topic_user;
 
-                if (mismatchedTopicUser.length > 0)
+                if (mappedUserSocketId)
                 {
-                    const mappedUserSocketId = mismatchedTopicUser[0];
-
                     if (!socketId || !mappedUserSocketId)
                     {
                         throw new Error('Both socket IDs are required to trigger a connection.');

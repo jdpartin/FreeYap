@@ -59,8 +59,6 @@ class AdManager
     {
         if (this.isInitialized) return;
         
-        console.log(`AdManager: Initializing for ${this.isMobile ? 'mobile' : 'desktop'} device`);
-        
         // Load primary ad immediately
         this.loadPrimaryAd();        // Load secondary ad after initial delay
         setTimeout(() => {
@@ -80,7 +78,6 @@ class AdManager
         const config = this.adConfigs[deviceType].primary;
         
         this.loadAd('primary', config);
-        console.log(`AdManager: Primary ${deviceType} ad loaded`);
     }    /**
      * Load the secondary ad
      */
@@ -90,7 +87,6 @@ class AdManager
         const config = this.adConfigs[deviceType].secondary;
         
         this.loadAd('secondary', config);
-        console.log(`AdManager: Secondary ${deviceType} ad loaded`);
     }/**
      * Load an ad with the given configuration
      */
@@ -185,11 +181,9 @@ class AdManager
         // Primary ad refreshes every 30 seconds
         this.refreshTimers.primary = setInterval(() => {
             this.loadPrimaryAd();
-            console.log('AdManager: Primary ad refreshed');
         }, this.refreshInterval);        // Secondary ad refreshes every 30 seconds with 15 second offset
         this.refreshTimers.secondary = setInterval(() => {
             this.loadSecondaryAd();
-            console.log('AdManager: Secondary ad refreshed');
         }, this.refreshInterval);
 
         // Start secondary refresh cycle with stagger delay
@@ -197,11 +191,8 @@ class AdManager
             // Clear the secondary timer and restart with proper timing
             clearInterval(this.refreshTimers.secondary);            this.refreshTimers.secondary = setInterval(() => {
                 this.loadSecondaryAd();
-                console.log('AdManager: Secondary ad refreshed (staggered)');
             }, this.refreshInterval);
         }, this.staggerDelay);
-
-        console.log('AdManager: Refresh cycle started with 15-second stagger');
     }
 
     /**
@@ -222,7 +213,6 @@ class AdManager
         const newIsMobile = window.innerWidth <= 1399;
         
         if (newIsMobile !== this.isMobile) {
-            console.log(`AdManager: Device type changed to ${newIsMobile ? 'mobile' : 'desktop'}`);
             this.isMobile = newIsMobile;
             this.restart();
         }
@@ -244,7 +234,6 @@ class AdManager
     cleanup()
     {
         this.clearRefreshTimers();
-        console.log('AdManager: Cleaned up');
     }
 }
 
