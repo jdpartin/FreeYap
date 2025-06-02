@@ -565,8 +565,12 @@ class WebRTCConnectionManager
             }
         });
 
-        this.socket.disconnect();// Disconnect from the socket server once the peer connection is established
-        this.socket = null;
+        if (this.socket)
+        {
+            this.socket.disconnect();
+            this.socket = null;
+        }
+        
         this.#raiseEvent('connectionReady');
     }
 
@@ -582,8 +586,11 @@ class WebRTCConnectionManager
         this.connectionCount++;
         this.peer = null
 
-        this.socket.disconnect();
-        this.socket = null;
+        if (this.socket)
+        {
+            this.socket.disconnect();
+            this.socket = null;
+        }
 
         this.#raiseEvent('connectionClosed');
         this.#connectToSocket();
