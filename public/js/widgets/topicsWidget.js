@@ -10,12 +10,20 @@ class TopicsWidget
         // These are both maps topic: embedding
         this.peerTopics = null;
         this.myTopics = null;
+        
+        // Store topics as array for immediate rendering and exchange
+        this.myTopicsArray = this.#getTopicsFromURL();
+        this.myEmbeddingsReady = false;
+        this.peerEmbeddingsReady = false;
 
         this.connectionLostAndMaxAttempts = false;
         this.needsMyTopicsRerender = false;
 
         this.partnerTopicsListElement = document.getElementById('partner-topics-list');
         this.myTopicsListElement = document.getElementById('user-topics-list');
+
+        // Render topics immediately
+        this.#renderBasicTopics();
 
         this.webRTCConnectionManager.on('peerCreated', () =>
         {
@@ -39,38 +47,67 @@ class TopicsWidget
 
         window.topicsWidget = this; // Expose for debugging
 
-        this.Initialization = this.#initialize();
-    }
-
-    async #initialize()
-    {
-        this.myTopics = await this.#getMyTopicsAndEmbeddings();
-        this.#updateTopicsUI();
-    }
+        // Fetch embeddings in background
+        this.#fetchMyEmbeddingsAsync();
+    }    
     
-    async #getMyTopicsAndEmbeddings()
+    /**
+     * Renders topics immediately without embeddings for instant display
+     */
+    #renderBasicTopics()
     {
-        if (this.myTopics != null && this.myTopics.size > 0)
+        if (this.myTopicsArray && this.myTopicsArray.length > 0)
         {
-            return this.myTopics; // Already fetched
+            this.myTopicsListElement.innerHTML = '';
+            
+            for (let i = 0; i < this.myTopicsArray.length; i++)
+            {
+                const topic = this.myTopicsArray[i];
+                const topicHtml = `<div class="topic-bubble wave-topic" style="animation-delay: ${i * 0.1}s;">${topic}</div>`;
+                this.myTopicsListElement.innerHTML += topicHtml;
+            }
         }
-
-        const topics = this.#getTopicsFromURL();
-        
-        if (topics.length > 0)
+        else
         {
-            const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
-
-            // Convert to Map: topic -> embedding
-            this.myTopics = new Map();
-
-            topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
-                this.myTopics.set(obj.topic, obj.embedding);
-            });
+            this.myTopicsListElement.innerHTML = '<div class="topics-empty">No Topics</div>';
         }
-
-        return this.myTopics;
     }
+
+    /**
+     * Fetches embeddings for my topics in the background
+     */
+    async #fetchMyEmbeddingsAsync()
+    {
+        if (this.myTopicsArray && this.myTopicsArray.length > 0)
+        {
+            try
+            {
+                const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(this.myTopicsArray);
+
+                // Convert to Map: topic -> embedding
+                this.myTopics = new Map();
+                topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
+                    this.myTopics.set(obj.topic, obj.embedding);
+                });
+
+                this.myEmbeddingsReady = true;
+
+                // Re-render with embeddings if peer topics are also ready
+                if (this.peerEmbeddingsReady)
+                {
+                    this.#renderMyTopics();
+                }
+            }
+            catch (error)
+            {
+                console.error('Error fetching my topic embeddings:', error);
+                this.myEmbeddingsReady = false;
+            }
+        }
+        else
+        {
+            this.myEmbeddingsReady = true; // No topics to process
+        }    }
 
     #handlePeerCreated()
     {
@@ -81,14 +118,8 @@ class TopicsWidget
 
             if (parsedData.type === 'request-topics')
             {
-                await this.Initialization;// Ensure my topics are initialized before sending
-
-                var topics = [];
-
-                if (this.myTopics && this.myTopics.size > 0)
-                {
-                    topics = [...this.myTopics.keys()];
-                }
+                // Send topics immediately from array (no need to wait for embeddings)
+                var topics = this.myTopicsArray || [];
 
                 this.webRTCConnectionManager.SendMessage({
                     messageType: 'send-topics',
@@ -104,22 +135,36 @@ class TopicsWidget
                 {
                     console.warn('Received empty topics from peer.');
                     this.peerTopics = new Map();
-                    this.#renderMyTopics();
+                    this.peerEmbeddingsReady = true;
                     this.#updateTopicsUI();
                     return;
                 }
 
-                const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
+                // Fetch embeddings for peer topics
+                try
+                {
+                    const topicsAndEmbeddingsResponse = await this.semanticSimilarityAPIClient.GetBulkEmbeddings(topics);
 
-                this.peerTopics = new Map();
+                    this.peerTopics = new Map();
+                    topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
+                        this.peerTopics.set(obj.topic, obj.embedding);
+                    });
 
-                topicsAndEmbeddingsResponse.embeddings.forEach(obj => {
-                    this.peerTopics.set(obj.topic, obj.embedding);
-                });
+                    this.peerEmbeddingsReady = true;
 
-                // Trigger re-render of my topics with similarity data
-                this.#renderMyTopics();
-                this.#updateTopicsUI();
+                    // Re-render with similarity data if my embeddings are ready
+                    if (this.myEmbeddingsReady)
+                    {
+                        this.#renderMyTopics();
+                    }
+                    
+                    this.#updateTopicsUI();
+                }
+                catch (error)
+                {
+                    console.error('Error fetching peer topic embeddings:', error);
+                    this.peerEmbeddingsReady = false;
+                }
             }
         });
     }
@@ -307,16 +352,8 @@ class TopicsWidget
                 this.partnerTopicsListElement.innerHTML += topicHtml;
             }
         }
-    }
-
-    async #updateTopicsUI()
+    }    async #updateTopicsUI()
     {
-        // Only render my topics if they haven't been rendered yet
-        if (this.myTopicsListElement.innerHTML === '')
-        {
-            this.#renderMyTopics();
-        }
-
         if (this.connectionLostAndMaxAttempts)
             return;
 
@@ -331,13 +368,12 @@ class TopicsWidget
             acknowledgmentMessageType: 'send-topics',
             requireAcknowledgment: true
         });
-    }
-
-    #handleConnectionClosed()
+    }    #handleConnectionClosed()
     {
         this.peerTopics = null;
-        // Re-render my topics without similarity data
-        this.#renderMyTopics();
+        this.peerEmbeddingsReady = false;
+        // Re-render my topics without similarity data (back to basic view)
+        this.#renderBasicTopics();
         this.#updateTopicsUI();
     }
 }

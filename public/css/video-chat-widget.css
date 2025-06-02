@@ -29,6 +29,8 @@
     gap: 10px;
     justify-content: space-between;
     padding: 10px 10px 0 10px; /* Keep some padding just for the videos section */
+    /* Ensure consistent container height */
+    min-height: 320px;
 }
 
 .video-wrapper {
@@ -41,6 +43,10 @@
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Fixed size to prevent camera resolution from affecting layout */
+    height: 300px;
+    min-height: 300px;
+    aspect-ratio: 16/9;
 }
 
 video {
@@ -75,6 +81,9 @@ video::-webkit-media-controls-fullscreen-button {
     height: 100%;
     object-fit: cover;
     border-radius: inherit;
+    /* Maintain consistent size regardless of camera resolution */
+    max-width: 100%;
+    max-height: 100%;
 }
 
 /* Additional mobile-specific video styling */
@@ -321,10 +330,12 @@ video::-webkit-media-controls-fullscreen-button {
     .layout-default #videos {
         flex-direction: column;
     }
-    
-    .video-wrapper {
+      .video-wrapper {
         width: 100% !important; /* Full width for stacked videos */
         margin-bottom: 10px;
+        /* Consistent mobile height */
+        height: 200px;
+        min-height: 200px;
     }
       .layout-pip .local-wrapper {
         width: 35%; /* Slightly larger PiP on mobile */
@@ -397,8 +408,10 @@ video::-webkit-media-controls-fullscreen-button {
 /* PiP layout is the only additional layout */
 .layout-pip #videos {
     position: relative;
-    height: 0;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 300px; /* Fixed height instead of percentage */
+    min-height: 300px;
+    aspect-ratio: 16/9;
+    /* Remove dynamic padding-bottom to prevent sizing issues */
 }
 
 .layout-pip .remote-wrapper {
@@ -408,6 +421,8 @@ video::-webkit-media-controls-fullscreen-button {
     width: 100%;
     height: 100%;
     z-index: 1;
+    /* Ensure remote video maintains consistent sizing */
+    aspect-ratio: 16/9;
 }
 
 .layout-pip .local-wrapper {
@@ -457,3 +472,47 @@ video::-webkit-media-controls-fullscreen-button {
 
 /* Ensure FontAwesome is correctly referenced if used via CSS */
 /* This is usually handled by the <link> tag in HTML, but good to keep in mind */
+
+/* Additional rules to ensure consistent video sizing */
+
+/* Prevent videos from affecting container size */
+#videos .video-wrapper {
+    /* Maintain fixed dimensions regardless of video content */
+    flex-shrink: 0;
+    flex-grow: 0;
+    flex-basis: calc(50% - 5px); /* Each video takes half the width minus gap */
+}
+
+/* Ensure video elements don't cause layout shifts */
+video {
+    /* Override any inherited sizing */
+    width: 100% !important;
+    height: 100% !important;
+    /* Prevent layout shifts during loading */
+    background-color: #f9f9f9;
+}
+
+/* Default layout specific sizing */
+.layout-default #videos {
+    min-height: 320px;
+}
+
+.layout-default .video-wrapper {
+    height: 300px;
+    min-height: 300px;
+}
+
+/* Mobile adjustments for consistent sizing */
+@media (max-width: 768px) {
+    .layout-default #videos {
+        min-height: 240px;
+        flex-direction: column;
+    }
+    
+    .layout-default .video-wrapper {
+        height: 200px;
+        min-height: 200px;
+        flex-basis: auto;
+        width: 100%;
+    }
+}

@@ -10,6 +10,9 @@ class AdManager
         this.refreshInterval = 30000; // 30 seconds
         this.staggerDelay = 15000; // 15 seconds stagger
         this.initialSecondaryDelay = 5000; // 5 seconds initial delay for secondary ad
+        this.maxRetries = 3; // Maximum retry attempts for failed ad loads
+        this.retryDelay = 2000; // 2 seconds between retries
+        this.loadAttempts = {}; // Track retry attempts per ad type
           this.adConfigs = {
             mobile: {
                 primary: {
@@ -67,9 +70,7 @@ class AdManager
         }, this.initialSecondaryDelay);
         
         this.isInitialized = true;
-    }
-
-    /**
+    }    /**
      * Load the primary ad
      */
     loadPrimaryAd()
@@ -77,8 +78,10 @@ class AdManager
         const deviceType = this.isMobile ? 'mobile' : 'desktop';
         const config = this.adConfigs[deviceType].primary;
         
-        this.loadAd('primary', config);
-    }    /**
+        this.loadAdWithCellularDetection('primary', config);
+    }
+
+    /**
      * Load the secondary ad
      */
     loadSecondaryAd()
@@ -86,7 +89,7 @@ class AdManager
         const deviceType = this.isMobile ? 'mobile' : 'desktop';
         const config = this.adConfigs[deviceType].secondary;
         
-        this.loadAd('secondary', config);
+        this.loadAdWithCellularDetection('secondary', config);
     }/**
      * Load an ad with the given configuration
      */
@@ -143,8 +146,7 @@ class AdManager
             invokeScript.src += `?t=${Date.now()}`;
             
             container.appendChild(containerDiv);
-            container.appendChild(invokeScript);
-        } else {
+            container.appendChild(invokeScript);        } else {
             // Standard iframe format
             const optionsScript = document.createElement('script');
             optionsScript.type = 'text/javascript';
@@ -160,14 +162,172 @@ class AdManager
 
             const invokeScript = document.createElement('script');
             invokeScript.type = 'text/javascript';
-            invokeScript.src = `//orepassport.com/${config.key}/invoke.js`;
+            
+            // Use HTTPS protocol for better cellular network compatibility
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'https:';
+            invokeScript.src = `${protocol}//orepassport.com/${config.key}/invoke.js`;
 
             // Add a timestamp to force refresh
             invokeScript.src += `?t=${Date.now()}`;
 
+            // Add error handling for script loading failures
+            invokeScript.onerror = () => {
+                console.warn(`AdManager: Failed to load ad script for ${adType} on cellular network`);
+                this.handleAdLoadFailure(adType, config);
+            };
+
+            // Add load success handler
+            invokeScript.onload = () => {
+                console.log(`AdManager: Successfully loaded ad script for ${adType}`);
+                // Reset retry attempts on success
+                this.loadAttempts[adType] = 0;
+            };
+
             container.appendChild(optionsScript);
             container.appendChild(invokeScript);
         }
+    }
+
+    /**
+     * Handle ad loading failures with retry logic
+     */
+    handleAdLoadFailure(adType, config)
+    {
+        if (!this.loadAttempts[adType]) {
+            this.loadAttempts[adType] = 0;
+        }
+
+        this.loadAttempts[adType]++;
+
+        if (this.loadAttempts[adType] < this.maxRetries) {
+            console.log(`AdManager: Retrying ${adType} ad load (attempt ${this.loadAttempts[adType]}/${this.maxRetries})`);
+            
+            setTimeout(() => {
+                this.loadAd(adType, config);
+            }, this.retryDelay * this.loadAttempts[adType]); // Exponential backoff
+        } else {
+            console.warn(`AdManager: Max retries reached for ${adType} ad. Likely cellular network blocking.`);
+            this.showFallbackMessage(config);
+        }
+    }
+
+    /**
+     * Show fallback message when ads fail to load
+     */
+    showFallbackMessage(config)
+    {
+        const container = document.querySelector(`[data-ad-container="${config.container}"]`);
+        if (!container) return;
+
+        // Clear existing content
+        container.innerHTML = '';
+
+        // Add fallback message
+        const fallbackDiv = document.createElement('div');
+        fallbackDiv.className = 'ad-fallback';
+        fallbackDiv.style.cssText = `
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            color: #6c757d;
+            font-size: 12px;
+        `;        fallbackDiv.innerHTML = `
+            <div>📱 Ads blocked by cellular network</div>
+            <div style="margin-top: 4px;">Consider switching to Wi-Fi</div>
+        `;
+        
+        container.appendChild(fallbackDiv);
+    }
+
+    /**
+     * Detect if user is likely on a cellular connection
+     */
+    isCellularConnection()
+    {
+        // Check if Network Information API is available
+        if ('connection' in navigator) {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                // Check for cellular connection types
+                const cellularTypes = ['cellular', '2g', '3g', '4g', 'slow-2g'];
+                return cellularTypes.includes(connection.effectiveType) || 
+                       cellularTypes.includes(connection.type) ||
+                       connection.downlink < 1; // Less than 1 Mbps typically indicates cellular
+            }
+        }
+        
+        // Fallback: Check if user agent indicates mobile and we're not on localhost
+        return this.isMobile && !window.location.hostname.includes('localhost');
+    }
+
+    /**
+     * Enhanced ad loading with cellular detection
+     */
+    loadAdWithCellularDetection(adType, config)
+    {
+        // If on cellular, show informative message immediately
+        if (this.isCellularConnection()) {
+            console.log('AdManager: Cellular connection detected, ads may be blocked by carrier');
+            
+            // Still try to load the ad, but with lower expectations
+            this.loadAd(adType, config);
+            
+            // Set a shorter timeout for cellular connections
+            setTimeout(() => {
+                const container = document.querySelector(`[data-ad-container="${config.container}"]`);
+                if (container) {
+                    const hasLoadedAd = container.querySelector('iframe') || 
+                                       container.querySelector('[id^="container-"]');
+                    
+                    if (!hasLoadedAd) {
+                        this.showCellularFriendlyMessage(config);
+                    }
+                }
+            }, 5000); // 5 second timeout for cellular
+        } else {
+            this.loadAd(adType, config);
+        }
+    }
+
+    /**
+     * Show a more user-friendly message for cellular users
+     */
+    showCellularFriendlyMessage(config)
+    {
+        const container = document.querySelector(`[data-ad-container="${config.container}"]`);
+        if (!container) return;
+
+        // Clear existing content except description
+        const description = container.querySelector('.ad-description');
+        container.innerHTML = '';
+        if (description) {
+            container.appendChild(description);
+        }
+
+        // Add cellular-friendly message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'cellular-message';
+        messageDiv.style.cssText = `
+            text-align: center;
+            padding: 15px 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            margin: 5px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        `;
+        messageDiv.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px;">📱 Using Cellular Data?</div>
+            <div>Ads help keep FreeYap free!</div>
+            <div style="margin-top: 5px; font-size: 11px; opacity: 0.9;">
+                Switch to Wi-Fi to support us
+            </div>
+        `;
+        
+        container.appendChild(messageDiv);
     }
 
     /**

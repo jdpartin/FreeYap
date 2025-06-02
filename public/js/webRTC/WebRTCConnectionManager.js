@@ -162,6 +162,9 @@ class WebRTCConnectionManager
     
     CloseConnection()
     {
+        // increment connection count to prevent delayed matchmaking from being called on the old connection
+        this.connectionCount++;
+
         if (this.peer)
         {
             this.peer.destroy();
@@ -186,6 +189,8 @@ class WebRTCConnectionManager
      */
     async RetryMatchmaking()
     {
+        this.connectionCount++;
+
         // Reset connection state
         if (this.peer)
         {
@@ -197,7 +202,6 @@ class WebRTCConnectionManager
         this.peerConnectionTimeoutStarted = false;
         this.peerIP = null;
         this.partnerSocketId = null;
-        this.connectionCount++;
         
         // Reset socket connection lost count to allow fresh attempts
         this.socketConnectionLostCount = 0;
@@ -280,13 +284,18 @@ class WebRTCConnectionManager
     {
         if (this.peer && !this.peerConnectionTimeoutStarted && !this.connectionReady)
         {
+            var currentConnectionCount = this.connectionCount;
+
             return new Promise((resolve) => {
                 this.peerConnectionTimeoutStarted = true;
 
                 setTimeout(() => {
                     this.peerConnectionTimeoutStarted = false;
 
-                    if (!this.connectionReady)
+                    if (!this.connectionReady 
+                        && this.connectionCount === currentConnectionCount
+                        && this.peer
+                        && this.peer.destroyed === false)
                     {
                         this.CloseConnection();
                         this.#raiseEvent('peerTimeout');
@@ -346,11 +355,12 @@ class WebRTCConnectionManager
             this.chatMode = chatMode;
         }
 
-        let topics = this.#getTopicsFromURL();
-
+        let topics = this.#getTopicsFromURL();        
+        
         if (this.socket == null || this.socket.id == null)
         {
             console.error('Socket ID is null. Cannot join matchmaking queue. Attempting to reconnect...');
+            this.connectionCount++; // Invalidate any pending delayed matchmaking
             this.#raiseEvent('matchmakingError');
             
             // Try to reconnect and retry matchmaking
@@ -369,7 +379,7 @@ class WebRTCConnectionManager
             this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, topics);
             this.#delayedMatchmakingRoutine(chatMode, topics);
         }
-    }    
+    }
     
     async #delayedMatchmakingRoutine(chatMode, topics = [])
     {
@@ -382,7 +392,11 @@ class WebRTCConnectionManager
         // Only connect if no peer connection exists and the connection count has not changed
         if (!this.peer && this.connectionCount === connectionCount)
         {
-            if (this.socket == null || this.socket.id == null)
+            if (this.socket && this.socket.connected && this.socket.id != null)
+            {
+                this.matchmakingAPIClient.delayedMatchmaking(this.socket.id, chatMode, topics);
+            }
+            else
             {
                 console.error('Socket is not connected. Cannot start delayed matchmaking. Attempting to reconnect...');
                 
@@ -397,8 +411,6 @@ class WebRTCConnectionManager
                 }
                 return;
             }
-
-            this.matchmakingAPIClient.delayedMatchmaking(this.socket.id, chatMode, topics);
         }
     }
 
@@ -415,7 +427,7 @@ class WebRTCConnectionManager
             // doesnt hurt to start matchmaking again just in case
             if (matchmake)
             {
-                this.#startMatchmaking(this.chatMode);
+                //this.#startMatchmaking(this.chatMode);
             }
 
             return Promise.resolve();
@@ -482,11 +494,12 @@ class WebRTCConnectionManager
                     }
 
                     resolve();
-                });
-
+                });                
+                
                 this.socket.on('connect_error', (error) =>
                 {
                     console.error('Socket connection error:', error);
+                    this.connectionCount++; // Invalidate any pending delayed matchmaking
                     this.#raiseEvent('socketConnectionError');
                     resolve(); // Don't reject, let the retry logic handle it
                 });
@@ -515,11 +528,11 @@ class WebRTCConnectionManager
         let currentSocketConnectionCount = this.socketConnectionCount; 
 
         return new Promise((resolve) => {
-            setTimeout(() => {
-                if (this.socket && !this.peer && this.socketConnectionCount == currentSocketConnectionCount
+            setTimeout(() => {                if (this.socket && !this.peer && this.socketConnectionCount == currentSocketConnectionCount
                     && (!this.socket.connected || this.socket.id == null))
                 {
                     console.error('Socket connection timed out.');
+                    this.connectionCount++; // Invalidate any pending delayed matchmaking
 
                     this.#raiseEvent('socketConnectionTimeout');
 
@@ -567,6 +580,8 @@ class WebRTCConnectionManager
     
     async #handleMatchFound(isInitiator, matchedSocketId)
     {
+        this.connectionCount++; // Increment connection count to prevent delayed matchmaking from being called on the old connection
+
         this.#raiseEvent('matchFound');
 
         if (isInitiator)
@@ -725,7 +740,9 @@ class WebRTCConnectionManager
 
         this.peer.on('close', () => {
             this.#handlePeerClose();
-        });        // Handle IP address exchange
+        });        
+        
+        // Handle IP address exchange
         this.peer.on('data', (data) =>
         {
             try 
@@ -775,11 +792,13 @@ class WebRTCConnectionManager
 
         this.#raiseEvent('connectionReady');
     }    
-    
-    #handlePeerError(err)
+      #handlePeerError(err)
     {
         console.error('Peer error:', err);
         this.#raiseEvent('connectionError');
+        
+        // Increment connection count to invalidate delayed matchmaking regardless of recovery attempt
+        this.connectionCount++;
         
         // If peer error occurs during connection attempts, try to recover
         if (!this.connectionReady && this.peer)
@@ -787,7 +806,7 @@ class WebRTCConnectionManager
             console.warn('Peer error during connection setup, attempting to restart connection...');
             this.CloseConnection();
         }
-    }    
+    }
     
     #handlePeerClose()
     {
@@ -920,6 +939,9 @@ window.addEventListener('beforeunload', () =>
 {
     if (window.webRTCConnectionManager)
     {
+        // Increment connection count to invalidate any pending delayed matchmaking
+        window.webRTCConnectionManager.connectionCount++;
+        
         if (window.webRTCConnectionManager.peer)
         {
             window.webRTCConnectionManager.peer.destroy();
