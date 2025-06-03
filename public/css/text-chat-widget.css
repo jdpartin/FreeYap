@@ -663,6 +663,11 @@ emoji-picker::part(wrapper) {
         display: none !important;
     }
     
+    /* Hide ice breaker games section on mobile */
+    .ice-breaker-games-section {
+        display: none !important;
+    }
+    
     /* Hide game embeds and show mobile message on mobile */
     .game-embed-container {
         display: none !important;

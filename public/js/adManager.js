@@ -54,13 +54,11 @@ class AdManager
         this.refreshTimers = {};
         this.isInitialized = false;
     }    
-    
-    /**
+      /**
      * Initialize the ad system
      */
     init()
     {
-        return; // TEMPORARY: Prevent ads from loading - remove this line to re-enable ads
         if (this.isInitialized) return;
         
         // Load primary ad immediately
@@ -71,7 +69,9 @@ class AdManager
         }, this.initialSecondaryDelay);
         
         this.isInitialized = true;
-    }    /**
+    }    
+    
+    /**
      * Load the primary ad
      */
     loadPrimaryAd()
@@ -132,8 +132,12 @@ class AdManager
                 container.insertBefore(descElement, container.firstChild);
             }
             descElement.textContent = descriptionText;
-        }        // Create script elements based on format
+        }        
+        
+        // Create script elements based on format
         if (config.format === 'native') {
+            return; // disable native ads for now
+
             // Native ad format with div container
             const containerDiv = document.createElement('div');
             containerDiv.id = `container-${config.key}`;
