@@ -306,22 +306,8 @@ class AdManager
         // Add cellular-friendly message
         const messageDiv = document.createElement('div');
         messageDiv.className = 'cellular-message';
-        messageDiv.style.cssText = `
-            text-align: center;
-            padding: 15px 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            color: white;
-            font-size: 13px;
-            margin: 5px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        `;
         messageDiv.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 5px;">📱 Using Cellular Data?</div>
-            <div>Ads help keep FreeYap free!</div>
-            <div style="margin-top: 5px; font-size: 11px; opacity: 0.9;">
-                Switch to Wi-Fi to support us
-            </div>
+            <div style="font-weight: bold; margin-bottom: 5px;">📱 Ads blocked by Cellular Connection.</div>
         `;
         
         container.appendChild(messageDiv);
