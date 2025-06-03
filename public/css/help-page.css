@@ -471,11 +471,6 @@
 }
 
 @media (max-width: 768px) {
-  .help-hero {
-    margin: -2.5rem -1rem 2rem -1rem;
-    padding: 2rem 1rem;
-  }
-
   .help-hero h1 {
     font-size: 1.8rem;
   }

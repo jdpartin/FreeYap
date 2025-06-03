@@ -2,8 +2,9 @@
     <%- include('./components/topics-widget') %>
     <%- include('./components/voice-chat-widget') %>
     <%- include('./components/text-chat-widget') %>
-    <div class="text-center" style="margin-top:50px;">
+    <div class="widget-controls-container">
         <%- include('./components/report-widget') %>
+        <%- include('./components/matchmaking-controls-widget') %>
     </div>
 </div>
 <%- include('./components/webrtc-prerequisites') %>
@@ -21,6 +22,7 @@
         const voiceChatWidget = new VoiceChatWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
         const reportWidget = new ReportWidget(connectionManager);
+        const matchmakingControlsWidget = new MatchmakingControlsWidget(connectionManager);
 
         let mediaInitializationSucceeded = await voiceChatWidget.MediaInitialization;
 

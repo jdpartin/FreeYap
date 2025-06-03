@@ -3,8 +3,9 @@
     <%- include('./components/video-chat-widget') %>
     <br>
     <%- include('./components/text-chat-widget') %>
-    <div class="text-center" style="padding-top: 50px;">
+    <div class="widget-controls-container">
         <%- include('./components/report-widget') %>
+        <%- include('./components/matchmaking-controls-widget') %>
     </div>
 </div>
 <%- include('./components/webrtc-prerequisites') %>
@@ -19,6 +20,7 @@
         const videoChatWidget = new VideoChatWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
         const reportWidget = new ReportWidget(connectionManager);
+        const matchmakingControlsWidget = new MatchmakingControlsWidget(connectionManager);
 
         let mediaInitializationSucceeded = await videoChatWidget.MediaInitialization;
 
