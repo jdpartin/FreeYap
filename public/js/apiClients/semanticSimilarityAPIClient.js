@@ -88,11 +88,21 @@ class SemanticSimilarityAPIClient
         for (const [topicA, embeddingA] of topicsA)
         {
             let bestMatch = null;
-            let bestSimilarity = -1; // Cosine similarity ranges from -1 to 1
-
+            let bestSimilarity = -1; // Cosine similarity ranges from -1 to 1            
+            
             for (const [topicB, embeddingB] of topicsB)
             {
-                const similarity = this.CalculateCosineSimilarity(embeddingA, embeddingB);
+                let similarity;
+                
+                // Check for exact match first to avoid unnecessary cosine similarity calculation
+                if (topicA === topicB)
+                {
+                    similarity = 1.0; // Perfect similarity for exact matches
+                }
+                else
+                {
+                    similarity = this.CalculateCosineSimilarity(embeddingA, embeddingB);
+                }
                 
                 if (similarity > bestSimilarity)
                 {
@@ -101,6 +111,12 @@ class SemanticSimilarityAPIClient
                         topic: topicB,
                         similarity: similarity
                     };
+                    
+                    // Break early if we find a perfect match (can't get better than 1.0)
+                    if (similarity === 1.0)
+                    {
+                        break;
+                    }
                 }
             }
 

@@ -1,0 +1,72 @@
+/* Matchmaking Controls Widget Styles */
+
+.matchmaking-controls-btn {
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    font-size: 1.3rem;
+    z-index: 1000;
+    border-radius: 50%;
+    background: var(--primary) !important;
+    border: none !important;
+    width: 50px;
+    height: 50px;
+    padding: 0 !important;
+    margin: 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 
+        0 8px 32px rgba(255, 79, 122, 0.4),
+        0 4px 16px rgba(255, 79, 122, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.matchmaking-controls-btn:hover {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+        0 12px 40px rgba(255, 79, 122, 0.5),
+        0 6px 20px rgba(255, 79, 122, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.matchmaking-controls-btn:focus,
+.matchmaking-controls-btn:active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 79, 122, 0.25);
+}
+
+.matchmaking-controls-btn:disabled {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 
+        0 4px 16px rgba(255, 79, 122, 0.2),
+        0 2px 8px rgba(255, 79, 122, 0.1);
+}
+
+.matchmaking-controls-btn i {
+    font-size: 1.1rem;
+}
+
+/* Widget Container Styles */
+.widget-controls-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 50px;
+}

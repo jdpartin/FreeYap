@@ -23,6 +23,7 @@ class TopicsWidget
 
         this.partnerTopicsListElement = document.getElementById('partner-topics-list');
         this.myTopicsListElement = document.getElementById('user-topics-list');
+        this.topicsContainer = document.querySelector('.topics-container');
 
         // Render topics immediately
         this.#renderBasicTopics();
@@ -159,6 +160,7 @@ class TopicsWidget
                     }
                     
                     this.#updateTopicsUI();
+                    this.#triggerMatchCelebration();
                 }
                 catch (error)
                 {
@@ -232,6 +234,24 @@ class TopicsWidget
         if (similarity >= 0.70) return 'may be related to';
         if (similarity >= 0.50) return 'somewhat related to';
         return 'vaguely related to';
+    }
+
+    /**
+     * Triggers a subtle celebration animation when matches are found
+     */
+    #triggerMatchCelebration()
+    {
+        if (this.topicsContainer)
+        {
+            // Add celebration animation class
+            this.topicsContainer.classList.add('match-celebration');
+            
+            // Remove animation class after animation completes
+            setTimeout(() =>
+            {
+                this.topicsContainer.classList.remove('match-celebration');
+            }, 1200); // Match the animation duration
+        }
     }
     
     #renderMyTopics()

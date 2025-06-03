@@ -54,6 +54,10 @@ This project is called FreeYap, a Node.js-based anonymous chat platform. Users c
 4. Avoid assumptions; verify functions/endpoints.
 5. Always read the entire file before making changes.
 6. Check for other instances of issues when they could exist in multiple places.
+7. **CRITICAL - SCOPE CONTROL**: Only implement exactly what is requested. DO NOT add extra features, endpoints, or functionality beyond the specific request.
+8. **CRITICAL - NO FEATURE CREEP**: If you think additional features would be helpful, ask first rather than implementing them.
+9. **CRITICAL - MINIMAL CHANGES**: Make the smallest possible change that satisfies the requirement.
+10. **CRITICAL - STICK TO REQUIREMENTS**: Do not add "nice to have" features, debugging endpoints, or extra functionality unless explicitly requested.
 
 ### Planning:
 1. Analyze tasks and plan steps.

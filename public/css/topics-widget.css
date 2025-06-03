@@ -137,3 +137,32 @@
     border-left-width: 4px;
     opacity: 0.8;
 }
+
+/* Match celebration animation for when matches are found */
+@keyframes matchCelebration {
+    0% {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(255, 79, 122, 0.3), 
+                    0 0 30px rgba(255, 79, 122, 0.2);
+    }
+    100% {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* Class to trigger the celebration animation */
+.topics-container.match-celebration {
+    animation: matchCelebration 1.2s ease-in-out;
+}
+
+/* Subtle glow effect for the entire widget when matches are active */
+.topics-container.has-matches {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 
+                0 0 20px rgba(255, 79, 122, 0.1);
+    transition: box-shadow 0.3s ease;
+}

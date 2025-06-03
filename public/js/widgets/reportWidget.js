@@ -1,5 +1,7 @@
 class ReportWidget
-{      constructor(webRTCConnectionManager)
+{
+    
+    constructor(webRTCConnectionManager)
     {
         this.webRTCConnectionManager = webRTCConnectionManager;
 
@@ -31,12 +33,12 @@ class ReportWidget
 
     #handleConnectionReady()
     {
-        
+        this.reportButtonElement.disabled = false;
     }
 
     #handleConnectionClosed()
     {
-        
+        // dont disable the button, they can report past connections
     }
 
     #capturePeerIP()
