@@ -932,8 +932,8 @@ body {
 /* Add minimal padding to body to account for fixed banners on mobile */
 @media (max-width: 1399px) {
   body {
-    padding-top: 66px; /* 60px ad + 6px spacing */
-    padding-bottom: 56px; /* 50px ad + 6px spacing */
+    /*padding-top: 66px;  60px ad + 6px spacing */
+    /*padding-bottom: 56px;  50px ad + 6px spacing */
   }
   
   /* Remove padding on home page since ads are hidden */

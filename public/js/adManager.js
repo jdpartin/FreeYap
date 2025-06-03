@@ -4,8 +4,11 @@
  */
 
 class AdManager
-{    constructor()
+{    
+    
+    constructor()
     {
+        return;
         this.isMobile = window.innerWidth <= 1399;
         this.refreshInterval = 30000; // 30 seconds
         this.staggerDelay = 15000; // 15 seconds stagger
@@ -59,6 +62,7 @@ class AdManager
      */
     init()
     {
+        return;
         if (this.isInitialized) return;
         
         // Load primary ad immediately
@@ -76,6 +80,7 @@ class AdManager
      */
     loadPrimaryAd()
     {
+        return;
         const deviceType = this.isMobile ? 'mobile' : 'desktop';
         const config = this.adConfigs[deviceType].primary;
         
@@ -87,6 +92,7 @@ class AdManager
      */
     loadSecondaryAd()
     {
+        return;
         const deviceType = this.isMobile ? 'mobile' : 'desktop';
         const config = this.adConfigs[deviceType].secondary;
         
@@ -96,6 +102,7 @@ class AdManager
      */
     loadAd(adType, config)
     {
+        return;
         const container = document.querySelector(`[data-ad-container="${config.container}"]`);
         if (!container) {
             console.warn(`AdManager: Container ${config.container} not found`);
@@ -199,6 +206,7 @@ class AdManager
      */
     handleAdLoadFailure(adType, config)
     {
+        return;
         if (!this.loadAttempts[adType]) {
             this.loadAttempts[adType] = 0;
         }
@@ -222,6 +230,7 @@ class AdManager
      */
     showFallbackMessage(config)
     {
+        return;
         const container = document.querySelector(`[data-ad-container="${config.container}"]`);
         if (!container) return;
 
@@ -243,6 +252,7 @@ class AdManager
      */
     isCellularConnection()
     {
+        return;
         // Check if Network Information API is available
         if ('connection' in navigator) {
             const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -264,6 +274,7 @@ class AdManager
      */
     loadAdWithCellularDetection(adType, config)
     {
+        return;
         // If on cellular, show informative message immediately
         if (this.isCellularConnection()) {
             console.log('AdManager: Cellular connection detected, ads may be blocked by carrier');
@@ -293,6 +304,7 @@ class AdManager
      */
     showCellularFriendlyMessage(config)
     {
+        return;
         const container = document.querySelector(`[data-ad-container="${config.container}"]`);
         if (!container) return;
 
@@ -318,6 +330,7 @@ class AdManager
      */
     startRefreshCycle()
     {
+        return;
         // Clear any existing timers
         this.clearRefreshTimers();
 
@@ -343,6 +356,7 @@ class AdManager
      */
     clearRefreshTimers()
     {
+        return;
         Object.values(this.refreshTimers).forEach(timer => {
             if (timer) clearInterval(timer);
         });
@@ -353,6 +367,7 @@ class AdManager
      * Handle window resize to detect device type changes
      */    handleResize()
     {
+        return;
         const newIsMobile = window.innerWidth <= 1399;
         
         if (newIsMobile !== this.isMobile) {
@@ -366,6 +381,7 @@ class AdManager
      */
     restart()
     {
+        return;
         this.clearRefreshTimers();
         this.isInitialized = false;
         this.init();
@@ -376,6 +392,7 @@ class AdManager
      */
     cleanup()
     {
+        return;
         this.clearRefreshTimers();
     }
 }
@@ -383,6 +400,7 @@ class AdManager
 // Initialize ad manager when DOM is ready
 document.addEventListener('DOMContentLoaded', function()
 {
+    /*
     if (typeof window.adManager === 'undefined') {
         window.adManager = new AdManager();
         window.adManager.init();
@@ -401,4 +419,5 @@ document.addEventListener('DOMContentLoaded', function()
             window.adManager.cleanup();
         });
     }
+    */
 });
