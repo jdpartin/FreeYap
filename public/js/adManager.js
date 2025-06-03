@@ -151,7 +151,8 @@ class AdManager
             invokeScript.src += `?t=${Date.now()}`;
             
             container.appendChild(containerDiv);
-            container.appendChild(invokeScript);        } else {
+            container.appendChild(invokeScript);        
+        } else {
             // Standard iframe format
             const optionsScript = document.createElement('script');
             optionsScript.type = 'text/javascript';
@@ -229,18 +230,9 @@ class AdManager
 
         // Add fallback message
         const fallbackDiv = document.createElement('div');
-        fallbackDiv.className = 'ad-fallback';
-        fallbackDiv.style.cssText = `
-            text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            color: #6c757d;
-            font-size: 12px;
-        `;        fallbackDiv.innerHTML = `
+        fallbackDiv.className = 'ad-fallback';   
+        fallbackDiv.innerHTML = `
             <div>📱 Ads blocked by cellular network</div>
-            <div style="margin-top: 4px;">Consider switching to Wi-Fi</div>
         `;
         
         container.appendChild(fallbackDiv);
