@@ -5,6 +5,7 @@
     <%- include('./components/text-chat-widget') %>
     <div class="widget-controls-container">
         <%- include('./components/report-widget') %>
+        <%- include('./components/block-widget') %>
         <%- include('./components/matchmaking-controls-widget') %>
     </div>
 </div>
@@ -20,6 +21,7 @@
         const videoChatWidget = new VideoChatWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
         const reportWidget = new ReportWidget(connectionManager);
+        const blockWidget = new BlockWidget(connectionManager);
         const matchmakingControlsWidget = new MatchmakingControlsWidget(connectionManager);
 
         let mediaInitializationSucceeded = await videoChatWidget.MediaInitialization;

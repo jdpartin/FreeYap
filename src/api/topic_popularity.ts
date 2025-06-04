@@ -79,7 +79,7 @@ async function refreshPopularTopicsCache()
     try
     {
         isPopularTopicsRefreshing = true;
-        const popularityResults = await db.executeFunction('get_popular_topics', [20]);
+        const popularityResults = await db.executeFunction('get_popular_topics', [10]);
         popularTopicsCache = popularityResults || [];
         popularTopicsCacheExpiry = Date.now() + CACHE_DURATION;
     }

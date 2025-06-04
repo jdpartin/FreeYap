@@ -491,13 +491,39 @@ class WebRTCConnectionManager
                 }
 
                 const data = await response.json();
-                this.myIP = data.ip;
+
+                // strip the local IP if included
+                var splitIp = data.ip.split(',');
+                var fixedIP = data.ip;
+
+                if (splitIp.length > 1)
+                {
+                    // remove the local IP from the list
+                    splitIp = splitIp.filter(ip => !ip.trim().startsWith('192.168.') 
+                                                && !ip.trim().startsWith('10.') 
+                                                && !ip.trim().startsWith('172.') 
+                                                && !ip.trim().startsWith('127.')
+                                                && !ip.trim().startsWith('::1'));
+
+                    fixedIP = splitIp[0].trim(); // Use the first valid IP address
+                }
+                else if (
+                       data.ip.trim().startsWith('192.168.') 
+                    || data.ip.trim().startsWith('10.') 
+                    || data.ip.trim().startsWith('172.') 
+                    || data.ip.trim().startsWith('127.')
+                    || data.ip.trim().startsWith('::1')
+                )
+                {
+                    fixedIP = null;
+                }
+
+                this.myIP = this.#hashIP(fixedIP);
             }
         }
         catch (error)
         {
             console.error('Failed to fetch IP address:', error);
-            // Continue without IP for now, it will be retried later
         }
 
         return new Promise((resolve, reject) =>
@@ -602,6 +628,30 @@ class WebRTCConnectionManager
             this.#handleSocketClose();
         });
     }    
+
+    #hashIP(ipAddress)
+    {
+        // Import CryptoJS (make sure crypto-js is loaded)
+        if (typeof CryptoJS === 'undefined')
+        {
+            console.error('CryptoJS library not loaded');
+            return null;
+        }
+        
+        if (!ipAddress)
+        {
+            return null;
+        }
+        
+        // Add a salt for consistency
+        const salt = 'FreeYap2025';
+        const combined = ipAddress + salt;
+        
+        // Create SHA256 hash
+        const hash = CryptoJS.SHA256(combined).toString();
+        
+        return hash;
+    }
     
     async #handleSignal(fromSocketId, data)
     {
@@ -820,7 +870,7 @@ class WebRTCConnectionManager
             requireAcknowledgment: true,
             callbackFunction: data => 
             {
-                this.peerIP = data.ip;
+                this.peerIP = data.ip;// already hashed be peer
             }
         });
 

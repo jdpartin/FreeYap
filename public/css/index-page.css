@@ -323,6 +323,11 @@
   background: linear-gradient(135deg, #ffffff, rgba(255, 79, 122, 0.05));
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 79, 122, 0.15);
+  color: #495057 !important;
+}
+
+.topic-bubble-popular:hover .topic-text {
+  color: #495057 !important;
 }
 
 .topic-bubble .popularity-icon {
@@ -330,14 +335,57 @@
   opacity: 1;
   transition: all 0.2s ease;
   font-size: 1rem;
-  color: #6c757d !important;
   filter: brightness(1.3);
+}
+
+.topic-bubble .popularity-icon i {
+  color: inherit !important;
+}
+
+.topic-bubble .popularity-icon .text-muted {
+  color: #6c757d !important;
+}
+
+.topic-bubble .popularity-icon .text-success {
+  color: #28a745 !important;
+}
+
+.topic-bubble .popularity-icon .text-info {
+  color: #17a2b8 !important;
+}
+
+.topic-bubble .popularity-icon .text-primary {
+  color: #007bff !important;
+}
+
+.topic-bubble .popularity-icon .text-warning {
+  color: #ffc107 !important;
 }
 
 .topic-bubble:hover .popularity-icon {
   opacity: 1;
   transform: scale(1.05);
-  filter: brightness(1.5);
+  filter: brightness(1.2);
+}
+
+.topic-bubble:hover .popularity-icon .text-muted {
+  color: #495057 !important;
+}
+
+.topic-bubble:hover .popularity-icon .text-success {
+  color: #1e7e34 !important;
+}
+
+.topic-bubble:hover .popularity-icon .text-info {
+  color: #138496 !important;
+}
+
+.topic-bubble:hover .popularity-icon .text-primary {
+  color: #0056b3 !important;
+}
+
+.topic-bubble:hover .popularity-icon .text-warning {
+  color: #e0a800 !important;
 }
 
 .topic-bubble .remove-btn {

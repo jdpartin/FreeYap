@@ -24,14 +24,18 @@ class TextChatWidget
         this.webRTCConnectionManager.on('connectionClosed', () =>
         {
             this.#handleConnectionClosed();
-        });        this.sendButton.addEventListener('click', () =>    
+        });        
+        
+        this.sendButton.addEventListener('click', () =>    
         {
             const message = this.chatInput.value;
             if (message.trim())
             {
                 this.SendMessage(message);
             }
-        });        window.textChatWidget = this;
+        });
+        
+        window.textChatWidget = this;
     }
 
     SendMessage(message)
@@ -232,8 +236,12 @@ class TextChatWidget
         const messageEl = this.#createTextMessageElement(type, message);
         this.chatLogContainer.appendChild(messageEl);
         
-        this.chatInput.value = '';
         this.chatLogContainer.scrollTop = this.chatLogContainer.scrollHeight;
+
+        if (type === 'sent')
+        {
+            this.chatInput.value = ''; // Clear input after sending
+        }
     }
 
     #addImageToUI(imageTag, type)

@@ -152,16 +152,16 @@ if (popularity === 0) {
     iconElement.title = 'New topic - be the first to discuss';
 } else if (popularity < 10) {
     iconClass = 'fas fa-seedling text-success popularity-icon';
-    iconElement.title = `Growing topic (${popularity} users discussing)`;
+    iconElement.title = 'Growing topic';
 } else if (popularity < 25) {
     iconClass = 'fas fa-chart-line text-info popularity-icon';
-    iconElement.title = `Trending topic (${popularity} users)`;
+    iconElement.title = 'Trending topic';
 } else if (popularity < 50) {
     iconClass = 'fas fa-users text-primary popularity-icon';
-    iconElement.title = `Popular topic (${popularity} users)`;
+    iconElement.title = 'Popular topic';
 } else {
     iconClass = 'fas fa-crown text-warning popularity-icon';
-    iconElement.title = `Hot topic (${popularity}+ users)`;
+    iconElement.title = 'Hot topic';
 }
 
 iconElement.innerHTML = `<i class="${iconClass}"></i>`;
@@ -236,16 +236,16 @@ if (popularity === 0) {
     iconElement.parentElement.title = 'New topic - be the first to discuss';
 } else if (popularity < 10) {
     iconElement.className = 'fas fa-seedling text-success';
-    iconElement.parentElement.title = `Growing topic (${popularity} users discussing)`;
+    iconElement.parentElement.title = 'Growing topic';
 } else if (popularity < 25) {
     iconElement.className = 'fas fa-chart-line text-info';
-    iconElement.parentElement.title = `Trending topic (${popularity} users)`;
+    iconElement.parentElement.title = 'Trending topic';
 } else if (popularity < 50) {
     iconElement.className = 'fas fa-users text-primary';
-    iconElement.parentElement.title = `Popular topic (${popularity} users)`;
+    iconElement.parentElement.title = 'Popular topic';
 } else {
     iconElement.className = 'fas fa-crown text-warning';
-    iconElement.parentElement.title = `Hot topic (${popularity}+ users)`;
+    iconElement.parentElement.title = 'Hot topic';
 }
 }
 function addTopic() {

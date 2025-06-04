@@ -7,7 +7,9 @@
 
 <!-- Report Form -->
 <div id="report-illegal-form" class="report-form hidden">
-    <div class="card shadow-sm">        <div class="card-header text-white" style="background-color: var(--primary);">
+    <div class="card shadow-sm">        
+        
+        <div class="card-header text-white" style="background-color: var(--primary);">
             <h6 class="mb-0">
                 <i class="fas fa-shield-alt me-2"></i>
                 Report Illegal Content
@@ -25,6 +27,12 @@
                 </small>
             </div>
               <form id="report-illegal-submit-form">
+                <div class="mb-3">
+                    <label for="report-interaction" class="form-label fw-bold">Which user are you reporting?</label>
+                    <select id="report-interaction" name="interaction" class="form-select" required>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
                 <!-- Report Type Selection -->
                 <div class="mb-3">
                     <label class="form-label fw-bold">What are you reporting?</label>

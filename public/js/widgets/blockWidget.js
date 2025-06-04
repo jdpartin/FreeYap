@@ -1,22 +1,22 @@
-class ReportWidget
+class BlockWidget
 {
     
     constructor(webRTCConnectionManager)
     {
         this.webRTCConnectionManager = webRTCConnectionManager;
 
-        this.messageType = 'report-type';
+        this.messageType = 'block-type';
 
-        this.reportButtonElement = document.getElementById('report-illegal-button');        
-        this.reportFormElement = document.getElementById('report-illegal-form');
-        this.reportOverlayElement = document.getElementById('report-illegal-overlay');
-        this.cancelButtonElement = document.getElementById('cancel-report-illegal');
-        this.submitFormElement = document.getElementById('report-illegal-submit-form');
-        this.detailsTextarea = document.getElementById('report-details');
+        this.blockButtonElement = document.getElementById('block-user-button');        
+        this.blockFormElement = document.getElementById('block-user-form');
+        this.blockOverlayElement = document.getElementById('block-user-overlay');
+        this.cancelButtonElement = document.getElementById('cancel-block-user');
+        this.submitFormElement = document.getElementById('block-user-submit-form');
+        this.reasonTextarea = document.getElementById('block-reason');
         this.charCountElement = document.getElementById('char-count');
-        this.confirmationModal = document.getElementById('report-illegal-confirmation');
-        this.closeConfirmationButton = document.getElementById('close-report-confirmation');
-        this.reportInteractionSelectElement = document.getElementById('report-interaction');
+        this.confirmationModal = document.getElementById('block-user-confirmation');
+        this.closeConfirmationButton = document.getElementById('close-block-confirmation');
+        this.blockInteractionSelectElement = document.getElementById('block-interaction');
 
         this.peerIPHistory = new Map();
 
@@ -32,10 +32,9 @@ class ReportWidget
 
         this.#setupUIEventListeners();
     }    
-    
     #handleConnectionReady()
     {
-        this.reportButtonElement.disabled = false;
+        this.blockButtonElement.disabled = false;
 
         var peerIP = this.webRTCConnectionManager.GetPeerIP();
 
@@ -47,24 +46,23 @@ class ReportWidget
 
     #handleConnectionClosed()
     {
-        // dont disable the button, they can report past connections
-    }
-    
+        // dont disable the button, they can block past connections
+    }    
     #setupUIEventListeners()
     {
-        if (this.reportButtonElement)
+        if (this.blockButtonElement)
         {
-            this.reportButtonElement.addEventListener('click', () =>
+            this.blockButtonElement.addEventListener('click', () =>
             {
-                this.#handleReportClick();
+                this.#handleBlockClick();
             });
         }
 
-        if (this.reportOverlayElement)
+        if (this.blockOverlayElement)
         {
-            this.reportOverlayElement.addEventListener('click', () =>
+            this.blockOverlayElement.addEventListener('click', () =>
             {
-                this.#hideReport();
+                this.#hideBlock();
             });
         }        
         
@@ -72,7 +70,7 @@ class ReportWidget
         {
             this.cancelButtonElement.addEventListener('click', () =>
             {
-                this.#hideReport();
+                this.#hideBlock();
             });
         }
 
@@ -86,10 +84,10 @@ class ReportWidget
             });
         }
 
-        // Character counting for details textarea
-        if (this.detailsTextarea && this.charCountElement)
+        // Character counting for reason textarea
+        if (this.reasonTextarea && this.charCountElement)
         {
-            this.detailsTextarea.addEventListener('input', () =>
+            this.reasonTextarea.addEventListener('input', () =>
             {
                 this.#updateCharacterCount();
             });
@@ -101,18 +99,17 @@ class ReportWidget
             this.closeConfirmationButton.addEventListener('click', () =>
             {
                 this.#hideConfirmation();
-            });
-        }
+            });        }
     }
 
-    #handleReportClick()
+    #handleBlockClick()
     {
-        if (this.reportFormElement.classList.contains('hidden'))
+        if (this.blockFormElement.classList.contains('hidden'))
         {
-            this.reportFormElement.classList.remove('hidden');
-            this.reportOverlayElement.classList.remove('hidden');
+            this.blockFormElement.classList.remove('hidden');
+            this.blockOverlayElement.classList.remove('hidden');
 
-            this.reportInteractionSelectElement.innerHTML = '<option value="" disabled selected>-- Select an interaction --</option>'; // Clear previous options
+            this.blockInteractionSelectElement.innerHTML = '<option value="" disabled selected>-- Select an interaction --</option>'; // Clear previous options
 
             // sort by date descending and mark the first one as (this interaction)
             const sortedIPs = Array.from(this.peerIPHistory.entries()).sort((a, b) => b[0] - a[0]);
@@ -131,62 +128,52 @@ class ReportWidget
                 const [latestDate, latestIP] = sortedIPs[0];
                 const option = createInteractionOption(latestDate, latestIP);
                 option.textContent = `This interaction (${latestIP}) - ${latestDate.toLocaleString()}`;
-                this.reportInteractionSelectElement.appendChild(option);
+                this.blockInteractionSelectElement.appendChild(option);
             }
 
             // Add all other interactions
             sortedIPs.slice(1).forEach(([date, ip]) =>
             {
                 const option = createInteractionOption(date, ip);
-                this.reportInteractionSelectElement.appendChild(option);
+                this.blockInteractionSelectElement.appendChild(option);
             });
         }
         else
         {
-            this.#hideReport();
-        }
-    }    
-    
-    #hideReport()
-    {
-        this.reportFormElement.classList.add('hidden');
-        this.reportOverlayElement.classList.add('hidden');
+            this.#hideBlock();        }
     }
+
+    #hideBlock()
+    {
+        this.blockFormElement.classList.add('hidden');
+        this.blockOverlayElement.classList.add('hidden');    }
 
     #updateCharacterCount()
     {
-        const currentLength = this.detailsTextarea.value.length;
+        const currentLength = this.reasonTextarea.value.length;
         this.charCountElement.textContent = currentLength;
         
         // Change color based on character count
-        if (currentLength > 900) {
+        if (currentLength > 450) {
             this.charCountElement.style.color = '#dc3545'; // Red
-        } else if (currentLength > 800) {
+        } else if (currentLength > 400) {
             this.charCountElement.style.color = '#fd7e14'; // Orange
         } else {
             this.charCountElement.style.color = '#6c757d'; // Gray
         }
-    }
-
-    async #handleFormSubmission()
+    }    async #handleFormSubmission()
     {
         try {
             const formData = new FormData(this.submitFormElement);
-            const contentType = formData.get('contentType');
-            const details = formData.get('details');
-
-            if (!contentType) {
-                alert('Please select a report type.');
-                return;
-            }
+            const reason = formData.get('reason');
 
             // Get submit button and show loading state
-            const submitButton = this.submitFormElement.querySelector('#submit-report-illegal');
+            const submitButton = this.submitFormElement.querySelector('#submit-block-user');
             const originalText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Submitting...';
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Blocking...';
             submitButton.disabled = true;
 
-            const selectedInteraction = this.reportInteractionSelectElement.value;
+            const selectedInteraction = this.blockInteractionSelectElement.value;
             var ip = this.peerIPHistory.get(new Date(selectedInteraction));
 
             if (!ip) {
@@ -195,44 +182,43 @@ class ReportWidget
             }
 
             // Prepare submission data
-            const reportData = {
-                contentType: contentType,
-                details: details || '',
+            const blockData = {
+                reason: reason || '',
                 userIP: ip,
                 timestamp: new Date().toISOString()
             };
 
             // Submit to API
-            const response = await fetch('/api/report/submit', {
+            const response = await fetch('/api/block/submit', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(reportData)
+                body: JSON.stringify(blockData)
             });
 
             const result = await response.json();
 
             if (result.success) {
                 // Hide the form and show confirmation
-                this.#hideReport();
+                this.#hideBlock();
                 this.#showConfirmation();
                 
                 // Reset the form
                 this.submitFormElement.reset();
                 this.#updateCharacterCount();
             } else {
-                throw new Error(result.error || 'Failed to submit report');
+                throw new Error(result.error || 'Failed to block user');
             }
 
         } catch (error) {
-            console.error('Failed to submit report:', error);
-            alert('Failed to submit report. Please try again or contact help@freeyap.com directly.');
+            console.error('Failed to block user:', error);
+            alert('Failed to block user. Please try again or contact help@freeyap.com directly.');
         } finally {
             // Restore submit button
-            const submitButton = this.submitFormElement.querySelector('#submit-report-illegal');
+            const submitButton = this.submitFormElement.querySelector('#submit-block-user');
             if (submitButton) {
-                submitButton.innerHTML = '<i class="fas fa-flag me-1"></i>Submit Report';
+                submitButton.innerHTML = '<i class="fas fa-ban me-1"></i>Block User';
                 submitButton.disabled = false;
             }
         }

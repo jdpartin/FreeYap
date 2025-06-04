@@ -3,6 +3,7 @@
     <%- include('./components/text-chat-widget', { showLogo: true }) %>    
     <div class="widget-controls-container">
         <%- include('./components/report-widget') %>
+        <%- include('./components/block-widget') %>
         <%- include('./components/matchmaking-controls-widget') %>
     </div>
 </div>
@@ -17,6 +18,7 @@
         const topicsWidget = new TopicsWidget(connectionManager);
         const textChatWidget = new TextChatWidget(connectionManager);
         const reportWidget = new ReportWidget(connectionManager);
+        const blockWidget = new BlockWidget(connectionManager);
         const matchmakingControlsWidget = new MatchmakingControlsWidget(connectionManager);
 
         connectionManager.StartMatchmaking(chatMode);

@@ -369,6 +369,13 @@
     box-sizing: border-box;
     line-height: 1.5;
     margin: 0;
+    outline: none !important;
+}
+
+#chat-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 2px solid var(--primary) !important;
 }
 
 /* Override emoji picker background */
