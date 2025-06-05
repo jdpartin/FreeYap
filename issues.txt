@@ -7,3 +7,5 @@ messages to send, we dont have a system to support multi-part messages yet
 Need to consolidate css into reusable classes
 
 If you click the NSFW settings in the footer it takes you to the home page which means it will disconnect your call
+
+The logic to auto add the topic that is in the topic input when you click a button is no longer working
