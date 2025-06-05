@@ -7,13 +7,15 @@ RETURNS TABLE (
     socket_id TEXT,
     inserted_at TIMESTAMP,
     has_topics BOOLEAN,
-    chat_mode TEXT
+    chat_mode TEXT,
+    nudity BOOLEAN,
+    gore BOOLEAN,
+    ip_hash TEXT
 ) AS $$
 DECLARE
     queue_entry_record RECORD;
-BEGIN
-    -- First, get the queue entry before deleting anything
-    SELECT q.socket_id, q.inserted_at, q.has_topics, q.chat_mode
+BEGIN    -- First, get the queue entry before deleting anything
+    SELECT q.socket_id, q.inserted_at, q.has_topics, q.chat_mode, q.nudity, q.gore, q.ip_hash
     INTO queue_entry_record
     FROM matchmaking_queue q
     WHERE q.socket_id = socketId;
@@ -30,14 +32,16 @@ BEGIN
     -- Then delete from matchmaking_queue (parent table)
     DELETE FROM matchmaking_queue
     WHERE matchmaking_queue.socket_id = socketId;
-    
-    -- Return the stored queue entry data
+      -- Return the stored queue entry data
     RETURN QUERY
     SELECT 
         queue_entry_record.socket_id,
         queue_entry_record.inserted_at,
         queue_entry_record.has_topics,
-        queue_entry_record.chat_mode;
+        queue_entry_record.chat_mode,
+        queue_entry_record.nudity,
+        queue_entry_record.gore,
+        queue_entry_record.ip_hash;
     
 END;
 $$ LANGUAGE plpgsql;

@@ -20,3 +20,7 @@ the server to accept the list of blocked IPs and the user's IP at the time of ma
 to apply logic to not match with blocked IPs. Since we are directly receiving hashes the
 logic to compare IPs for a block will be easy, we will receive a hashed IP and list of blocked hashed IPs 
 for direct comparison
+
+If you click the NSFW settings in the footer it takes you to the home page which means it will disconnect your call
+
+The nudity and gore filtering are currently applying to all chat modes, we need to only apply them to video

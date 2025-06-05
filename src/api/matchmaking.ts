@@ -7,15 +7,15 @@ router.post('/join-queue', async (req: Request, res: Response) =>
 {
     try
     {
-        const { socketId, mode, topics = [] } = req.body;
+        const { socketId, mode, gore, nudity, ipHash, topics = [] } = req.body;
 
-        if (!socketId || !mode)
+        if (!socketId || !mode || gore === undefined || nudity === undefined)
         {
-            res.status(400).json({ error: 'socketId and mode are required' });
+            res.status(400).json({ error: 'socketId, mode, gore, and nudity are required' });
             return;
         }
         
-        await MatchmakingManager.JoinQueue(socketId, topics, mode);
+        await MatchmakingManager.JoinQueue(socketId, topics, mode, gore, nudity, ipHash);
         res.status(200).json({ message: 'User added to queue' });
     }
     catch (error)
@@ -51,15 +51,15 @@ router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
 {
     try
     {
-        const { socketId, mode, topics = [] } = req.body;
+        const { socketId, mode, gore, nudity, ipHash, topics = [] } = req.body;
 
-        if (!socketId || !mode)
+        if (!socketId || !mode || gore === undefined || nudity === undefined)
         {
             res.status(400).json({ error: 'socketId and mode are required' });
             return;
         }
         
-        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, mode);
+        const result = await MatchmakingManager.PerformDelayedMatchmaking(socketId, topics, mode, gore, nudity, ipHash);
         
         // Set proper content type
         res.setHeader('Content-Type', 'application/json');

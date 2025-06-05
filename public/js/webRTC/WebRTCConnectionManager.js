@@ -47,6 +47,10 @@ class WebRTCConnectionManager
         this.myIP = null;
         this.peerIP = null;
 
+        // settings to indicate content preferences, default strictly to prevent NSFW content
+        this.nudity = false;
+        this.gore = false;
+
         this.socketConnectionLostCount = 0;
         this.lastSocketConnectionLostTime = null;
         this.socketConnectionLostThreshold = 3; // max reconnect attempts before displaying connection lost message
@@ -55,6 +59,8 @@ class WebRTCConnectionManager
         this.socketConnectionCount = 0; // Used to track the number of socket connections
 
         window.webRTCConnectionManager = this;
+
+        this.#getContentPreferencesFromCookies();
 
         this.matchmakingAPIClient = new MatchmakingAPIClient();
         this.initialization = this.#connectToSocket(false);
@@ -178,7 +184,9 @@ class WebRTCConnectionManager
     GetPeerIP()
     {
         return this.peerIP;
-    }    GetMyIP()
+    }    
+    
+    GetMyIP()
     {
         return this.myIP;
     }
@@ -312,6 +320,50 @@ class WebRTCConnectionManager
     //#region Private Methods
 
 
+    #getContentPreferencesFromCookies()
+    {
+        try {
+            // Cookie utility function to get cookie value
+            function getCookie(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+                return null;
+            }
+
+            // Convert integer preference to boolean/null
+            function mapPreferenceToBoolean(preference) {
+                switch (parseInt(preference)) {
+                    case 0: return false; // None (block)
+                    case 1: return null;  // Allow
+                    case 2: return true;  // Show
+                    default: return false; // Default to block if invalid
+                }
+            }
+
+            // Get preferences from cookie
+            const cookiePrefs = getCookie('freeyap_vibe_preferences');
+            if (!cookiePrefs) {
+                return {
+                    nudity: false,  // Default to block
+                    gore: false     // Default to block
+                };
+            }
+
+            const preferences = JSON.parse(cookiePrefs);
+            
+            this.nudity = mapPreferenceToBoolean(preferences.nudityPreference);
+            this.gore = mapPreferenceToBoolean(preferences.gorePreference);
+
+        } catch (error) {
+            console.warn('Error retrieving content preferences from cookies:', error);
+        }
+    }
+
     async #startPeerConnectionTimeout()
     {
         if (this.peer && !this.peerConnectionTimeoutStarted && !this.connectionReady)
@@ -414,7 +466,7 @@ class WebRTCConnectionManager
         }
         else
         {
-            this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, topics);
+            this.matchmakingAPIClient.joinQueue(this.socket.id, chatMode, this.gore, this.nudity, this.myIP, topics);
             this.#delayedMatchmakingRoutine(chatMode, topics);
         }
     }
@@ -432,7 +484,7 @@ class WebRTCConnectionManager
         {
             if (this.socket && this.socket.connected && this.socket.id != null)
             {
-                this.matchmakingAPIClient.delayedMatchmaking(this.socket.id, chatMode, topics);
+                this.matchmakingAPIClient.delayedMatchmaking(this.socket.id, chatMode, this.gore, this.nudity, this.myIP, topics);
             }
             else
             {

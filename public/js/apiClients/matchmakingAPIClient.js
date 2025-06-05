@@ -5,7 +5,7 @@ class MatchmakingAPIClient
         this.baseUrl = '/api/matchmaking';
     }
 
-    async joinQueue(socketId, mode, topics = [])
+    async joinQueue(socketId, mode, gore, nudity, ipHash, topics = [])
     {
         try
         {
@@ -14,7 +14,7 @@ class MatchmakingAPIClient
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ socketId, mode, topics })
+                body: JSON.stringify({ socketId, mode, nudity, gore, ipHash, topics })
             });
 
             if (!response.ok)
@@ -57,7 +57,7 @@ class MatchmakingAPIClient
         }
     }
 
-    async delayedMatchmaking(socketId, mode, topics = [])
+    async delayedMatchmaking(socketId, mode, gore, nudity, ipHash, topics = [])
     {
         try
         {
@@ -66,7 +66,7 @@ class MatchmakingAPIClient
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ socketId, mode, topics })
+                body: JSON.stringify({ socketId, mode, gore, nudity, ipHash, topics })
             });
 
             if (!response.ok)

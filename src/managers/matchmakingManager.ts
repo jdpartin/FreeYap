@@ -18,11 +18,6 @@ interface EmbeddingResponse
     embedding: number[];
 }
 
-interface MatchmakingOptions {
-    mode?: string;
-    filters?: string[];
-}
-
 class MatchmakingManager
 {
 
@@ -33,16 +28,30 @@ class MatchmakingManager
         this.socketIo = socketIo;
     }
 
-    static async JoinQueue(socketId: string, topics: string[], mode: string, options: MatchmakingOptions = {}): Promise<void>
+    static async JoinQueue(
+        socketId: string, 
+        topics: string[], 
+        mode: string, 
+        gore: boolean | null = false,
+        nudity: boolean | null = false,
+        ipHash: string | null = null
+    ): Promise<void>
     {
-        await this.#initialMatchmaking(socketId, topics, mode);
+        await this.#initialMatchmaking(socketId, topics, mode, gore, nudity, ipHash);
     }    
     
-    static async PerformDelayedMatchmaking(socketId: string, topics: string[], mode: string, options: MatchmakingOptions = {}): Promise<any>
+    static async PerformDelayedMatchmaking(
+        socketId: string, 
+        topics: string[], 
+        mode: string,
+        gore: boolean | null = false,
+        nudity: boolean | null = false,
+        ipHash: string | null = null
+    ): Promise<any>
     {
         const queueInfo = await db.executeFunction('get_and_delete_queue_entry', { socketId: socketId as unknown as 'UUID' }) as UserQueueInfo[];
 
-        const matchmakingResult = await this.#delayedMatchmaking(socketId, topics, mode);
+        const matchmakingResult = await this.#delayedMatchmaking(socketId, topics, mode, gore, nudity, ipHash);
 
         if (!matchmakingResult)
         {
@@ -67,7 +76,10 @@ class MatchmakingManager
                     topics: JSON.stringify(mappedUser.topics), // Convert topics to JSONB array
                     has_topics: mappedUser.topics.length > 0,
                     inserted_at: mappedUser.insertedAt,
-                    mode: mode
+                    mode,
+                    gore,
+                    nudity,
+                    ipHash
                 });
             }
         }
@@ -79,6 +91,13 @@ class MatchmakingManager
     {
         await this.#removeFromQueue(socketId);
     }
+
+    static async BlockUser(source_ip: string, blocked_ip: string): Promise<void>
+    {
+        // the ips are hashed already
+        await db.executeStoredProcedure('insert_matchmaking_blocking_entry', { source_ip, blocked_ip });
+    }
+
 
     // Public method to get embeddings for semantic similarity comparison
     static async getEmbedding(topic: string): Promise<number[]>
@@ -121,7 +140,14 @@ class MatchmakingManager
         };
     }
 
-    static async #initialMatchmaking(socketId: string, topics: string[], mode: string): Promise<void>
+    static async #initialMatchmaking(
+        socketId: string, 
+        topics: string[], 
+        mode: string, 
+        gore: boolean | null = false, 
+        nudity: boolean | null = false,
+        ipHash: string | null = null
+    ): Promise<void>
     {
         if (!socketId || !mode)
         {
@@ -132,7 +158,7 @@ class MatchmakingManager
         {
             this.saveTopicUsage(topics); // for popularity and reporting
 
-            const bestMatch = await this.getBestTopicMatch(socketId, topics, mode);
+            const bestMatch = await this.getBestTopicMatch(socketId, topics, mode, gore, nudity, ipHash);
 
             if (bestMatch && bestMatch.length > 0 && bestMatch[0].socket_id != null)
             {
@@ -149,7 +175,13 @@ class MatchmakingManager
         }
         else // Random topic user
         {
-            const result = (await db.executeFunction('get_oldest_delayed_term_user', {mode})) as { get_oldest_delayed_term_user: string | null }[];
+            const result = (await db.executeFunction('get_oldest_delayed_term_user', 
+                {
+                    mode,
+                    gore,
+                    nudity,
+                    ipHash
+                })) as { get_oldest_delayed_term_user: string | null }[];
             
             if (result && result.length > 0)
             {
@@ -163,19 +195,29 @@ class MatchmakingManager
             }
         }
 
-        await this.#addToQueue(socketId, topics, mode);
+        await this.#addToQueue(socketId, topics, mode, nudity, gore, ipHash);
     }    
     
-    static async getBestTopicMatch(socketId: string, topics: string[], mode: string): Promise<UserQueueInfo[]>
+    static async getBestTopicMatch(
+        socketId: string, 
+        topics: string[], 
+        mode: string,
+        gore: boolean | null = false,
+        nudity: boolean | null = false,
+        ipHash: string | null = null
+    ): Promise<UserQueueInfo[]>
     {
-        const matchingTopics = await this.#getMatchingTopics(topics, mode);
+        const matchingTopics = await this.#getMatchingTopics(topics, mode, gore, nudity);
 
         if (matchingTopics && matchingTopics.length > 0)
         {
             return (await db.executeFunction('get_queued_user_with_most_matches',
             {
                 matchedTopics: matchingTopics,
-                mode: mode
+                mode: mode,
+                gore: gore,
+                nudity: nudity,
+                ipHash: ipHash
             })) as UserQueueInfo[];
         }
 
@@ -187,13 +229,18 @@ class MatchmakingManager
         db.executeStoredProcedure('bulk_insert_topic_history', { topicArray: topics as unknown as 'TEXT[]' });
     }    
     
-    static async #getMatchingTopics(topics: string[], mode: string): Promise<string[]>
+    static async #getMatchingTopics(
+        topics: string[], 
+        mode: string,
+        gore: boolean | null = false,
+        nudity: boolean | null = false
+    ): Promise<string[]>
     {
         if (topics && topics.length > 0)
         {
             const threshold = 0.8;
 
-            const results = await db.searchVectorBatch(topics, mode, 1000);
+            const results = await db.searchVectorBatch(topics, mode, nudity, gore, 1000);
 
             const matchedTopics = results.flatMap((result: any) =>
                 result.matches
@@ -241,15 +288,22 @@ class MatchmakingManager
             console.error('Error triggering connection:', error);
         }
     }    
-    
-    static async #addToQueue(socketId: string, topics: string[], mode: string): Promise<void>
+      
+    static async #addToQueue(
+        socketId: string, 
+        topics: string[], 
+        mode: string,
+        nudity: boolean | null = false,
+        gore: boolean | null = false,
+        ip_hash: string | null = null
+    ): Promise<void>
     {
         if (topics && topics.length > 0)
         {
             const embeddings = await Promise.all(topics.map(topic => this.#getEmbedding(topic)));
             const vectorDataArray = topics.map((topic, index) => ({
                 vector: embeddings[index],
-                metadata: { socketId, topic, mode }
+                metadata: { socketId, topic, mode, nudity, gore }
             }));
 
             db.vectorBatchInsert('topics_collection', vectorDataArray);
@@ -259,17 +313,33 @@ class MatchmakingManager
         {
             socket_id: socketId as unknown as 'UUID',
             topics: JSON.stringify(topics) as unknown as 'JSONB', // Convert topics to JSONB array
-            mode: mode
+            mode,
+            nudity,
+            gore,
+            ip_hash
         });
     }    
     
-    static async #delayedMatchmaking(socketId: string, topics: string[], mode: string): Promise<boolean>
+    static async #delayedMatchmaking(
+        socketId: string, 
+        topics: string[], 
+        mode: string,
+        gore: boolean | null = false,
+        nudity: boolean | null = false,
+        ipHash: string | null = null
+    ): Promise<boolean>
     {
         // Users with topics
         if (topics && topics.length > 0)
         {
             // perfer matching with a random topic user otherwise a mismatched topic user
-            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: string | null }[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', 
+                {
+                    mode,
+                    gore,
+                    nudity,
+                    ipHash
+                })) as { get_oldest_random_topic_user: string | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {
@@ -287,7 +357,13 @@ class MatchmakingManager
                 }
             }
             
-            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', {mode})) as { get_oldest_topic_user: string | null }[];
+            const mismatchedTopicResult = (await db.executeFunction('get_oldest_topic_user', 
+                {
+                    mode,
+                    gore,
+                    nudity,
+                    ipHash
+                })) as { get_oldest_topic_user: string | null }[];
 
             if (mismatchedTopicResult && mismatchedTopicResult.length > 0 && mismatchedTopicResult[0].get_oldest_topic_user)
             {
@@ -308,7 +384,13 @@ class MatchmakingManager
         else // Random topic users
         {
             // at this point match them with another random topic user
-            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', {mode})) as { get_oldest_random_topic_user: string | null }[];
+            const randomTopicResult = (await db.executeFunction('get_oldest_random_topic_user', 
+                {
+                    mode,
+                    gore,
+                    nudity,
+                    ipHash
+                })) as { get_oldest_random_topic_user: string | null }[];
 
             if (randomTopicResult && randomTopicResult.length > 0 && randomTopicResult[0].get_oldest_random_topic_user)
             {

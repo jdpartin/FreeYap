@@ -4,7 +4,10 @@ CREATE OR REPLACE PROCEDURE public.add_back_to_queue(
     topics JSONB,
     hasTopics BOOLEAN,
     insertedAt TIMESTAMP,
-    mode TEXT
+    mode TEXT,
+    gore BOOLEAN DEFAULT NULL,
+    nudity BOOLEAN DEFAULT NULL,
+    ipHash TEXT DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -18,14 +21,20 @@ BEGIN
         socket_id, 
         inserted_at,
         has_topics,
-        chat_mode
+        chat_mode,
+        gore,
+        nudity,
+        ip_hash
     )
     VALUES 
     (
         socketId, 
         insertedAt,
         hasTopics,
-        mode
+        mode,
+        gore,
+        nudity,
+        ipHash
     );
 
     INSERT INTO queue_topics

@@ -103,8 +103,16 @@ class DatabaseManager
             console.error(`Error searching vectors in ${collectionName}:`, err);
             throw err;
         }
-    }    // Search for similar topics using embeddings from PostgreSQL
-    public async searchVectorBatch(topics: string[], mode?: string, topK = 10): Promise<{ topic: string; matches: any[] }[]>
+    }    
+    
+    // Search for similar topics using embeddings from PostgreSQL
+    public async searchVectorBatch(
+        topics: string[], 
+        mode?: string, 
+        nudity?: boolean | null,
+        gore?: boolean | null,
+        topK = 10
+    ): Promise<{ topic: string; matches: any[] }[]>
     {
         const collectionName = 'topics_collection';
 
@@ -123,19 +131,83 @@ class DatabaseManager
                     const searchOptions: any = {
                         vector: embeddingResult[0].embedding,
                         limit: topK
-                    };
+                    };                    // Build filter conditions
+                    const filterConditions: any[] = [];
 
                     // Add mode filtering if mode is specified
                     if (mode) {
-                        searchOptions.filter = {
-                            must: [
-                                {
-                                    key: 'mode',
-                                    match: {
-                                        value: mode
+                        filterConditions.push({
+                            key: 'mode',
+                            match: {
+                                value: mode
+                            }
+                        });
+                    }                    // Add nudity filtering - null can match either, but true and false cannot match each other
+                    if (nudity !== undefined) {
+                        if (nudity === null) {
+                            // null: can match with anything (no filter needed for null)
+                            // Actually, we don't need to add any filter for null since it should match everything
+                        } else if (nudity === false) {
+                            // false: exclude true values (allow false and null)
+                            filterConditions.push({
+                                must_not: [
+                                    {
+                                        key: 'nudity',
+                                        match: {
+                                            value: true
+                                        }
                                     }
-                                }
-                            ]
+                                ]
+                            });
+                        } else if (nudity === true) {
+                            // true: exclude false values (allow true and null)
+                            filterConditions.push({
+                                must_not: [
+                                    {
+                                        key: 'nudity',
+                                        match: {
+                                            value: false
+                                        }
+                                    }
+                                ]
+                            });
+                        }
+                    }                    // Add gore filtering - null can match either, but true and false cannot match each other
+                    if (gore !== undefined) {
+                        if (gore === null) {
+                            // null: can match with anything (no filter needed for null)
+                            // Actually, we don't need to add any filter for null since it should match everything
+                        } else if (gore === false) {
+                            // false: exclude true values (allow false and null)
+                            filterConditions.push({
+                                must_not: [
+                                    {
+                                        key: 'gore',
+                                        match: {
+                                            value: true
+                                        }
+                                    }
+                                ]
+                            });
+                        } else if (gore === true) {
+                            // true: exclude false values (allow true and null)
+                            filterConditions.push({
+                                must_not: [
+                                    {
+                                        key: 'gore',
+                                        match: {
+                                            value: false
+                                        }
+                                    }
+                                ]
+                            });
+                        }
+                    }
+
+                    // Apply filters if any conditions exist
+                    if (filterConditions.length > 0) {
+                        searchOptions.filter = {
+                            must: filterConditions
                         };
                     }
 
