@@ -873,7 +873,9 @@ function putGamesInContainer(gameResult)
 function initializeMediaTabSwitching()
 {
     const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabPanes = document.querySelectorAll('.tab-pane');    tabButtons.forEach(button => {
+    const tabPanes = document.querySelectorAll('.tab-pane');    
+    
+    tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetTab = button.getAttribute('data-tab');
               // Remove active class from all buttons and panes
@@ -882,10 +884,7 @@ function initializeMediaTabSwitching()
                 
                 // Reset ice-breakers icon to black when deactivating
                 if (btn.getAttribute('data-tab') === 'ice-breakers') {
-                    const img = btn.querySelector('img');
-                    if (img) {
-                        img.src = '/images/icebreaker_icon_black.png';
-                    }
+                    btn.innerHTML = `<i class="icon-icebreaker"></i>`
                     
                     // Reset the generate button when leaving ice-breakers tab
                     const generateTemplateBtn = document.getElementById('generate-template-btn');
@@ -911,10 +910,7 @@ function initializeMediaTabSwitching()
             
             // Change ice-breakers icon to white when activating
             if (targetTab === 'ice-breakers') {
-                const img = button.querySelector('img');
-                if (img) {
-                    img.src = '/images/icebreaker_icon_white.png';
-                }
+                button.innerHTML = `<i class="icon-icebreaker active"></i>`;
             }
             
             const targetPane = document.getElementById(targetTab + '-tab');

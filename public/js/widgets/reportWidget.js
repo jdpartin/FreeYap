@@ -18,6 +18,7 @@ class ReportWidget
         this.closeConfirmationButton = document.getElementById('close-report-confirmation');
         this.reportInteractionSelectElement = document.getElementById('report-interaction');
 
+        // To be clear, these are hashed. We never store actual IPs.
         this.peerIPHistory = new Map();
 
         this.webRTCConnectionManager.on('connectionReady', () =>
@@ -114,14 +115,16 @@ class ReportWidget
 
             this.reportInteractionSelectElement.innerHTML = '<option value="" disabled selected>-- Select an interaction --</option>'; // Clear previous options
 
+            // These IPs are hashed and NOT something the user will understand if they see.
+
             // sort by date descending and mark the first one as (this interaction)
             const sortedIPs = Array.from(this.peerIPHistory.entries()).sort((a, b) => b[0] - a[0]);
 
-            function createInteractionOption(date, ip)
+            function createInteractionOption(date)
             {
                 const option = document.createElement('option');
                 option.value = date;
-                option.textContent = `${ip} - ${date.toLocaleString()}`;
+                option.textContent = date.toLocaleString();// DO NOT show the IP in the VALUE or the TEXT
                 return option;
             }
 
@@ -130,14 +133,14 @@ class ReportWidget
             {
                 const [latestDate, latestIP] = sortedIPs[0];
                 const option = createInteractionOption(latestDate, latestIP);
-                option.textContent = `This interaction (${latestIP}) - ${latestDate.toLocaleString()}`;
+                option.textContent = `${latestDate.toLocaleString()} (Most Recent)`;
                 this.reportInteractionSelectElement.appendChild(option);
             }
 
             // Add all other interactions
             sortedIPs.slice(1).forEach(([date, ip]) =>
             {
-                const option = createInteractionOption(date, ip);
+                const option = createInteractionOption(date);
                 this.reportInteractionSelectElement.appendChild(option);
             });
         }

@@ -43,6 +43,7 @@ class WebRTCConnectionManager
 
         this.peerConnectionTimeoutStarted = false;
 
+        // To be clear, these are hashed. We never store actual IPs.
         this.myIP = null;
         this.peerIP = null;
 

@@ -4,12 +4,26 @@
     transition: all 0.3s ease;
     font-size: 0.875rem;
     z-index: 1000;
-    border-radius: 20px;
+    vertical-align: middle;
+    color: white;
+    background: none;
+    border:none;
+    border-radius:20px;
 }
 
 .vibe-check-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 77, 109, 0.3);
+    background:none;
+    color: #f8d7da;
+}
+
+.vibe-check-btn:disabled {
+    background:none;
+    color: #f8d7da;
+}
+
+.icon-vibe-check {
+    font-size: 1.7rem;
+    vertical-align: middle;
 }
 
 .vibe-check-form {
@@ -18,12 +32,34 @@
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
-    max-width: 500px;
+    max-width: 580px;
     z-index: 1050;
-    transition: all 0.3s ease;
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 249, 250, 0.95)),
+        radial-gradient(circle at 20% 20%, rgba(255, 79, 122, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 79, 122, 0.03) 0%, transparent 50%);
+    backdrop-filter: blur(30px) saturate(1.2);
+    border-radius: 28px;
+    box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.08),
+        0 8px 16px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(255, 255, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    animation: modalSlideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vibe-check-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border-radius: 28px;
+    pointer-events: none;
 }
 
 .vibe-check-form.hidden {
@@ -32,66 +68,272 @@
 
 .vibe-check-form .card {
     border: none;
-    border-radius: 15px;
+    border-radius: 28px;
     overflow: hidden;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+    z-index: 1;
 }
 
 .vibe-check-form .card-header {
     border-bottom: none;
-    padding: 1rem 1.25rem;
+    padding: 1.75rem 2rem 1.25rem 2rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-gradient-end)) !important;
+    color: white !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.vibe-check-form .card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent, rgba(255, 255, 255, 0.05));
+    pointer-events: none;
+}
+
+.vibe-check-form .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.vibe-check-form .card-header h3 {
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
 }
 
 .vibe-check-form .card-body {
-    padding: 1.25rem;
+    padding: 2rem;
     max-height: 70vh;
     overflow-y: auto;
+    position: relative;
+}
+
+.vibe-check-form .card-body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
+}
+
+.vibe-check-form .card-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.vibe-check-form .card-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+.vibe-check-form .card-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary), var(--primary-gradient-end));
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.vibe-check-form .card-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--primary-gradient-end), var(--primary-dark));
+    background-clip: content-box;
 }
 
 /* Content Options Styling */
-.content-options .form-check {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-    background-color: rgba(248, 249, 250, 0.8);
+.content-options .form-check-container {
+    display: block;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.8)),
+        radial-gradient(circle at 10% 20%, rgba(255, 79, 122, 0.02) 0%, transparent 50%);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
-.content-options .form-check:hover {
-    background-color: rgba(255, 77, 109, 0.05);
-    border-color: rgba(255, 77, 109, 0.2);
-    transform: translateY(-1px);
+.content-options .form-check-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-gradient-end));
+    transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-radius: 0 0 10px 10px;
 }
 
-.content-options .form-check-input:checked + .form-check-label {
+.content-options .form-check-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.content-options .form-check-container:hover {
+    border-color: rgba(255, 79, 122, 0.3);
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.85)),
+        radial-gradient(circle at 20% 20%, rgba(255, 79, 122, 0.05) 0%, transparent 50%);
+    transform: translateY(-4px);
+    box-shadow: 
+        0 12px 24px rgba(0, 0, 0, 0.1),
+        0 6px 12px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.content-options .form-check-container:hover::before {
+    left: 0;
+}
+
+.content-options .form-check-container:hover::after {
+    opacity: 1;
+}
+
+.content-options .form-check-input:checked + .form-check-content {
     color: var(--primary);
 }
 
-.content-options .form-check:has(.form-check-input:checked) {
-    background-color: rgba(255, 77, 109, 0.1);
+.content-options .form-check-container:has(.form-check-input:checked) {
+    background: 
+        linear-gradient(135deg, rgba(255, 79, 122, 0.15), rgba(255, 182, 193, 0.1)),
+        radial-gradient(circle at 20% 20%, rgba(255, 79, 122, 0.08) 0%, transparent 50%);
     border-color: var(--primary);
-    box-shadow: 0 2px 8px rgba(255, 77, 109, 0.15);
+    box-shadow: 
+        0 8px 16px rgba(255, 79, 122, 0.2),
+        0 4px 8px rgba(255, 79, 122, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
 }
 
 .content-options .form-check-input {
-    margin-top: 0.25rem;
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    margin: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    background-color: white;
+    transition: all 0.3s ease;
 }
 
-.content-options .form-check-label {
+.content-options .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 79, 122, 0.2);
+}
+
+.content-options .form-check-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 79, 122, 0.2);
+}
+
+.content-options .form-check-content {
     cursor: pointer;
     width: 100%;
-    padding-left: 0.25rem;
+    padding-right: 2.5rem;
 }
 
-.content-options .form-check-label strong {
+.content-options .form-check-content strong {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 1rem;
-    color: var(--foreground);
+    color: #2c3e50;
+    font-weight: 700;
+    letter-spacing: 0.2px;
 }
 
-.content-options .form-check-label small {
+/* Icon Styling for Content Type Options */
+.content-type-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.content-options .form-check-content i {
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+    color: #6c757d;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.content-options .form-check-container:hover i {
+    opacity: 0.9;
+    color: var(--primary);
+    transform: scale(1.15);
+    text-shadow: 0 2px 4px rgba(255, 79, 122, 0.3);
+}
+
+.content-options .form-check-container:has(.form-check-input:checked) i {
+    opacity: 1;
+    color: var(--primary);
+    transform: scale(1.15);
+    text-shadow: 0 2px 6px rgba(255, 79, 122, 0.4);
+    filter: brightness(1.1);
+}
+
+/* Specific icon colors and effects */
+.content-options .form-check-content .bi-eye-slash {
+    color: #e74c3c;
+}
+
+.content-options .form-check-content .fa-skull {
+    color: #8b0000;
+}
+
+.content-options .form-check-container:hover .bi-eye-slash {
+    color: #c0392b;
+}
+
+.content-options .form-check-container:hover .fa-skull {
+    color: #a50000;
+}
+
+.content-options .form-check-container:has(.form-check-input:checked) .bi-eye-slash {
+    color: #e74c3c;
+    filter: drop-shadow(0 0 8px rgba(231, 76, 60, 0.4));
+}
+
+.content-options .form-check-container:has(.form-check-input:checked) .fa-skull {
+    color: #8b0000;
+    filter: drop-shadow(0 0 8px rgba(139, 0, 0, 0.4));
+}
+
+.content-options .form-check-content small {
     font-size: 0.85rem;
     line-height: 1.4;
     color: var(--muted-foreground);
@@ -99,10 +341,28 @@
 
 /* Friendly intro styling */
 .friendly-intro {
-    background: linear-gradient(135deg, rgba(255, 77, 109, 0.05), rgba(255, 182, 193, 0.05));
-    border-radius: 12px;
-    padding: 1rem;
+    background: 
+        linear-gradient(135deg, rgba(255, 79, 122, 0.08), rgba(255, 182, 193, 0.05)),
+        radial-gradient(circle at 20% 20%, rgba(255, 79, 122, 0.03) 0%, transparent 50%);
+    border-radius: 16px;
+    padding: 1.25rem;
     border-left: 4px solid var(--primary);
+    border: 1px solid rgba(255, 79, 122, 0.15);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.friendly-intro::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+    pointer-events: none;
+    border-radius: inherit;
 }
 
 .friendly-intro p {
@@ -122,33 +382,106 @@
 }
 
 /* Textarea focus styling */
+#vibeNote {
+    border-radius: 12px;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.8));
+    backdrop-filter: blur(10px);
+}
+
 #vibeNote:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 0.2rem rgba(255, 77, 109, 0.25);
+    box-shadow: 
+        0 0 0 0.2rem rgba(255, 79, 122, 0.25),
+        0 4px 8px rgba(255, 79, 122, 0.1);
+    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.9));
+    transform: translateY(-1px);
 }
 
 /* Button styling */
 .vibe-check-form .btn {
-    border-radius: 20px;
-    padding: 0.625rem 1.5rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    border-radius: 50px;
+    padding: 0.75rem 2rem;
+    font-weight: 700;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+    min-height: 48px;
 }
 
 .vibe-check-form .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--primary-gradient-end));
-    border: none;
-    box-shadow: 0 2px 4px rgba(255, 77, 109, 0.2);
+    background: linear-gradient(135deg, var(--primary), var(--primary-gradient-end)) !important;
+    border: none !important;
+    box-shadow: 
+        0 8px 16px rgba(255, 79, 122, 0.25),
+        0 4px 8px rgba(255, 79, 122, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.vibe-check-form .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
 }
 
 .vibe-check-form .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 77, 109, 0.3);
+    background: linear-gradient(135deg, var(--primary-gradient-end), #dc3545, #c82333) !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 12px 24px rgba(255, 79, 122, 0.35),
+        0 8px 16px rgba(255, 79, 122, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.vibe-check-form .btn-primary:hover::before {
+    left: 100%;
+}
+
+.vibe-check-form .btn-outline-secondary {
+    border: 2px solid #6c757d !important;
+    color: #6c757d !important;
+    background: rgba(248, 249, 250, 0.8) !important;
+    box-shadow: 
+        0 4px 8px rgba(108, 117, 125, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.vibe-check-form .btn-outline-secondary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(108, 117, 125, 0.1), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
 }
 
 .vibe-check-form .btn-outline-secondary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(108, 117, 125, 0.2);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 16px rgba(108, 117, 125, 0.25),
+        0 4px 8px rgba(108, 117, 125, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    background: rgba(248, 249, 250, 0.95) !important;
+    border-color: #495057 !important;
+    color: #343a40 !important;
+}
+
+.vibe-check-form .btn-outline-secondary:hover::before {
+    left: 100%;
 }
 
 /* Alert styling - removed warning styles since we're not using warnings anymore */
@@ -176,29 +509,43 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px) saturate(1.2);
 }
 
 .modal-content {
-    position: relative;
-    background: white;
+    position: relative;    background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 249, 250, 0.95)),
+        radial-gradient(circle at 20% 20%, rgba(255, 79, 122, 0.05) 0%, transparent 50%);
     padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 28px;
+    box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 16px 32px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
     max-width: 400px;
     width: 90%;
     text-align: center;
+    backdrop-filter: blur(30px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 @keyframes modalSlideIn {
-    from {
+    0% {
         opacity: 0;
-        transform: scale(0.9) translateY(-20px);
+        transform: translate(-50%, -50%) scale(0.8) translateY(30px);
+        filter: blur(10px);
     }
-    to {
+    50% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(0.95) translateY(10px);
+        filter: blur(2px);
+    }
+    100% {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: translate(-50%, -50%) scale(1) translateY(0);
+        filter: blur(0);
     }
 }
 
@@ -222,7 +569,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px) saturate(1.2);
     z-index: 1040;
 }
 
@@ -240,12 +588,36 @@
     .vibe-check-form {
         width: 95%;
         max-width: none;
-        margin: 1rem;
+        margin: 10px auto;
+        border-radius: 20px;
+        box-shadow: 
+            0 16px 32px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(0, 0, 0, 0.1),
+            0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .vibe-check-form .card {
+        border-radius: 20px;
+    }
+    
+    .vibe-check-form .card-header {
+        padding: 1.25rem 1.25rem 1rem 1.25rem;
+    }
+    
+    .vibe-check-form .card-header h3 {
+        font-size: 1.1rem;
+        letter-spacing: 0.2px;
     }
     
     .vibe-check-form .card-body {
-        padding: 1rem;
+        padding: 1.25rem;
         max-height: 80vh;
+    }
+    
+    .content-options .form-check {
+        margin-bottom: 1.25rem;
+        padding: 1.25rem;
+        border-radius: 16px;
     }
     
     .severity-options {
@@ -260,13 +632,39 @@
     .modal-content {
         margin: 1rem;
         padding: 1.5rem;
+        border-radius: 20px;
     }
 }
 
 @media (max-width: 480px) {
     .vibe-check-form {
         width: 98%;
-        margin: 0.5rem;
+        margin: 5px auto;
+        border-radius: 16px;
+    }
+    
+    .vibe-check-form .card {
+        border-radius: 16px;
+    }
+    
+    .vibe-check-form .card-header {
+        padding: 1rem 1rem 0.75rem 1rem;
+    }
+    
+    .vibe-check-form .card-header h3 {
+        font-size: 1rem;
+        letter-spacing: 0.1px;
+    }
+    
+    .vibe-check-form .card-body {
+        padding: 1rem;
+    }
+    
+    .content-options .form-check {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        border-width: 1px;
     }
     
     .report-options .form-check {
@@ -281,6 +679,12 @@
     
     .vibe-check-form .btn {
         width: 100%;
+        padding: 0.875rem 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .modal-content {
+        border-radius: 16px;
     }
 }
 
@@ -311,13 +715,13 @@
 }
 
 /* Form validation states */
-.was-validated .form-check-input:invalid ~ .form-check-label {
+.was-validated .form-check-input:invalid ~ .form-check-content {
     color: var(--primary);
 }
 
-.was-validated .form-check:has(.form-check-input:invalid) {
+.was-validated .form-check-container:has(.form-check-input:invalid) {
     border-color: var(--primary);
-    background-color: rgba(255, 77, 109, 0.05);
+    background-color: rgba(255, 79, 122, 0.05);
 }
 
 /* Focus trap for accessibility */

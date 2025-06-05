@@ -1,0 +1,85 @@
+<link rel="stylesheet" href="/css/vibe-form.css">
+
+<!-- filepath: c:\Users\jdpar\OneDrive\Desktop\FreeYap\Node\views\components\vibe-form.ejs -->
+<div class="vibe-form-container">
+    <div class="card">        
+        <div class="card-header text-center">
+            <h3 class="mb-0">NSFW Settings</h3>
+        </div>
+        <div class="card-body">            
+            <form id="vibeForm">                  
+                <!-- Nudity Preference Toggle -->                
+                <div class="toggle-section mb-4">
+                    <label class="form-label fw-bold mb-3">Nudity</label>
+                    <div class="toggle-switch-container">
+                        <div class="sliding-toggle" data-name="nudityPreference">
+                            <input type="hidden" id="nuditySlider" value="0">
+                            <div class="sliding-track">
+                                <div class="sliding-indicator"></div>
+                                <div class="toggle-option active" data-value="0">
+                                    <i class="fas fa-ban"></i>
+                                    <span>None</span>
+                                </div>
+                                <div class="toggle-option" data-value="1">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Allow</span>
+                                </div>
+                                <div class="toggle-option" data-value="2">
+                                    <i class="fas fa-share"></i>
+                                    <span>Show</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- Gore Preference Toggle -->                
+                <div class="toggle-section mb-4">
+                    <label class="form-label fw-bold mb-3">Gore</label>
+                    <div class="toggle-switch-container">
+                        <div class="sliding-toggle" data-name="gorePreference">
+                            <input type="hidden" id="goreSlider" value="0">
+                            <div class="sliding-track">
+                                <div class="sliding-indicator"></div>
+                                <div class="toggle-option active" data-value="0">
+                                    <i class="fas fa-ban"></i>
+                                    <span>None</span>
+                                </div>
+                                <div class="toggle-option" data-value="1">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Allow</span>
+                                </div>
+                                <div class="toggle-option" data-value="2">
+                                    <i class="fas fa-share"></i>
+                                    <span>Show</span>
+                                </div>
+                            </div>                        
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Preferences Checkbox -->
+                <div class="save-preferences-section mb-4">
+                    <div class="custom-checkbox-container">
+                        <input type="checkbox" id="savePreferences" class="custom-checkbox-input" checked>
+                        <label for="savePreferences" class="custom-checkbox-label">
+                            <div class="checkbox-visual">
+                                <i class="fas fa-check checkbox-check"></i>
+                            </div>
+                            <span class="checkbox-text">
+                                <strong>Save my preferences</strong>
+                                <small class="text-muted d-block">Remember these settings for future sessions</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>                
+                <div class="d-flex justify-content-center gap-3 mt-4 button-container">
+                    <button type="button" class="btn btn-outline-secondary" id="cancelVibeForm">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="vibeFormSubmit">
+                        <i class="fas fa-video me-2" id="vibeFormSubmitIcon"></i><span id="vibeFormSubmitText">Start Chatting</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/js/forms/vibe-form.js"></script>

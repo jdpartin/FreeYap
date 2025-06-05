@@ -3,14 +3,14 @@ class VibeCheckWidget
     {
         this.webRTCConnectionManager = webRTCConnectionManager;
 
-        this.messageType = 'vibe-check';
-
-        this.vibeCheckButtonElement = document.getElementById('vibe-check-button');
+        this.messageType = 'vibe-check';        this.vibeCheckButtonElement = document.getElementById('vibe-check-button');
         this.vibeCheckFormElement = document.getElementById('vibe-check-form');
         this.vibeCheckOverlayElement = document.getElementById('vibe-check-overlay');
         this.cancelButtonElement = document.getElementById('cancel-vibe-check');
+        this.vibeCheckInteractionSelectElement = document.getElementById('vibe-check-interaction');
 
-        this.capturedPeerIP = null; // for capturing during reporting
+        // To be clear, these are hashed. We never store actual IPs.
+        this.peerIPHistory = new Map();
 
         this.webRTCConnectionManager.on('connectionReady', () =>
         {
@@ -27,18 +27,22 @@ class VibeCheckWidget
 
     #handleConnectionReady()
     {
-        
+        this.vibeCheckButtonElement.disabled = false;
+
+        var peerIP = this.webRTCConnectionManager.GetPeerIP();
+
+        if (peerIP) // unavailable during local testing
+        {
+            this.peerIPHistory.set(new Date(), this.webRTCConnectionManager.GetPeerIP());
+        }
     }
 
     #handleConnectionClosed()
     {
         
     }
-
-    #capturePeerIP()
-    {
-        this.capturedPeerIP = this.webRTCConnectionManager.GetPeerIP();
-    }    #setupUIEventListeners()
+    
+    #setupUIEventListeners()
     {
         if (this.vibeCheckButtonElement)
         {
@@ -63,21 +67,51 @@ class VibeCheckWidget
                 this.#hideVibeCheck();
             });
         }
-    }
-
+    }    
+    
     #handleVibeCheckClick()
     {
         if (this.vibeCheckFormElement.classList.contains('hidden'))
         {
-            this.#capturePeerIP();
             this.vibeCheckFormElement.classList.remove('hidden');
             this.vibeCheckOverlayElement.classList.remove('hidden');
+
+            this.vibeCheckInteractionSelectElement.innerHTML = '<option value="" disabled selected>-- Select an interaction --</option>'; // Clear previous options
+
+            // These IPs are hashed and NOT something the user will understand if they see.
+
+            // sort by date descending and mark the first one as (this interaction)
+            const sortedIPs = Array.from(this.peerIPHistory.entries()).sort((a, b) => b[0] - a[0]);
+
+            function createInteractionOption(date)
+            {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date.toLocaleString();// DO NOT show the IP in the VALUE or the TEXT
+                return option;
+            }            
+            
+            // Add the latest interaction as the first option with a special label
+            if (sortedIPs.length > 0)
+            {
+                const [latestDate, latestIP] = sortedIPs[0];                
+                const option = createInteractionOption(latestDate, latestIP);
+                option.textContent = `${latestDate.toLocaleString()} (Most Recent)`;
+                this.vibeCheckInteractionSelectElement.appendChild(option);
+            }
+
+            // Add all other interactions
+            sortedIPs.slice(1).forEach(([date, ip]) =>
+            {
+                const option = createInteractionOption(date);
+                this.vibeCheckInteractionSelectElement.appendChild(option);
+            });
         }
         else
         {
             this.#hideVibeCheck();
         }
-    }
+    }    
 
     #hideVibeCheck()
     {

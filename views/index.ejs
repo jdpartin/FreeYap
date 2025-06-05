@@ -2,10 +2,11 @@
 <!-- Spell Checker CSS - only for home page -->
 <link rel="stylesheet" href="/css/spellcheck.css">
 
-<div class="widget-container">  <div class="widget-header">
+<div class="widget-container">  
+  <div class="widget-header">
     <div class="logo-section">
       <div class="logo-brand-row">
-        <img src="/images/logo_white.png" alt="FreeYap Logo">
+        <i class="icon-logo me-2" style="font-size:1.7em;color:white;"></i>
         <span class="brand-text">FreeYap.com</span>
       </div>
       <p>Chat with strangers, be treated like an adult.</p>
@@ -75,6 +76,12 @@
         <a href="/privacy" style="color: var(--primary); text-decoration: none;">Privacy</a>
       </p>
     </div>  </div>
+</div>
+
+<!-- Vibe Check Overlay -->
+<div id="vibeOverlay" class="vibe-overlay hidden">
+  <div class="vibe-overlay-backdrop"></div>
+  <%- include('components/vibe-form') %>
 </div>
 
 <!-- Spell checker scripts - only for home page -->

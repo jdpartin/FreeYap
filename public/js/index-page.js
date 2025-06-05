@@ -4,6 +4,13 @@ const topicList = document.getElementById('topicList');  const topics = [];
 // Local cache for topic popularity - stores known values to avoid API calls
 const topicPopularityCache = new Map();
 
+// Store selected chat mode for later use
+let selectedChatMode = null;
+
+// Make variables globally accessible for vibe form
+window.topics = topics;
+window.selectedChatMode = selectedChatMode;
+
 // Debounce timer for input changes
 let inputDebounceTimer = null;
 
@@ -488,23 +495,101 @@ if (topicInput.value.trim() === '') {
 addTopicBtn.addEventListener('click', addTopic);
 
 // Add event listeners to chat interface cards
-document.querySelectorAll('.chat-interface-card').forEach(button => {
-    button.addEventListener('click', (event) => {
+document.querySelectorAll('.chat-interface-card').forEach(button => {    button.addEventListener('click', (event) => {
         event.preventDefault();
-        const chatMode = button.getAttribute('href');
+        selectedChatMode = button.getAttribute('href');
+        window.selectedChatMode = selectedChatMode; // Update global reference
         
-        // Check if there's text in the topic input field
-        const inputText = topicInput.value.trim();
-        if (inputText !== '' && topics.length < 10) {
-            // Process the topic input before navigating
-            procesTopicAndNavigate(inputText, chatMode);
+        // Only show vibe check overlay for video chat mode
+        if (selectedChatMode === '/video-chat') {
+            // Check if user has saved preferences with checkbox checked
+            if (shouldBypassVibeForm()) {
+                console.log('Bypassing vibe form - user has saved preferences');
+                // Navigate directly to video chat with topics if any
+                const topics = window.topics || [];
+                if (topics.length > 0) {
+                    const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+                    window.location.href = `${selectedChatMode}?${queryParams}`;
+                } else {
+                    window.location.href = selectedChatMode;
+                }
+            } else {
+                showVibeOverlay();
+            }
         } else {
-            // No input text, navigate directly with existing topics
-            const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
-            window.location.href = `${chatMode}?${queryParams}`;
+            // For other modes, navigate directly with topics if any
+            const topics = window.topics || [];
+            if (topics.length > 0) {
+                const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+                window.location.href = `${selectedChatMode}?${queryParams}`;
+            } else {
+                window.location.href = selectedChatMode;
+            }
         }
     });
 });
+
+// Show vibe overlay
+function showVibeOverlay(config = {}) {
+    const overlay = document.getElementById('vibeOverlay');
+    if (overlay) {
+        // Set button text and icon based on config
+        const submitButton = document.getElementById('vibeFormSubmit');
+        const submitIcon = document.getElementById('vibeFormSubmitIcon');
+        const submitText = document.getElementById('vibeFormSubmitText');
+        
+        if (submitButton && submitIcon && submitText) {
+            // Default to video chat configuration
+            const buttonText = config.buttonText || 'Start Chatting';
+            const iconClass = config.iconClass || 'fas fa-video';
+            
+            submitText.textContent = buttonText;
+            submitIcon.className = iconClass + ' me-2';
+        }
+        
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+}
+
+// Hide vibe overlay
+function hideVibeOverlay() {
+    const overlay = document.getElementById('vibeOverlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}
+
+// Check if user should bypass the vibe form
+function shouldBypassVibeForm() {
+    try {
+        // Check both localStorage and cookies for saved preferences
+        let preferences = null;
+        
+        // Try localStorage first
+        const savedPrefs = localStorage.getItem('freeyap_vibe_preferences');
+        if (savedPrefs) {
+            preferences = JSON.parse(savedPrefs);
+        } else {
+            // Fall back to cookies
+            const cookiePrefs = getCookie('freeyap_vibe_preferences');
+            if (cookiePrefs) {
+                preferences = JSON.parse(cookiePrefs);
+            }
+        }
+        
+        // If preferences exist and user checked "save preferences", bypass the form
+        return preferences && preferences.savePreferences === true;
+    } catch (error) {
+        console.warn('Error checking saved preferences:', error);
+        return false;
+    }
+}
+
+// Make functions globally accessible for vibe form
+window.hideVibeOverlay = hideVibeOverlay;
+window.showVibeOverlay = showVibeOverlay;
 // Fetch and display popular topics
 async function fetchPopularTopics() {
 try {
@@ -666,11 +751,12 @@ function procesTopicAndNavigate(inputText, chatMode) {
             showSpellCheckDialogWithNavigation(originalTopic, topic, spellCheckResult.suggestions, chatMode);
             return;
         }
-    }
-
-    // No spelling errors, add topic and navigate
+    }    // No spelling errors, add topic and navigate
     addTopicToListAndNavigate(topic, chatMode);
 }
+
+// Make procesTopicAndNavigate globally accessible for vibe form
+window.procesTopicAndNavigate = procesTopicAndNavigate;
 
 // Function to add topic and navigate to chat mode
 function addTopicToListAndNavigate(topic, chatMode) {
@@ -829,3 +915,21 @@ function showSpellCheckDialogWithNavigation(originalTopic, lowercaseTopic, sugge
     };
     document.addEventListener('keydown', escapeHandler);
 }
+
+// Check URL parameters on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+      // Check if showNSFWSettings parameter is present
+    if (urlParams.get('showNSFWSettings') === 'true') {
+        // Show the NSFW Settings popup with Save button
+        setTimeout(() => {
+            showVibeOverlay({
+                buttonText: 'Save',
+                iconClass: 'fas fa-save'
+            });
+            // Clean up the URL parameter without page reload
+            const newUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState(null, '', newUrl);
+        }, 100); // Small delay to ensure DOM is ready
+    }
+});

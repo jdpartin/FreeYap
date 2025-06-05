@@ -2,9 +2,9 @@
 
 /* Logo styling */
 .logo-image {
-    height: 23px;
+    font-size: 1em;
     vertical-align: middle;
-    margin-right: 8px;
+    margin-right: 4px;
 }
 
 /* Simplified styling for video chat widget */
@@ -236,10 +236,6 @@ video::-webkit-media-controls-fullscreen-button {
     min-width: 0; /* Allow flex shrinking */
 }
 
-#chat-session-title .logo-image {
-    flex-shrink: 0; /* Prevent logo from shrinking */
-}
-
 /* Detached PiP mode - Fixed to window */
 .pip-detached {
     position: fixed !important;
@@ -303,11 +299,6 @@ video::-webkit-media-controls-fullscreen-button {
         font-size: 0.9rem; /* Slightly smaller font on mobile */
         overflow: hidden; /* Prevent overflow */
         flex-shrink: 1; /* Allow shrinking if needed */
-    }
-
-    #chat-session-title .logo-image {
-        height: 20px; /* Slightly smaller logo on mobile */
-        margin-right: 6px; /* Reduce margin */
     }
 
     /* Ensure video effects column can shrink properly on mobile */
