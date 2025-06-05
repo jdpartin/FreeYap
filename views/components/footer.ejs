@@ -1,7 +1,8 @@
     <footer class="footer text-center py-3 mt-4">
-    <div>&copy; 2025 FreeYap. All rights reserved.</div>
-    <div>
-      <a href="#" id="nsfw-settings-link" class="text-secondary">NSFW Settings</a> ·
+    <div>&copy; 2025 FreeYap. All rights reserved.</div>    <div>
+      <% if (typeof isHomePage !== 'undefined' && isHomePage) { %>
+        <a href="#" id="nsfw-settings-link" class="text-secondary">NSFW Settings</a> ·
+      <% } %>
       <a href="/terms" class="text-secondary">Terms of Service</a> ·
       <a href="/privacy" class="text-secondary">Privacy Policy</a> ·
       <a href="/safety" class="text-secondary">Protect Yourself Online</a> ·
@@ -22,8 +23,8 @@
 <% if (typeof isHomePage === 'undefined' || !isHomePage) { %>
   <!--<script src="/js/adManager.js"></script>-->
 <% } %>
-
   <!-- NSFW Settings Footer Link Handler -->
+  <% if (typeof isHomePage !== 'undefined' && isHomePage) { %>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const nsfwSettingsLink = document.getElementById('nsfw-settings-link');
@@ -44,6 +45,7 @@
       }
     });
   </script>
+  <% } %>
   
 </body>
 </html>

@@ -500,6 +500,34 @@ document.querySelectorAll('.chat-interface-card').forEach(button => {    button.
         selectedChatMode = button.getAttribute('href');
         window.selectedChatMode = selectedChatMode; // Update global reference
         
+        // First, check if there's something typed in the topic input and add it
+        if (topicInput.value.trim() !== '' && topics.length < 10) {
+            const originalTopic = topicInput.value.trim();
+            const topic = originalTopic.toLowerCase();
+            
+            // Check if topic already exists (case-insensitive)
+            if (!topics.some(existingTopic => existingTopic.toLowerCase() === topic)) {
+                // Check spelling if spell checker is available
+                if (window.freeYapSpellChecker && window.freeYapSpellChecker.isInitialized) {
+                    const spellCheckResult = checkTopicSpelling(topic);
+                    if (spellCheckResult.hasErrors && spellCheckResult.suggestions.length > 0) {
+                        // Show spell check dialog with navigation callback
+                        showSpellCheckDialogWithNavigation(originalTopic, topic, spellCheckResult.suggestions, selectedChatMode);
+                        return;
+                    }
+                }
+                
+                // Add the topic to the list
+                addTopicToList(topic);
+            }
+            
+            // Clear the input after adding
+            topicInput.value = '';
+            addTopicBtn.classList.add('d-none');
+            updateInputIcon('');
+        }
+        
+        // Now proceed with the original logic
         // Only show vibe check overlay for video chat mode
         if (selectedChatMode === '/video-chat') {
             // Check if user has saved preferences with checkbox checked
@@ -768,9 +796,26 @@ function addTopicToListAndNavigate(topic, chatMode) {
     addTopicBtn.classList.add('d-none');
     updateInputIcon('');
     
-    // Navigate to chat mode with updated topics
-    const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
-    window.location.href = `${chatMode}?${queryParams}`;
+    // Check if this is video chat and handle vibe form accordingly
+    if (chatMode === '/video-chat') {
+        // Set the selected chat mode for potential vibe form usage
+        window.selectedChatMode = chatMode;
+        
+        // Check if user has saved preferences with checkbox checked
+        if (shouldBypassVibeForm()) {
+            console.log('Bypassing vibe form - user has saved preferences');
+            // Navigate directly to video chat with topics
+            const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+            window.location.href = `${chatMode}?${queryParams}`;
+        } else {
+            // Show vibe form overlay for video chat
+            showVibeOverlay();
+        }
+    } else {
+        // For other modes, navigate directly with topics
+        const queryParams = new URLSearchParams({ topics: JSON.stringify(topics) });
+        window.location.href = `${chatMode}?${queryParams}`;
+    }
 }
 
 // Modified spell check dialog that includes navigation functionality

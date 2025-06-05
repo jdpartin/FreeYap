@@ -128,10 +128,10 @@ class BlockWidget
             // sort by date descending and mark the first one as (this interaction)
             const sortedIPs = Array.from(this.peerIPHistory.entries()).sort((a, b) => b[0] - a[0]);
 
-            function createInteractionOption(date, ip)
+            function createInteractionOption(date, hashed_ip)
             {
                 const option = document.createElement('option');
-                option.value = date;
+                option.value = hashed_ip;
                 option.textContent = date.toLocaleString();
                 return option;
             }
@@ -183,31 +183,28 @@ class BlockWidget
         try
         {
             const formData = new FormData(this.submitFormElement);
-            const date = formData.get('block-interaction');
 
-            const blockedIp = this.peerIPHistory.get(new Date(date));
+            const blockedIp = formData.get('block-interaction');
             const sourceIp = this.webRTCConnectionManager.myIP;
 
             if (!blockedIp || !sourceIp)
             {
-                this.#hideBlock();
-                this.webRTCConnectionManager.CloseConnection();
                 return;
             }
 
             await this.webRTCConnectionManager.matchmakingAPIClient.blockUser(sourceIp, blockedIp);
 
-            this.#hideBlock();
             this.#showConfirmation();
-            this.webRTCConnectionManager.CloseConnection();
         }
         catch (error)
         {
             console.error('Failed to block user:', error);
-            alert('Failed to block user. Please try again or contact help@freeyap.com directly.');
         }
         finally
         {
+            this.#hideBlock();
+            this.webRTCConnectionManager.CloseConnection();
+            
             // Restore submit button
             const submitButton = this.submitFormElement.querySelector('#submit-block-user');
             if (submitButton) {

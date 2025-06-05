@@ -8,10 +8,7 @@ Need to consolidate css into reusable classes
 
 If you click the NSFW settings in the footer it takes you to the home page which means it will disconnect your call
 
-The logic to auto add the topic that is in the topic input when you click a button is no longer working
-
-The blocking system is not working, when you submit the block you dont get the confirmation indicating an error
-
 Verify the matchmaking system is still fully functional and reliable
 
 There were 90+ topics stuck in vector db verify cleanup
+

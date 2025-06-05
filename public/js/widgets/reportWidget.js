@@ -133,11 +133,11 @@ class ReportWidget
             // sort by date descending and mark the first one as (this interaction)
             const sortedIPs = Array.from(this.peerIPHistory.entries()).sort((a, b) => b[0] - a[0]);
 
-            function createInteractionOption(date)
+            function createInteractionOption(date, hashed_ip)
             {
                 const option = document.createElement('option');
-                option.value = date;
-                option.textContent = date.toLocaleString();// DO NOT show the IP in the VALUE or the TEXT
+                option.value = hashed_ip;
+                option.textContent = date.toLocaleString();
                 return option;
             }
 
@@ -153,7 +153,7 @@ class ReportWidget
             // Add all other interactions
             sortedIPs.slice(1).forEach(([date, ip]) =>
             {
-                const option = createInteractionOption(date);
+                const option = createInteractionOption(date, ip);
                 this.reportInteractionSelectElement.appendChild(option);
             });
         }
@@ -203,12 +203,7 @@ class ReportWidget
             submitButton.disabled = true;
 
             const selectedInteraction = this.reportInteractionSelectElement.value;
-            var ip = this.peerIPHistory.get(new Date(selectedInteraction));
-
-            if (!ip) {
-                alert('Please select a valid interaction.');
-                return;
-            }
+            var ip = formData.get('report-interaction');
 
             // Prepare submission data
             const reportData = {
@@ -227,24 +222,21 @@ class ReportWidget
                 body: JSON.stringify(reportData)
             });
 
-            const result = await response.json();
-
-            if (result.success) {
-                // Hide the form and show confirmation
-                this.#hideReport();
-                this.#showConfirmation();
-                
-                // Reset the form
-                this.submitFormElement.reset();
-                this.#updateCharacterCount();
-            } else {
-                throw new Error(result.error || 'Failed to submit report');
-            }
-
-        } catch (error) {
+        }
+        catch (error)
+        {
             console.error('Failed to submit report:', error);
-            alert('Failed to submit report. Please try again or contact help@freeyap.com directly.');
-        } finally {
+        }
+        finally
+        {
+
+            this.#hideReport();
+            this.#showConfirmation();
+
+            // Reset the form
+            this.submitFormElement.reset();
+            this.#updateCharacterCount();
+
             // Restore submit button
             const submitButton = this.submitFormElement.querySelector('#submit-report-illegal');
             if (submitButton) {

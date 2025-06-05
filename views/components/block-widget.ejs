@@ -25,7 +25,7 @@
               <form id="block-user-submit-form">
                 <div class="mb-3">
                     <label for="block-interaction" class="form-label fw-bold">Which user would you like to block?</label>
-                    <select id="block-interaction" name="interaction" class="form-select" required>
+                    <select id="block-interaction" name="block-interaction" class="form-select" required>
                         <!-- Options will be populated dynamically -->
                     </select>
                 </div>
@@ -39,7 +39,8 @@
                 <div class="d-flex justify-content-between mt-3">
                     <button type="button" id="cancel-block-user" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-1"></i>Cancel
-                    </button>                    <button type="submit" id="submit-block-user" class="btn btn-danger" style="background-color: var(--primary); border-color: var(--primary);">
+                    </button>                    
+                    <button type="submit" id="submit-block-user" class="btn btn-danger" style="background-color: var(--primary); border-color: var(--primary);">
                         <i class="fas fa-ban me-1"></i>Block User
                     </button>
                 </div>
@@ -59,7 +60,8 @@
         <div class="text-center">
             <div class="success-icon">
                 <i class="fas fa-check-circle text-success"></i>
-            </div>            <h5 class="mt-3 mb-2">User Blocked</h5>
+            </div>            
+            <h5 class="mt-3 mb-2">User Blocked</h5>
             <p class="text-muted">
                 A temporary block has been created for this user's current network connection. Due to our privacy-focused design, this block will automatically expire and may not prevent all future encounters.
             </p>
