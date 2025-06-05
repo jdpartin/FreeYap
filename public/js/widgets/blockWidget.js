@@ -18,29 +18,42 @@ class BlockWidget
         this.closeConfirmationButton = document.getElementById('close-block-confirmation');
         this.blockInteractionSelectElement = document.getElementById('block-interaction');
 
+        // To be clear, these are hashed. We never store actual IPs.
         this.peerIPHistory = new Map();
 
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
+
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.PEER_IP_HASH_RECEIVED, () =>
+        {
+            this.#handlePeerIPHashReceived();
+        });
+
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
         });
 
         this.#setupUIEventListeners();
-    }    
+    }
+
     #handleConnectionReady()
     {
-        this.blockButtonElement.disabled = false;
+        // enabled once an IP has been received, not here.
+    }
 
+    #handlePeerIPHashReceived()
+    {
         var peerIP = this.webRTCConnectionManager.GetPeerIP();
 
-        if (peerIP) // unavailable during local testing
+        if (peerIP)
         {
-            this.peerIPHistory.set(new Date(), this.webRTCConnectionManager.GetPeerIP());
+            this.peerIPHistory.set(new Date(), peerIP);
+            this.blockButtonElement.disabled = false;
         }
     }
 
@@ -48,6 +61,7 @@ class BlockWidget
     {
         // dont disable the button, they can block past connections
     }    
+
     #setupUIEventListeners()
     {
         if (this.blockButtonElement)
@@ -118,7 +132,7 @@ class BlockWidget
             {
                 const option = document.createElement('option');
                 option.value = date;
-                option.textContent = `${ip} - ${date.toLocaleString()}`;
+                option.textContent = date.toLocaleString();
                 return option;
             }
 
@@ -127,7 +141,7 @@ class BlockWidget
             {
                 const [latestDate, latestIP] = sortedIPs[0];
                 const option = createInteractionOption(latestDate, latestIP);
-                option.textContent = `This interaction (${latestIP}) - ${latestDate.toLocaleString()}`;
+                option.textContent = `${latestDate.toLocaleString()} (Most Recent)`;
                 this.blockInteractionSelectElement.appendChild(option);
             }
 
@@ -140,7 +154,8 @@ class BlockWidget
         }
         else
         {
-            this.#hideBlock();        }
+            this.#hideBlock();        
+        }
     }
 
     #hideBlock()
@@ -161,60 +176,38 @@ class BlockWidget
         } else {
             this.charCountElement.style.color = '#6c757d'; // Gray
         }
-    }    async #handleFormSubmission()
+    }    
+    
+    async #handleFormSubmission()
     {
-        try {
+        try
+        {
             const formData = new FormData(this.submitFormElement);
-            const reason = formData.get('reason');
+            const date = formData.get('block-interaction');
 
-            // Get submit button and show loading state
-            const submitButton = this.submitFormElement.querySelector('#submit-block-user');
-            const originalText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Blocking...';
-            submitButton.disabled = true;
+            const blockedIp = this.peerIPHistory.get(new Date(date));
+            const sourceIp = this.webRTCConnectionManager.myIP;
 
-            const selectedInteraction = this.blockInteractionSelectElement.value;
-            var ip = this.peerIPHistory.get(new Date(selectedInteraction));
-
-            if (!ip) {
-                alert('Please select a valid interaction.');
+            if (!blockedIp || !sourceIp)
+            {
+                this.#hideBlock();
+                this.webRTCConnectionManager.CloseConnection();
                 return;
             }
 
-            // Prepare submission data
-            const blockData = {
-                reason: reason || '',
-                userIP: ip,
-                timestamp: new Date().toISOString()
-            };
+            await this.webRTCConnectionManager.matchmakingAPIClient.blockUser(sourceIp, blockedIp);
 
-            // Submit to API
-            const response = await fetch('/api/block/submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(blockData)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Hide the form and show confirmation
-                this.#hideBlock();
-                this.#showConfirmation();
-                
-                // Reset the form
-                this.submitFormElement.reset();
-                this.#updateCharacterCount();
-            } else {
-                throw new Error(result.error || 'Failed to block user');
-            }
-
-        } catch (error) {
+            this.#hideBlock();
+            this.#showConfirmation();
+            this.webRTCConnectionManager.CloseConnection();
+        }
+        catch (error)
+        {
             console.error('Failed to block user:', error);
             alert('Failed to block user. Please try again or contact help@freeyap.com directly.');
-        } finally {
+        }
+        finally
+        {
             // Restore submit button
             const submitButton = this.submitFormElement.querySelector('#submit-block-user');
             if (submitButton) {

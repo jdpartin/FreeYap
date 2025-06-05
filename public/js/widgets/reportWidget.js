@@ -21,28 +21,41 @@ class ReportWidget
         // To be clear, these are hashed. We never store actual IPs.
         this.peerIPHistory = new Map();
 
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
+
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.PEER_IP_HASH_RECEIVED, () =>
+        {
+            this.#handlePeerIPHashReceived();
+        });
+
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
         });
+
+        window.reportWidget = this; // For debugging purposes
 
         this.#setupUIEventListeners();
     }    
     
     #handleConnectionReady()
     {
-        this.reportButtonElement.disabled = false;
+        // enabled once an IP has been received, not here.
+    }
 
+    #handlePeerIPHashReceived()
+    {
         var peerIP = this.webRTCConnectionManager.GetPeerIP();
 
-        if (peerIP) // unavailable during local testing
+        if (peerIP)
         {
-            this.peerIPHistory.set(new Date(), this.webRTCConnectionManager.GetPeerIP());
+            this.peerIPHistory.set(new Date(), peerIP);
+            this.reportButtonElement.disabled = false;
         }
     }
 

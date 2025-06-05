@@ -22,27 +22,24 @@ class VideoChatWidget
         // Make this widget instance available globally for other modules
         window.videoChatWidget = this;
 
-        this.webRTCConnectionManager.on('matchFound', () =>
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
+
+        this.webRTCConnectionManager.on(eventTypes.MATCH_FOUND, () =>
         {
             this.#handleMatchFound();
         });
 
-        this.webRTCConnectionManager.on('peerCreated', () =>
+        this.webRTCConnectionManager.on(eventTypes.PEER_CREATED, () =>
         {
             this.#handlePeerCreated();
         });
         
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionReady', () =>
-        {
-            this.#handleConnectionReady();
-        });
-
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
         });
@@ -85,6 +82,7 @@ class VideoChatWidget
         catch (error)
         {
             console.error('VideoChat: Failed to initialize media:', error);
+            this.webRTCConnectionManager.ReportError('<i class="fas fa-exclamation-triangle"></i> Camera and/or microphone access denied.');
             return false;
         }
     }

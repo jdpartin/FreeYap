@@ -94,6 +94,16 @@ class MatchmakingManager
 
     static async BlockUser(source_ip: string, blocked_ip: string): Promise<void>
     {
+        if (!source_ip || !blocked_ip)
+        {
+            throw new Error('Both source and blocked IPs are required to block a user.');
+        }
+
+        if (source_ip == blocked_ip)
+        {
+            throw new Error('Cannot block yourself.');
+        }
+        
         // the ips are hashed already
         await db.executeStoredProcedure('insert_matchmaking_blocking_entry', { source_ip, blocked_ip });
     }
@@ -152,6 +162,13 @@ class MatchmakingManager
         if (!socketId || !mode)
         {
             throw new Error('Invalid parameters for matchmaking. SocketId and mode are required.');
+        }
+
+        // if the mode is not video then we should set the gore and nudity to null since they are not used
+        if (mode !== 'video')
+        {
+            gore = null;
+            nudity = null;
         }
 
         if (topics && topics.length > 0) // User has topics
@@ -282,6 +299,8 @@ class MatchmakingManager
                 matchedSocketId: socketId,
                 isInitiator: false
             });
+
+            console.log(`Connection triggered between ${socketId} and ${matchedSocketId}`);
         }
         catch (error)
         {
@@ -329,6 +348,14 @@ class MatchmakingManager
         ipHash: string | null = null
     ): Promise<boolean>
     {
+
+        // if the mode is not video then we should set the gore and nudity to null since they are not used
+        if (mode !== 'video')
+        {
+            gore = null;
+            nudity = null;
+        }
+
         // Users with topics
         if (topics && topics.length > 0)
         {

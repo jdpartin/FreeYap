@@ -20,13 +20,22 @@ class WebRTCConnectionManager
             CONNECTION_LOST_MAX_ATTEMPTS: 'connectionLostMaxAttempts',
             PEER_TIMEOUT: 'peerTimeout',
             PEER_CREATED: 'peerCreated',
+            PEER_IP_HASH_RECEIVED: 'peerIPHashReceived',
+
+            // TURN Server Events
+            TURN_USAGE_READY: 'turnUsageReady',
 
             // Socket Connection Events
             SOCKET_CONNECTED: 'socketConnected',
             SOCKET_CONNECTION_ERROR: 'socketConnectionError',
             SOCKET_CONNECTION_TIMEOUT: 'socketConnectionTimeout',
-            MAX_RECONNECT_ATTEMPTS_REACHED: 'maxReconnectAttemptsReached'
+            MAX_RECONNECT_ATTEMPTS_REACHED: 'maxReconnectAttemptsReached',
+
+            // Error Events
+            ERROR_REPORTED: 'errorReported'
         });
+
+        this.reportedError = null;
         
         this.eventTarget = new EventTarget();// EventTarget for custom events
 
@@ -69,6 +78,14 @@ class WebRTCConnectionManager
     //#endregion
 
     //#region Public Methods
+
+
+    ReportError(message, error = null)
+    {
+        console.error(`WebRTCConnectionManager Error: ${message}`, error);
+        this.reportedError = message;
+        this.#raiseEvent(this.EventTypes.ERROR_REPORTED);
+    }
 
     /**
      * Sends a message over the WebRTC connection.
@@ -548,7 +565,7 @@ class WebRTCConnectionManager
                 // strip the local IP if included
                 var splitIp = data.ip.split(',');
                 var fixedIP = data.ip;
-
+                /*
                 if (splitIp.length > 1)
                 {
                     // remove the local IP from the list
@@ -570,6 +587,8 @@ class WebRTCConnectionManager
                 {
                     fixedIP = null;
                 }
+
+                */
 
                 this.myIP = this.#hashIP(fixedIP);
             }
@@ -924,6 +943,7 @@ class WebRTCConnectionManager
             callbackFunction: data => 
             {
                 this.peerIP = data.ip;// already hashed be peer
+                this.#raiseEvent(this.EventTypes.PEER_IP_HASH_RECEIVED);
             }
         });
 
@@ -993,14 +1013,6 @@ class WebRTCConnectionManager
                         const remoteUsingTURN = remoteCandidate.candidateType === 'relay';
                         
                         this.peerIsUsingTURN = localUsingTURN || remoteUsingTURN;
-                        
-                        console.log(`TURN Detection Results:`, {
-                            localCandidateType: localCandidate.candidateType,
-                            remoteCandidateType: remoteCandidate.candidateType,
-                            localAddress: localCandidate.address || localCandidate.ip,
-                            remoteAddress: remoteCandidate.address || remoteCandidate.ip,
-                            usingTURN: this.peerIsUsingTURN
-                        });
                         
                         return;
                     }

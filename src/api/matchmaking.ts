@@ -85,4 +85,29 @@ router.post('/delayed-matchmaking', async (req: Request, res: Response) =>
     }
 });
 
+router.post('/block-user', async (req: Request, res: Response) =>
+{
+    try
+    {
+        const { sourceIp, blockedIp } = req.body;
+
+        if (!sourceIp || !blockedIp)
+        {
+            res.status(400).json({ error: 'sourceIp and blockedIp are required' });
+            return;
+        }
+
+        await MatchmakingManager.BlockUser(sourceIp, blockedIp);
+        res.status(200).json({ message: 'User blocked successfully' });
+    }
+    catch (error)
+    {
+        console.error('Error in /block-user:', error);
+        res.status(500).json({ 
+            error: 'Failed to block user',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 export default router;

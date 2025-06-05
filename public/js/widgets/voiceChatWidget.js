@@ -1,8 +1,10 @@
 class VoiceChatWidget
-{
+{    
+    
     constructor(webRTCConnectionManager)
-    {
+    {        
         this.webRTCConnectionManager = webRTCConnectionManager;
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
 
         this.eventTarget = new EventTarget();
         this.messageType = 'voice-chat';
@@ -17,22 +19,22 @@ class VoiceChatWidget
         // Make this widget instance available globally for other modules
         window.voiceChatWidget = this;
 
-        this.webRTCConnectionManager.on('matchFound', () =>
+        this.webRTCConnectionManager.on(eventTypes.MATCH_FOUND, () =>
         {
             this.#handleMatchFound();
         });
 
-        this.webRTCConnectionManager.on('peerCreated', () =>
+        this.webRTCConnectionManager.on(eventTypes.PEER_CREATED, () =>
         {
             this.#handlePeerCreated();
         });
         
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
         });
@@ -87,10 +89,11 @@ class VoiceChatWidget
             }
 
             return true;
-        }
+        }        
         catch (error)
         {
             console.error('VoiceChat: Failed to initialize media:', error);
+            this.webRTCConnectionManager.ReportError('<i class="fas fa-exclamation-triangle"></i> Microphone access denied.');
             return false;
         }
     }

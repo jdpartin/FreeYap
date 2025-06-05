@@ -1,8 +1,10 @@
 class TextChatWidget
-{
+{    
+    
     constructor(webRTCConnectionManager)
-    {
+    {        
         this.webRTCConnectionManager = webRTCConnectionManager;
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
 
         this.eventTarget = new EventTarget();
         this.messageType = 'text-chat';
@@ -16,15 +18,15 @@ class TextChatWidget
 
         this.isFirstMessage = true;
 
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
-        });        
+        });
         
         this.sendButton.addEventListener('click', () =>    
         {

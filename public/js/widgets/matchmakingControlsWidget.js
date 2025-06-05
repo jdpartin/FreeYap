@@ -21,6 +21,11 @@ class MatchmakingControlsWidget
         this.#setupUIEventListeners();
     }
 
+    Skip()
+    {
+        this.webRTCConnectionManager.CloseConnection();
+    }
+
     async #handleConnectionReady()
     {
         // Skip button count down

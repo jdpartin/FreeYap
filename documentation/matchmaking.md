@@ -13,6 +13,8 @@ The matchmaking system is designed to pair users based on the semantic similarit
 - When a user starts matchmaking, the system queries the vector database with all the topics the user has entered.
 - The vector database returns ranked results based on semantic similarity.
 - The system filters out any results with a semantic similarity score below **0.9**.
+- **Content preference filtering** is applied based on nudity and gore preferences.
+- **Blocking filtering** is applied to exclude any users with active blocking entries.
 - The system identifies the queued user with the most matches from the filtered results.
 - If a match is found, the matched user is removed from the queue, and the connection is triggered.
 - If no match is found, the user is added to the queue.
@@ -20,6 +22,7 @@ The matchmaking system is designed to pair users based on the semantic similarit
 ### 3. Delayed Matchmaking
 - After 10 seconds, the user sends a delayed match request to the API.
 - The user is temporarily removed from the queue and delayed matchmaking is performed:
+  - **All matches are subject to content preference filtering and blocking checks.**
   - If the user has topics:
     - The system attempts to match them with the oldest user who did not enter any topics.
     - If no such user is available, it matches them with another delayed user.
@@ -31,6 +34,7 @@ The matchmaking system is designed to pair users based on the semantic similarit
 
 ### 4. Matching Without Topics
 - Users who start matchmaking without topics follow a similar approach:
+  - **All matches are subject to content preference filtering and blocking checks.**
   - Their first choice is a delayed user with topics.
   - After 10 seconds, they call the delayed matchmaking function.
   - The system attempts to match them with the oldest random chat user.
@@ -44,10 +48,32 @@ The matchmaking system is designed to pair users based on the semantic similarit
 
 ### Vector Database
 - Used to perform semantic similarity searches on user topics.
+- **Note**: The vector database only enforces topic similarity, nudity, and gore preferences. Blocking enforcement is handled exclusively by the relational database during the matching process.
 
 ## Matching Criteria
 - Only results with a semantic similarity score of **0.9 or higher** are considered for matching.
 - The user with the highest number of matching topics is selected as the best match.
+
+### Content Preference Filtering
+- **Nudity Preference**: Users are matched based on their nudity preference settings:
+  - `true` matches with `true` or `null`
+  - `false` matches with `false` or `null`
+  - `null` matches with any value (`true`, `false`, or `null`)
+  - **Never matches**: `true` with `false`
+
+- **Gore Preference**: Users are matched based on their gore content preference settings:
+  - `true` matches with `true` or `null`
+  - `false` matches with `false` or `null`
+  - `null` matches with any value (`true`, `false`, or `null`)
+  - **Never matches**: `true` with `false`
+
+### Blocking System
+- Users are **never matched** if there is a blocking entry in the `matchmaking_blocking` table between them
+- Blocking works **bidirectionally**: if User A blocks User B, or User B blocks User A, they will not be matched
+- The system checks for blocking entries in **both directions**:
+  - `source_ip = currentUser AND blocked_ip = potentialMatch`
+  - `source_ip = potentialMatch AND blocked_ip = currentUser`
+- Only active blocking entries (where `expires > NOW()`) are considered
 
 ## Timestamp Preservation
 - Any time a user is removed from the queue by a delayed matching function and then re-entered, their original timestamp is maintained.

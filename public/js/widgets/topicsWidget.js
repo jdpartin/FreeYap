@@ -28,24 +28,32 @@ class TopicsWidget
         // Render topics immediately
         this.#renderBasicTopics();
 
-        this.webRTCConnectionManager.on('peerCreated', () =>
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
+
+        this.webRTCConnectionManager.on(eventTypes.PEER_CREATED, () =>
         {
             this.#handlePeerCreated();
         });
 
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
         });
 
-        this.webRTCConnectionManager.on('connectionLostMaxAttempts', () =>
+        this.webRTCConnectionManager.on(eventTypes.MAX_RECONNECT_ATTEMPTS_REACHED, () =>
         {
             this.#handleConnectionLostAndMaxAttempts();
+        });
+
+        this.webRTCConnectionManager.on(eventTypes.ERROR_REPORTED, () =>
+        {
+            var error = this.webRTCConnectionManager.reportedError;
+            this.partnerTopicsListElement.innerHTML = `<div class="topics-empty">${error}</div>`;
         });
 
         window.topicsWidget = this; // Expose for debugging

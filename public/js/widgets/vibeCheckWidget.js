@@ -1,9 +1,13 @@
 class VibeCheckWidget
-{    constructor(webRTCConnectionManager)
+{    
+    
+    constructor(webRTCConnectionManager)
     {
         this.webRTCConnectionManager = webRTCConnectionManager;
+        const eventTypes = this.webRTCConnectionManager.EventTypes;
 
-        this.messageType = 'vibe-check';        this.vibeCheckButtonElement = document.getElementById('vibe-check-button');
+        this.messageType = 'vibe-check';        
+        this.vibeCheckButtonElement = document.getElementById('vibe-check-button');
         this.vibeCheckFormElement = document.getElementById('vibe-check-form');
         this.vibeCheckOverlayElement = document.getElementById('vibe-check-overlay');
         this.cancelButtonElement = document.getElementById('cancel-vibe-check');
@@ -12,12 +16,12 @@ class VibeCheckWidget
         // To be clear, these are hashed. We never store actual IPs.
         this.peerIPHistory = new Map();
 
-        this.webRTCConnectionManager.on('connectionReady', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_READY, () =>
         {
             this.#handleConnectionReady();
         });
 
-        this.webRTCConnectionManager.on('connectionClosed', () =>
+        this.webRTCConnectionManager.on(eventTypes.CONNECTION_CLOSED, () =>
         {
             this.#handleConnectionClosed();
         });

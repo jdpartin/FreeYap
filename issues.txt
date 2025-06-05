@@ -4,23 +4,6 @@ fetching embeddings could be made more efficient by having each client keep up w
 their topics and passing them over webrtc. The issue is that embeddings are large and would require multiple
 messages to send, we dont have a system to support multi-part messages yet
 
-Report Illegal use button is not well styled on mobile and hard to use, footer cuts off part of it
-
-When you first load the page we need the topics widget to display appropriate message indicating status
-for example, if the camera permissions are denied then display that
-Also, the initial waiting for partner message is missing the spinner
-
-center popular topics
-
 Need to consolidate css into reusable classes
 
-We have a system set up to store and exchange hashed IPs between peers
-We need to set up the block form to store the blocked IP hashes in cookies and
-the server to accept the list of blocked IPs and the user's IP at the time of matchmaking
-to apply logic to not match with blocked IPs. Since we are directly receiving hashes the
-logic to compare IPs for a block will be easy, we will receive a hashed IP and list of blocked hashed IPs 
-for direct comparison
-
 If you click the NSFW settings in the footer it takes you to the home page which means it will disconnect your call
-
-The nudity and gore filtering are currently applying to all chat modes, we need to only apply them to video

@@ -10,6 +10,9 @@ This document outlines the database schema for the FreeYap project, including ta
                 disconnected users from queue via foreign key
 - `has_topics` (BOOLEAN): Indicates if the user has associated topics.
 - `chat_mode` (TEXT): The chat mode; video, voice, or text
+- `nudity` (BOOLEAN, nullable): User's nudity preference for matching.
+- `gore` (BOOLEAN, nullable): User's gore content preference for matching.
+- `ip_hash` (TEXT): Hashed IP address for blocking functionality.
 Foreign key on session id being in session_sockets, cascade on update or delete
 
 ### `queue_topics`
@@ -25,6 +28,12 @@ Foreign Key on session_id being in matchmaking_queue cascade on update or delete
 - `id` (UUID): Primary key auto generated
 - `topic` (TEXT): The topic that was used
 - `used_at` (TIMESTAMP): Auto generated, the time the topic was used
+
+### `matchmaking_blocking`
+- `id` (UUID): Primary key auto generated
+- `source_ip` (TEXT): Hashed IP address of the user who initiated the block
+- `blocked_ip` (TEXT): Hashed IP address of the user being blocked
+- `expires` (TIMESTAMP): When the blocking entry expires
 
 ## Naming Conventions
 
