@@ -81,8 +81,8 @@ class MatchmakingAPIClient
         {
             console.error('Error in delayed matchmaking:', error);
         }
-    }
-
+    }    
+    
     async blockUser(sourceIp, blockedIp)
     {
         try
@@ -107,6 +107,34 @@ class MatchmakingAPIClient
         catch (error)
         {
             console.error('Error blocking user:', error);
+            throw error;
+        }
+    }
+
+    async vibeCheck(reportedIp, sourceIP, gore, nudity, verified)
+    {
+        try
+        {
+            const response = await fetch(`${this.baseUrl}/vibe-check`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reportedIp, sourceIP, gore, nudity, verified })
+            });
+
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Vibe check submitted:', data);
+            return data;
+        }
+        catch (error)
+        {
+            console.error('Error submitting vibe check:', error);
             throw error;
         }
     }

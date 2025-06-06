@@ -23,14 +23,12 @@
                 <div class="mb-3">
                     <div class="content-options">
 
-                        <select class="form-select" required>
+                        <select class="form-select" id="vibe-check-interaction" required>
                             <option value="" disabled selected>-- Select Interaction --</option>
                             <!-- Will be filled dynamically with js -->
                         </select>
-                        <br>
-
-                        <label class="form-check-container" for="adult-content">
-                            <input class="form-check-input" type="radio" name="contentType" id="adult-content" value="adult-content" required>
+                        <br>                        <label class="form-check-container" for="nudity">
+                            <input class="form-check-input" type="checkbox" name="nudity" id="nudity" value="on">
                             <div class="form-check-content">
                                 <div class="content-type-option">
                                     <i class="bi bi-eye-slash" style="color:var(--primary);vertical-align:middle;"></i>
@@ -38,8 +36,8 @@
                                 </div>
                             </div>
                         </label>
-                        <label class="form-check-container" for="graphic-content">
-                            <input class="form-check-input" type="radio" name="contentType" id="graphic-content" value="graphic-content" required>
+                        <label class="form-check-container" for="gore">
+                            <input class="form-check-input" type="checkbox" name="gore" id="gore" value="on">
                             <div class="form-check-content">
                                 <div class="content-type-option">
                                     <i class="fas fa-skull" style="color:var(--primary);vertical-align:middle;"></i>

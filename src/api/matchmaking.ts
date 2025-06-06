@@ -110,4 +110,29 @@ router.post('/block-user', async (req: Request, res: Response) =>
     }
 });
 
+router.post('/vibe-check', async (req: Request, res: Response) =>
+{
+    try
+    {
+        const { reportedIp, sourceIP, gore, nudity, verified } = req.body;
+
+        if (!reportedIp || !sourceIP)
+        {
+            res.status(400).json({ error: 'reportedIp and sourceIP are required' });
+            return;
+        }
+
+        await MatchmakingManager.InsertVibeCheck(reportedIp, sourceIP, gore, nudity, verified);
+        res.status(200).json({ message: 'Vibe check saved successfully' });
+    }
+    catch (error)
+    {
+        console.error('Error in /vibe-check:', error);
+        res.status(500).json({ 
+            error: 'Failed to save vibe check',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 export default router;

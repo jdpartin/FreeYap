@@ -35,6 +35,15 @@ Foreign Key on session_id being in matchmaking_queue cascade on update or delete
 - `blocked_ip` (TEXT): Hashed IP address of the user being blocked
 - `expires` (TIMESTAMP): When the blocking entry expires
 
+### `vibe_checks`
+- `id` (UUID): Primary key auto generated
+- `hashed_ip` (TEXT): Hashed IP address of the user
+- `source_ip` (TEXT, not null): Hashed IP address of the user who submitted the vibe check
+- `gore` (BOOLEAN, default false): User's gore content preference
+- `nudity` (BOOLEAN, default false): User's nudity preference
+- `inserted_at` (TIMESTAMP, default NOW()): Timestamp when the vibe check was created
+- `verified` (BOOLEAN, default false): Whether the vibe check has been verified
+
 ## Naming Conventions
 
 - **Tables and Columns**: Use `snake_case` for all table and column names in the database.

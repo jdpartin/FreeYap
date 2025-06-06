@@ -575,7 +575,6 @@ class WebRTCConnectionManager
                                                 && !ip.trim().startsWith('::1'));
 
                     fixedIP = splitIp[0].trim();
-                    console.log('Using fixed IP');
                 }
                 else if (
                        data.ip.trim().startsWith('192.168.') 
@@ -586,12 +585,9 @@ class WebRTCConnectionManager
                 )
                 {
                     fixedIP = null;
-                    console.warn('Local IP detected, using null for myIP');
                 }
 
                 this.myIP = this.#hashIP(fixedIP);
-
-                console.log('My hashed IP address:', this.myIP);
             }
         }
         catch (error)

@@ -108,6 +108,32 @@ class MatchmakingManager
         await db.executeStoredProcedure('insert_matchmaking_blocking_entry', { source_ip, blocked_ip });
     }
 
+    static async InsertVibeCheck(
+        reportedIp: Text, 
+        sourceIp: Text,
+        gore: Boolean | null, 
+        nudity: Boolean | null,
+        verified: Boolean | null
+    ): Promise<void>
+    {
+        if (!reportedIp)
+        {
+            throw new Error('Reported IP is required for vibe check.');
+        }
+
+        gore ??= false;
+        nudity ??= false;
+        verified ??= false;        
+        
+        return db.executeStoredProcedure('insert_vibe_check', {
+            hashedIp: reportedIp,
+            sourceIp: sourceIp,
+            gorePreference: gore,
+            nudityPreference: nudity,
+            verifiedStatus: verified
+        });
+    }
+
 
     // Public method to get embeddings for semantic similarity comparison
     static async getEmbedding(topic: string): Promise<number[]>
@@ -162,10 +188,29 @@ class MatchmakingManager
         if (!socketId || !mode)
         {
             throw new Error('Invalid parameters for matchmaking. SocketId and mode are required.');
-        }
+        }        
+        
+        if (mode == 'video')
+        {
+            const vibeCheckResult = await db.executeFunction('is_user_vibe_checked',
+                { hashedIp: ipHash }) as { nudity: boolean; gore: boolean }[];
 
-        // if the mode is not video then we should set the gore and nudity to null since they are not used
-        if (mode !== 'video')
+            if (vibeCheckResult && vibeCheckResult.length > 0)
+            {
+                const enforcement = vibeCheckResult[0];
+                
+                if (enforcement.nudity)
+                {
+                    nudity = true;
+                }
+
+                if (enforcement.gore)
+                {
+                    gore = true;
+                }
+            }
+        }
+        else // no gore or nudity for non-video modes
         {
             gore = null;
             nudity = null;
