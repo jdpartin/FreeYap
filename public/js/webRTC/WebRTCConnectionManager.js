@@ -563,12 +563,11 @@ class WebRTCConnectionManager
                 const data = await response.json();
 
                 // strip the local IP if included
+                var splitIp = data.ip.split(',');
                 var fixedIP = data.ip;
                 
                 if (splitIp.length > 1)
                 {
-                    var splitIp = data.ip.split(',');
-                    
                     splitIp = splitIp.filter(ip => !ip.trim().startsWith('192.168.') 
                                                 && !ip.trim().startsWith('10.') 
                                                 && !ip.trim().startsWith('172.') 
