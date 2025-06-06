@@ -563,19 +563,20 @@ class WebRTCConnectionManager
                 const data = await response.json();
 
                 // strip the local IP if included
-                var splitIp = data.ip.split(',');
                 var fixedIP = data.ip;
-                /*
+                
                 if (splitIp.length > 1)
                 {
-                    // remove the local IP from the list
+                    var splitIp = data.ip.split(',');
+                    
                     splitIp = splitIp.filter(ip => !ip.trim().startsWith('192.168.') 
                                                 && !ip.trim().startsWith('10.') 
                                                 && !ip.trim().startsWith('172.') 
                                                 && !ip.trim().startsWith('127.')
                                                 && !ip.trim().startsWith('::1'));
 
-                    fixedIP = splitIp[0].trim(); // Use the first valid IP address
+                    fixedIP = splitIp[0].trim();
+                    console.log('Using fixed IP');
                 }
                 else if (
                        data.ip.trim().startsWith('192.168.') 
@@ -586,11 +587,12 @@ class WebRTCConnectionManager
                 )
                 {
                     fixedIP = null;
+                    console.warn('Local IP detected, using null for myIP');
                 }
 
-                */
-
                 this.myIP = this.#hashIP(fixedIP);
+
+                console.log('My hashed IP address:', this.myIP);
             }
         }
         catch (error)
