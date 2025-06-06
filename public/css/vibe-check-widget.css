@@ -737,3 +737,174 @@
 * {
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
+
+/* Disabled state styling for content type options */
+.content-options .form-check-container:has(.form-check-input:disabled) {
+    opacity: 0.5;
+    pointer-events: auto; /* Changed from none to allow tooltip hover */
+    background: 
+        linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(173, 181, 189, 0.05)),
+        radial-gradient(circle at 20% 20%, rgba(108, 117, 125, 0.03) 0%, transparent 50%);
+    border-color: rgba(108, 117, 125, 0.2);
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.content-options .form-check-container:has(.form-check-input:disabled)::before {
+    background: linear-gradient(90deg, rgba(108, 117, 125, 0.3), rgba(108, 117, 125, 0.2));
+    left: 0;
+    animation: none;
+}
+
+.content-options .form-check-container:has(.form-check-input:disabled)::after {
+    opacity: 0.3;
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.2), transparent);
+}
+
+.content-options .form-check-container:has(.form-check-input:disabled):hover {
+    border-color: rgba(108, 117, 125, 0.2);
+    background: 
+        linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(173, 181, 189, 0.05)),
+        radial-gradient(circle at 20% 20%, rgba(108, 117, 125, 0.03) 0%, transparent 50%);
+    transform: none !important;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent clicking on disabled checkbox but allow label hover for tooltip */
+.content-options .form-check-container:has(.form-check-input:disabled) .form-check-input {
+    pointer-events: none;
+}
+
+.content-options .form-check-container:has(.form-check-input:disabled) .form-check-content {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.content-options .form-check-container:has(.form-check-input:disabled) .form-check-content strong {
+    color: #6c757d;
+    opacity: 0.6;
+}
+
+.content-options .form-check-container:has(.form-check-input:disabled) i {
+    opacity: 0.4 !important;
+    color: #6c757d !important;
+    transform: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+.content-options .form-check-input:disabled {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.content-options .form-check-input:disabled:checked {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    box-shadow: none;
+}
+
+/* Tooltip styling for disabled content options */
+.content-options .form-check-container[title]:not([title=""]) {
+    position: relative;
+}
+
+/* Tooltip bubble - using higher specificity to override container pseudo-elements */
+.content-options .form-check-container[title]:not([title=""]):hover::after {
+    content: attr(title) !important;
+    position: absolute !important;
+    bottom: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    color: white !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    width: max-content !important;
+    max-width: 400px !important;
+    min-height: fit-content !important;
+    text-align: center !important;
+    line-height: 1.4 !important;
+    z-index: 1070 !important;
+    margin-bottom: 8px !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    animation: tooltipFadeIn 0.2s ease-out !important;
+    transition: none !important;
+    opacity: 1 !important;
+    top: auto !important;
+    right: auto !important;
+    height: auto !important;
+    pointer-events: none !important;
+}
+
+/* Tooltip arrow - using higher specificity to override container pseudo-elements */
+.content-options .form-check-container[title]:not([title=""]):hover::before {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    border: 6px solid transparent !important;
+    border-top-color: rgba(0, 0, 0, 0.9) !important;
+    z-index: 1070 !important;
+    margin-bottom: 2px !important;
+    animation: tooltipFadeIn 0.2s ease-out !important;
+    transition: none !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    width: 0 !important;
+    height: 0 !important;
+    top: auto !important;
+    right: auto !important;
+}
+
+@keyframes tooltipFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(4px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Responsive tooltip positioning */
+@media (max-width: 768px) {
+    .content-options .form-check-container[title]:not([title=""]):hover::after {
+        font-size: 0.8rem !important;
+        padding: 6px 10px !important;
+        max-width: 300px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .content-options .form-check-container[title]:not([title=""]):hover::after {
+        bottom: auto !important;
+        top: 100% !important;
+        margin-bottom: 0 !important;
+        margin-top: 8px !important;
+    }
+    
+    .content-options .form-check-container[title]:not([title=""]):hover::before {
+        bottom: auto !important;
+        top: 100% !important;
+        border-top-color: transparent !important;
+        border-bottom-color: rgba(0, 0, 0, 0.9) !important;
+        margin-bottom: 0 !important;
+        margin-top: 2px !important;
+    }
+}

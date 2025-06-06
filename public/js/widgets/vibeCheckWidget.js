@@ -6,12 +6,16 @@ class VibeCheckWidget
         this.webRTCConnectionManager = webRTCConnectionManager;
         const eventTypes = this.webRTCConnectionManager.EventTypes;
 
-        this.messageType = 'vibe-check';        
+        this.messageType = 'vibe-check';
+
         this.vibeCheckButtonElement = document.getElementById('vibe-check-button');
-        this.vibeCheckFormElement = document.getElementById('vibe-check-form');        this.vibeCheckOverlayElement = document.getElementById('vibe-check-overlay');
+        this.vibeCheckFormElement = document.getElementById('vibe-check-form');        
+        this.vibeCheckOverlayElement = document.getElementById('vibe-check-overlay');
         this.cancelButtonElement = document.getElementById('cancel-vibe-check');
         this.vibeCheckInteractionSelectElement = document.getElementById('vibe-check-interaction');
         this.vibeCheckConfirmationModal = document.getElementById('vibe-check-confirmation-modal');
+        this.nudityCheckbox = document.getElementById('vibe-check-nudity-checkbox');
+        this.goreCheckbox = document.getElementById('vibe-check-gore-checkbox');
 
         // To be clear, these are hashed. We never store actual IPs.
         this.peerIPHistory = new Map();
@@ -31,6 +35,7 @@ class VibeCheckWidget
             this.#handleConnectionClosed();
         });
 
+        this.#disableAllowedContentTypes();
         this.#setupUIEventListeners();
     }
 
@@ -41,20 +46,90 @@ class VibeCheckWidget
 
     #handlePeerIPHashReceived()
     {
-        this.vibeCheckButtonElement.disabled = false;
-
         var peerIP = this.webRTCConnectionManager.GetPeerIP();
 
         if (peerIP)
         {
             this.peerIPHistory.set(new Date(), peerIP);
-            this.blockButtonElement.disabled = false;
+            this.vibeCheckButtonElement.disabled = false;
         }
     }
 
     #handleConnectionClosed()
     {
         
+    }    
+      
+    #disableAllowedContentTypes()
+    {
+        try
+        {
+            // Cookie utility function to get cookie value
+            function getCookie(name)
+            {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for (let i = 0; i < ca.length; i++)
+                {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+                return null;
+            }
+
+            const cookiePrefs = getCookie('freeyap_vibe_preferences');
+            if (!cookiePrefs)
+            {
+                return; // No preferences saved, nothing to disable
+            }
+
+            const preferences = JSON.parse(cookiePrefs);
+            
+            // Get the checkbox elements and their containers
+            const nudityCheckbox = document.getElementById('vibe-check-nudity-checkbox');
+            const goreCheckbox = document.getElementById('vibe-check-gore-checkbox');
+            
+            if (preferences.nudityPreference >= 1 && preferences.gorePreference >= 1)
+            {
+                this.vibeCheckButtonElement.classList.add('hidden');
+            }
+            else
+            {
+                if (preferences.nudityPreference >= 1)
+                {
+                    nudityCheckbox.disabled = true;
+
+                    const nudityContainer = nudityCheckbox.closest('.form-check-container');
+
+                    if (nudityContainer)
+                    {
+                        const preferenceText = preferences.nudityPreference === 1 ? 'Allow' : 'Show';
+                        nudityContainer.title = `You selected "${preferenceText}" nudity in your content settings`;
+                        nudityContainer.style.cursor = 'not-allowed';
+                    }
+                }
+                
+                if (preferences.gorePreference >= 1)
+                {
+                    goreCheckbox.disabled = true;
+
+                    const goreContainer = goreCheckbox.closest('.form-check-container');
+
+                    if (goreContainer)
+                    {
+                        const preferenceText = preferences.gorePreference === 1 ? 'Allow' : 'Show';
+                        goreContainer.title = `You selected "${preferenceText}" gore in your content settings`;
+                        goreContainer.style.cursor = 'not-allowed';
+                    }
+                }
+            }
+            
+        }
+        catch (error)
+        {
+            console.warn('Error in disableAllowedContentTypes:', error);
+        }
     }
     
     #setupUIEventListeners()
