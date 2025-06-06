@@ -16,27 +16,16 @@
                     <i class="fas fa-bullhorn"></i>
                 </button>
             </div>
-              </div>        <!-- Audio visualizer -->
-        <div id="audio-visualizer">
-            <!-- Main conversation area with remote blob prominently displayed -->
-            <div class="main-conversation">
+              </div>        
+              <!-- Audio visualizer -->        
+               <div id="audio-visualizer">
+            <!-- Main conversation area with remote audio icon prominently displayed -->            
+             <div class="main-conversation">                
                 <div class="audio-wrapper remote-wrapper">
                     <audio id="remote-audio" autoplay></audio>
-                    <div class="blob-container main-blob">
-                        <div class="voice-blob remote-blob muted"></div>
+                    <div class="audio-icon-container remote-icon disabled">
+                        <i class="fas fa-volume-up audio-icon"></i>
                     </div>
-                    <div class="participant-label">Partner</div>
-                </div>
-            </div>
-            
-            <!-- Secondary area with smaller local blob -->
-            <div class="local-area">
-                <div class="audio-wrapper local-wrapper">
-                    <audio id="local-audio" autoplay muted></audio>                
-                    <div class="blob-container mini-blob">
-                        <div class="voice-blob local-blob idle"></div>
-                    </div>
-                    <div class="participant-label">You</div>
                 </div>
             </div>
         </div>
