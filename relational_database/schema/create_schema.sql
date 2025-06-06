@@ -52,6 +52,9 @@ CREATE TABLE IF NOT EXISTS matchmaking_queue (
     inserted_at TIMESTAMP NOT NULL DEFAULT NOW(),
     has_topics BOOLEAN NOT NULL DEFAULT FALSE,
     chat_mode TEXT NOT NULL CHECK (chat_mode IN ('video', 'voice', 'text')),
+    nudity BOOLEAN,
+    gore BOOLEAN,
+    ip_hash TEXT,
     
     -- Foreign key constraint to session_sockets with cascade
     CONSTRAINT fk_matchmaking_queue_socket_id 
@@ -104,6 +107,49 @@ CREATE TABLE IF NOT EXISTS topic_history (
     -- socket_id UUID REFERENCES session_sockets(socket_id) ON DELETE SET NULL
 );
 
+-- Matchmaking blocking table
+-- Stores blocked user relationships with expiration
+CREATE TABLE IF NOT EXISTS matchmaking_blocking (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source_ip TEXT NOT NULL,
+    blocked_ip TEXT NOT NULL,
+    expires TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    
+    -- Ensure source and blocked IPs are not the same
+    CONSTRAINT chk_different_ips 
+        CHECK (source_ip != blocked_ip),
+        
+    -- Ensure IP strings are not empty
+    CONSTRAINT chk_source_ip_not_empty 
+        CHECK (LENGTH(TRIM(source_ip)) > 0),
+        
+    CONSTRAINT chk_blocked_ip_not_empty 
+        CHECK (LENGTH(TRIM(blocked_ip)) > 0)
+);
+
+-- Vibe checks table
+-- Stores user preference flags based on reported content
+CREATE TABLE IF NOT EXISTS vibe_checks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hashed_ip TEXT NOT NULL,
+    source_ip TEXT NOT NULL,
+    gore BOOLEAN NOT NULL DEFAULT FALSE,
+    nudity BOOLEAN NOT NULL DEFAULT FALSE,
+    verified BOOLEAN NOT NULL DEFAULT FALSE,
+    inserted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    
+    -- Create unique constraint on hashed_ip for ON CONFLICT support
+    CONSTRAINT uq_vibe_checks_hashed_ip UNIQUE (hashed_ip),
+    
+    -- Ensure IP strings are not empty
+    CONSTRAINT chk_hashed_ip_not_empty 
+        CHECK (LENGTH(TRIM(hashed_ip)) > 0),
+        
+    CONSTRAINT chk_source_ip_vibe_not_empty 
+        CHECK (LENGTH(TRIM(source_ip)) > 0)
+);
+
 -- ==================================================
 -- INDEXES (Basic - Performance indexes in separate file)
 -- ==================================================
@@ -116,6 +162,16 @@ CREATE INDEX IF NOT EXISTS idx_matchmaking_queue_chat_mode ON matchmaking_queue(
 CREATE INDEX IF NOT EXISTS idx_queue_topics_topic_basic ON queue_topics(topic);
 CREATE INDEX IF NOT EXISTS idx_topic_history_used_at_basic ON topic_history(used_at DESC);
 CREATE INDEX IF NOT EXISTS idx_session_sockets_active ON session_sockets(is_active) WHERE is_active = TRUE;
+
+-- Indexes for matchmaking_blocking table
+CREATE INDEX IF NOT EXISTS idx_matchmaking_blocking_source_ip ON matchmaking_blocking(source_ip);
+CREATE INDEX IF NOT EXISTS idx_matchmaking_blocking_blocked_ip ON matchmaking_blocking(blocked_ip);
+CREATE INDEX IF NOT EXISTS idx_matchmaking_blocking_expires ON matchmaking_blocking(expires);
+
+-- Indexes for vibe_checks table
+CREATE INDEX IF NOT EXISTS idx_vibe_checks_hashed_ip ON vibe_checks(hashed_ip);
+CREATE INDEX IF NOT EXISTS idx_vibe_checks_source_ip ON vibe_checks(source_ip);
+CREATE INDEX IF NOT EXISTS idx_vibe_checks_inserted_at ON vibe_checks(inserted_at DESC);
 
 -- ==================================================
 -- CONSTRAINTS AND VALIDATIONS
@@ -201,7 +257,7 @@ INSERT INTO topic_embeddings (topic, embedding) VALUES
 SELECT table_name, table_type 
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
-  AND table_name IN ('session_sockets', 'matchmaking_queue', 'queue_topics', 'topic_embeddings', 'topic_history')
+  AND table_name IN ('session_sockets', 'matchmaking_queue', 'queue_topics', 'topic_embeddings', 'topic_history', 'matchmaking_blocking', 'vibe_checks')
 ORDER BY table_name;
 
 -- Check all foreign key constraints
@@ -238,7 +294,7 @@ WHERE extname IN ('uuid-ossp', 'pgcrypto');
 DO $$
 BEGIN
     RAISE NOTICE 'FreeYap database schema creation completed successfully!';
-    RAISE NOTICE 'Tables created: session_sockets, matchmaking_queue, queue_topics, topic_embeddings, topic_history';
+    RAISE NOTICE 'Tables created: session_sockets, matchmaking_queue, queue_topics, topic_embeddings, topic_history, matchmaking_blocking, vibe_checks';
     RAISE NOTICE 'Types created: UserQueueInfo';
     RAISE NOTICE 'Extensions enabled: uuid-ossp, pgcrypto';
     RAISE NOTICE '';

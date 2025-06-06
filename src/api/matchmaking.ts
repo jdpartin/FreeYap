@@ -122,6 +122,14 @@ router.post('/vibe-check', async (req: Request, res: Response) =>
             return;
         }
 
+        /*
+        if (reportedIp === sourceIP)
+        {
+            res.status(400).json({ error: 'You cannot report your own IP' });
+            return;
+        }
+        */
+
         await MatchmakingManager.InsertVibeCheck(reportedIp, sourceIP, gore, nudity, verified);
         res.status(200).json({ message: 'Vibe check saved successfully' });
     }

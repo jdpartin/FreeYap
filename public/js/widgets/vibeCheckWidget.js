@@ -9,7 +9,8 @@ class VibeCheckWidget
         this.messageType = 'vibe-check';
 
         this.vibeCheckButtonElement = document.getElementById('vibe-check-button');
-        this.vibeCheckFormElement = document.getElementById('vibe-check-form');        
+        this.vibeCheckFormElement = document.getElementById('vibe-check-form');
+        this.vibeCheckReportFormElement = document.getElementById('vibe-check-report-form');
         this.vibeCheckOverlayElement = document.getElementById('vibe-check-overlay');
         this.cancelButtonElement = document.getElementById('cancel-vibe-check');
         this.vibeCheckInteractionSelectElement = document.getElementById('vibe-check-interaction');
@@ -244,11 +245,11 @@ class VibeCheckWidget
     {
         try
         {
-            const formData = new FormData(this.vibeCheckFormElement);
+            const formData = new FormData(this.vibeCheckReportFormElement);
 
             const reportedIp = formData.get('vibe-check-interaction');
-            const nudity = formData.get('nudity') === 'on';
-            const gore = formData.get('gore') === 'on';
+            const nudity = formData.get('vibe-check-nudity-checkbox') === 'on';
+            const gore = formData.get('vibe-check-gore-checkbox') === 'on';
 
             const verified = false; // Add verification logic later
 
@@ -258,7 +259,7 @@ class VibeCheckWidget
             }
 
             // Validate that at least one content type is selected
-            if (!nudityBool && !goreBool)
+            if (!nudity && !gore)
             {
                 alert('Please select at least one content type (Nudity or Gore).');
                 return;
@@ -269,6 +270,16 @@ class VibeCheckWidget
             await this.webRTCConnectionManager.matchmakingAPIClient.vibeCheck(reportedIp, sourceIP, gore, nudity, verified)
 
             this.#showConfirmation();
+
+            // Uncheck both checkboxes
+            this.nudityCheckbox.checked = false;
+            this.goreCheckbox.checked = false;
+
+            // Remove the selected interaction from the map
+            this.peerIPHistory.delete(new Date(reportedIp));
+
+            // Clear the interaction select dropdown
+            this.vibeCheckInteractionSelectElement.innerHTML = '<option value="" disabled selected>-- Select an interaction --</option>';
         }
         catch (error)
         {
