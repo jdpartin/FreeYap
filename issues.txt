@@ -1,14 +1,9 @@
-
-
 fetching embeddings could be made more efficient by having each client keep up with their embeddings for 
 their topics and passing them over webrtc. The issue is that embeddings are large and would require multiple
 messages to send, we dont have a system to support multi-part messages yet
 
 Need to consolidate css into reusable classes
 
-If you click the NSFW settings in the footer it takes you to the home page which means it will disconnect your call
-
 Verify the matchmaking system is still fully functional and reliable
 
 There were 90+ topics stuck in vector db verify cleanup
-
