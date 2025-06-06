@@ -8,8 +8,4 @@ Verify the matchmaking system is still fully functional and reliable
 
 There were 90+ topics stuck in vector db verify cleanup
 
-Need to get vibe check widget hooked up and implement vibe system
-
-have to check the actual checkbox in vibe check
-
 skip button enables after 5 seconds even if there is no partner

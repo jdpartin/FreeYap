@@ -15,6 +15,8 @@ class MatchmakingControlsWidget
 
         this.webRTCConnectionManager.on(this.webRTCConnectionManager.EventTypes.CONNECTION_CLOSED, () =>
         {
+            // ensure we reset the inner html if it was in the middle of a countdown
+            this.skipButtonElement.innerHTML = '<i class="fas fa-step-forward"></i>'
             this.skipButtonElement.disabled = true;
         });
 
@@ -30,12 +32,18 @@ class MatchmakingControlsWidget
     {
         // Skip button count down
         let countdown = 5;
+        let currentPeerCount = this.webRTCConnectionManager.connectionCount;
 
         while (countdown > 0)
         {
             this.skipButtonElement.innerHTML = countdown;
             await new Promise(resolve => setTimeout(resolve, 1000));
             countdown--;
+
+            if (this.webRTCConnectionManager.connectionCount != currentPeerCount)
+            {
+                return; // If the connection count changes, exit the countdown
+            }
         }
 
         this.skipButtonElement.innerHTML = '<i class="fas fa-step-forward"></i>';

@@ -48,21 +48,19 @@ This project is called FreeYap, a Node.js-based anonymous chat platform. Users c
 ## Guidelines:
 
 ### General:
-1. Implement specific changes only.
-2. Avoid reintroducing removed features.
-3. Verify code before changes.
-4. Avoid assumptions; verify functions/endpoints.
-5. Always read the entire file before making changes.
-6. Check for other instances of issues when they could exist in multiple places.
-7. **CRITICAL - SCOPE CONTROL**: Only implement exactly what is requested. DO NOT add extra features, endpoints, or functionality beyond the specific request.
-8. **CRITICAL - NO FEATURE CREEP**: If you think additional features would be helpful, ask first rather than implementing them.
-9. **CRITICAL - MINIMAL CHANGES**: Make the smallest possible change that satisfies the requirement.
-10. **CRITICAL - STICK TO REQUIREMENTS**: Do not add "nice to have" features, debugging endpoints, or extra functionality unless explicitly requested.
+1. **SIMPLEST SOLUTION ONLY**: Always choose the most direct, simple approach to solve the exact problem stated.
+2. **NO ASSUMPTIONS**: Do not read into what the user says or anticipate other needs. Only address what is explicitly asked.
+3. **NO EXTRA CHANGES**: Do not make any changes beyond exactly what is requested in the moment.
+4. **NO DEBUGGING/VALIDATION**: Do not add debugging, logging, validation, or error handling unless specifically requested.
+5. **MINIMAL CODE**: Make the smallest possible change that achieves the desired result.
+6. **SINGLE PURPOSE**: Each change should address only one specific request. Do not combine or anticipate related changes.
+7. **NO FEATURE CREEP**: Do not add "helpful" features, improvements, or optimizations unless asked.
+8. **LITERAL INTERPRETATION**: Take requests literally and implement exactly what is stated, nothing more.
 
 ### Planning:
-1. Analyze tasks and plan steps.
-2. Communicate plans before execution.
-3. Implement systematically and validate changes.
+1. Use the simplest approach possible.
+2. Make only the exact change requested.
+3. Ask for clarification only if the request is genuinely unclear.
 
 ### Code Style:
 1. Use Allman style.

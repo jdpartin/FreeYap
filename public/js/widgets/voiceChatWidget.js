@@ -14,10 +14,23 @@ class VoiceChatWidget
 
         this.muteAudioBtn = document.getElementById('mute-audio-btn');
         this.localAudioElement = document.getElementById('local-audio');
-        this.remoteAudioElement = document.getElementById('remote-audio');
+        this.remoteAudioElement = document.getElementById('remote-audio');        this.localAnalyzer = null;
+        this.remoteAnalyzer = null;
+        this.animationFrame = null;
+        this.isAnalyzing = false;
         
-        // Make this widget instance available globally for other modules
+        // Enhanced audio state tracking for smoother transitions
+        this.localVolumeHistory = [];
+        this.remoteVolumeHistory = [];
+        this.localCurrentState = 'idle';
+        this.remoteCurrentState = 'idle';
+        this.stateTransitionBuffer = 8; // frames to smooth transitions
+        this.volumeHistorySize = 10; // number of frames to keep in history
+          // Make this widget instance available globally for other modules
         window.voiceChatWidget = this;
+
+        // Initialize blob states to idle on page load
+        this.#initializeBlobStates();
 
         this.webRTCConnectionManager.on(eventTypes.MATCH_FOUND, () =>
         {
@@ -41,6 +54,13 @@ class VoiceChatWidget
 
         this.#setupUIEventListeners();
         this.MediaInitialization = this.#initializeMedia();
+    }    #initializeBlobStates() {
+        // Initialize local blob to idle and remote blob to muted on page load
+        setTimeout(() => {
+            // Initialize with discrete states that will use CSS animations
+            if (window.setLocalBlobState) window.setLocalBlobState('idle');
+            if (window.setRemoteBlobState) window.setRemoteBlobState('muted');
+        }, 100); // Small delay to ensure DOM is ready
     }
 
     #handleMatchFound()
@@ -50,9 +70,7 @@ class VoiceChatWidget
 
     #handlePeerCreated()
     {
-        let peer = this.webRTCConnectionManager.GetPeer();
-
-        peer.on('stream', (stream) =>
+        let peer = this.webRTCConnectionManager.GetPeer();        peer.on('stream', (stream) =>
         {
             this.remoteStream = stream;
 
@@ -63,11 +81,14 @@ class VoiceChatWidget
             else
             {
                 this.remoteAudioElement.src = window.URL.createObjectURL(stream); // for older browsers
-            }
+            }            this.remoteAnalyzer = this.#createAudioAnalyzer(stream);
+            
+            // Initialize remote blob to breathing state when peer connects
+            // This uses CSS animation until audio analysis detects sound
+            if (window.setRemoteBlobState) window.setRemoteBlobState('breathing');
         });
     }
-    
-    async #initializeMedia()
+      async #initializeMedia()
     {
         try
         {
@@ -86,7 +107,10 @@ class VoiceChatWidget
             else
             {
                 this.localAudioElement.src = window.URL.createObjectURL(this.localStream); // for older browsers
-            }
+            }            this.localAnalyzer = this.#createAudioAnalyzer(this.localStream);
+            
+            // Start local audio analysis immediately when media is ready
+            this.#startLocalAudioAnalysis();
 
             return true;
         }        
@@ -96,23 +120,59 @@ class VoiceChatWidget
             this.webRTCConnectionManager.ReportError('<i class="fas fa-exclamation-triangle"></i> Microphone access denied.');
             return false;
         }
-    }
-
-    async #handleConnectionReady()
+    }    async #handleConnectionReady()
     {
         // Ensure media is initialized before setting up voice transmission
         await this.MediaInitialization;
 
         this.muteAudioBtn.disabled = false;
-    }
 
-    #handleConnectionClosed()
+        // Stop local-only analysis and upgrade to full audio analysis (local + remote)
+        this.#stopAudioAnalysis();
+        this.#startAudioAnalysis();
+    }    #handleConnectionClosed()
     {
         this.remoteStream = null;
         this.remoteAudioElement.srcObject = null;
+
+        // Stop audio analysis and cleanup
+        this.#stopAudioAnalysis();
+        this.remoteAnalyzer = null;
+          // Reset blobs to appropriate states and clear any morphing styles
+        // Use discrete states which will trigger CSS animations
+        if (window.setLocalBlobState) window.setLocalBlobState('idle');
+        if (window.setRemoteBlobState) window.setRemoteBlobState('muted');
+        
+        // Clear any inline morphing styles
+        const localBlob = document.querySelector('.local-blob');
+        const remoteBlob = document.querySelector('.remote-blob');
+        const localContainer = localBlob?.closest('.blob-container');
+        const remoteContainer = remoteBlob?.closest('.blob-container');
+        
+        if (localBlob) {
+            localBlob.style.transform = '';
+            localBlob.style.borderRadius = '';
+            localBlob.style.opacity = '';
+            localBlob.style.boxShadow = '';
+        }
+        if (remoteBlob) {
+            remoteBlob.style.transform = '';
+            remoteBlob.style.borderRadius = '';
+            remoteBlob.style.opacity = '';
+            remoteBlob.style.boxShadow = '';
+        }
+        if (localContainer) {
+            localContainer.style.removeProperty('--shadow-width');
+            localContainer.style.removeProperty('--shadow-height');
+            localContainer.style.removeProperty('--shadow-opacity');
+        }
+        if (remoteContainer) {
+            remoteContainer.style.removeProperty('--shadow-width');
+            remoteContainer.style.removeProperty('--shadow-height');
+            remoteContainer.style.removeProperty('--shadow-opacity');
+        }
     }
-    
-    #toggleAudio(mute)
+      #toggleAudio(mute)
     {
         const audioTracks = this.localStream.getAudioTracks();
 
@@ -121,11 +181,211 @@ class VoiceChatWidget
             audioTracks.forEach(track =>
             {
                 track.enabled = !mute;
-            });
+            });            // Update local blob state based on mute status
+            if (mute) {
+                // When muted, use discrete state system for CSS animation
+                if (window.setLocalBlobState) {
+                    window.setLocalBlobState('muted');
+                }
+            } else {
+                // When unmuted, start with idle state, let audio analysis take over
+                if (window.setLocalBlobState) {
+                    window.setLocalBlobState('idle');
+                }
+            }
             
             return true;
         }
         return false;
+    }#createAudioAnalyzer(stream) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        
+        // Enhanced settings for more sensitive audio detection
+        analyser.fftSize = 512; // Increased for better frequency resolution
+        analyser.smoothingTimeConstant = 0.6; // Reduced for faster response
+        analyser.minDecibels = -85; // Lower threshold for quiet sounds
+        analyser.maxDecibels = -10; // Higher threshold for loud sounds
+        
+        source.connect(analyser);
+        
+        return {
+            analyser,
+            audioContext,
+            dataArray: new Uint8Array(analyser.frequencyBinCount)
+        };
+    }#getVolumeLevel(analyzer) {
+        analyzer.analyser.getByteFrequencyData(analyzer.dataArray);
+        
+        // Calculate multiple audio metrics for more sensitive detection
+        let sum = 0;
+        let lowFreqSum = 0;  // 0-85Hz (bass/low voice)
+        let midFreqSum = 0;  // 85-340Hz (vocal range)
+        let highFreqSum = 0; // 340Hz+ (consonants/high voice)
+        
+        const lowEnd = Math.floor(analyzer.dataArray.length * 0.1);
+        const midEnd = Math.floor(analyzer.dataArray.length * 0.4);
+        
+        for (let i = 0; i < analyzer.dataArray.length; i++) {
+            const value = analyzer.dataArray[i];
+            sum += value;
+            
+            if (i < lowEnd) {
+                lowFreqSum += value;
+            } else if (i < midEnd) {
+                midFreqSum += value;
+            } else {
+                highFreqSum += value;
+            }
+        }
+        
+        // Calculate weighted average with emphasis on vocal frequencies
+        const lowAvg = lowFreqSum / lowEnd;
+        const midAvg = midFreqSum / (midEnd - lowEnd);
+        const highAvg = highFreqSum / (analyzer.dataArray.length - midEnd);
+        
+        // Weight vocal frequencies more heavily
+        const weightedVolume = (lowAvg * 0.3 + midAvg * 0.5 + highAvg * 0.2);
+        const overallVolume = (sum / analyzer.dataArray.length);
+        
+        // Combine weighted and overall for final volume
+        const volume = ((weightedVolume * 0.7) + (overallVolume * 0.3)) / 255 * 100;
+        
+        return {
+            volume: volume,
+            lowFreq: lowAvg / 255 * 100,
+            midFreq: midAvg / 255 * 100,
+            highFreq: highAvg / 255 * 100
+        };
+    }
+
+    #getSmoothedAudioState(volumeData, isLocal = true) {
+        const history = isLocal ? this.localVolumeHistory : this.remoteVolumeHistory;
+        const currentState = isLocal ? this.localCurrentState : this.remoteCurrentState;
+        
+        // Add current volume to history
+        history.push(volumeData);
+        if (history.length > this.volumeHistorySize) {
+            history.shift();
+        }
+        
+        // Calculate moving averages for smoother detection
+        const recentFrames = Math.min(5, history.length);
+        const recentHistory = history.slice(-recentFrames);
+        
+        const avgVolume = recentHistory.reduce((sum, data) => sum + data.volume, 0) / recentHistory.length;
+        const avgMidFreq = recentHistory.reduce((sum, data) => sum + data.midFreq, 0) / recentHistory.length;
+        
+        // Enhanced thresholds with hysteresis to prevent jittery transitions
+        let newState;
+        
+        // More sensitive thresholds
+        if (avgVolume < 1.5 && avgMidFreq < 2) {
+            newState = 'idle';
+        } else if (avgVolume < 4 && avgMidFreq < 6) {
+            newState = 'breathing';
+        } else if (avgVolume < 12 && avgMidFreq < 15) {
+            newState = 'whisper';
+        } else if (avgVolume < 25 && avgMidFreq < 30) {
+            newState = 'speaking-soft';
+        } else if (avgVolume < 45) {
+            newState = 'speaking';
+        } else {
+            newState = 'speaking-loud';
+        }
+        
+        // Apply hysteresis - require sustained level change to switch states
+        if (newState !== currentState) {
+            // Count how many recent frames support the new state
+            let supportingFrames = 0;
+            for (let i = Math.max(0, history.length - this.stateTransitionBuffer); i < history.length; i++) {
+                const frameData = history[i];
+                const frameVolume = frameData.volume;
+                
+                let frameState;
+                if (frameVolume < 1.5) frameState = 'idle';
+                else if (frameVolume < 4) frameState = 'breathing';
+                else if (frameVolume < 12) frameState = 'whisper';
+                else if (frameVolume < 25) frameState = 'speaking-soft';
+                else if (frameVolume < 45) frameState = 'speaking';
+                else frameState = 'speaking-loud';
+                
+                if (frameState === newState) supportingFrames++;
+            }
+            
+            // Only change state if enough frames support it
+            const requiredFrames = Math.ceil(this.stateTransitionBuffer * 0.6);
+            if (supportingFrames >= requiredFrames) {
+                if (isLocal) {
+                    this.localCurrentState = newState;
+                } else {
+                    this.remoteCurrentState = newState;
+                }
+                return newState;
+            } else {
+                // Not enough support, keep current state
+                return currentState;
+            }
+        }
+          return currentState;
+    }    #startLocalAudioAnalysis() {
+        if (this.isAnalyzing) return;
+        this.isAnalyzing = true;
+        
+        const analyzeLocalAudio = () => {
+            if (!this.isAnalyzing) return;
+            
+            // Analyze local audio only
+            if (this.localAnalyzer && this.localStream) {
+                const volumeData = this.#getVolumeLevel(this.localAnalyzer);
+                // Use proportional morphing instead of discrete states
+                if (window.setLocalBlobMorphing) {
+                    window.setLocalBlobMorphing(volumeData);
+                }
+            }
+            
+            this.animationFrame = requestAnimationFrame(analyzeLocalAudio);
+        };
+        
+        analyzeLocalAudio();
+    }#startAudioAnalysis() {
+        if (this.isAnalyzing) return;
+        this.isAnalyzing = true;
+        
+        const analyzeAudio = () => {
+            if (!this.isAnalyzing) return;
+            
+            // Analyze local audio
+            if (this.localAnalyzer && this.localStream) {
+                const volumeData = this.#getVolumeLevel(this.localAnalyzer);
+                // Use proportional morphing instead of discrete states
+                if (window.setLocalBlobMorphing) {
+                    window.setLocalBlobMorphing(volumeData);
+                }
+            }
+            
+            // Analyze remote audio
+            if (this.remoteAnalyzer && this.remoteStream) {
+                const volumeData = this.#getVolumeLevel(this.remoteAnalyzer);
+                // Use proportional morphing instead of discrete states
+                if (window.setRemoteBlobMorphing) {
+                    window.setRemoteBlobMorphing(volumeData);
+                }
+            }
+            
+            this.animationFrame = requestAnimationFrame(analyzeAudio);
+        };
+        
+        analyzeAudio();
+    }
+
+    #stopAudioAnalysis() {
+        this.isAnalyzing = false;
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
     }
       
     #setupUIEventListeners()
@@ -146,7 +406,190 @@ class VoiceChatWidget
     }    
 }
 
+/****** Blob Animation Functions ******/
 
+// Blob shadow management functions
+function updateBlobShadow(blobContainer, state) {
+    if (!blobContainer) return;
+    
+    // Remove all shadow state classes
+    blobContainer.classList.remove('speaking', 'breathing', 'whisper', 'speaking-soft', 'speaking-loud');
+    
+    // Add the appropriate state class
+    if (state === 'speaking' || state === 'whisper' || state === 'speaking-soft' || state === 'speaking-loud') {
+        blobContainer.classList.add(state);
+    } else if (state === 'idle' || state === 'breathing') {
+        blobContainer.classList.add('breathing');
+    }
+    // Note: muted state doesn't get a shadow animation
+}
+
+// Function to set local blob state
+function setLocalBlobState(state) {
+    const localBlob = document.querySelector('.local-blob');
+    const localContainer = localBlob?.closest('.blob-container');
+    
+    if (localBlob && localContainer) {
+        updateBlobShadow(localContainer, state);
+        
+        // Remove all state classes
+        localBlob.classList.remove('speaking', 'whisper', 'speaking-soft', 'speaking-loud', 'muted', 'idle');
+        
+        // Add appropriate state class
+        if (state === 'speaking' || state === 'whisper' || state === 'speaking-soft' || state === 'speaking-loud') {
+            localBlob.classList.add(state);
+        } else if (state === 'muted') {
+            localBlob.classList.add('muted');
+        } else if (state === 'idle') {
+            localBlob.classList.add('idle');
+        }
+    }
+}
+
+// Function to set remote blob state
+function setRemoteBlobState(state) {
+    const remoteBlob = document.querySelector('.remote-blob');
+    const remoteContainer = remoteBlob?.closest('.blob-container');
+    
+    if (remoteBlob && remoteContainer) {
+        updateBlobShadow(remoteContainer, state);
+        
+        // Remove all state classes
+        remoteBlob.classList.remove('speaking', 'whisper', 'speaking-soft', 'speaking-loud', 'muted', 'idle');
+        
+        // Add appropriate state class
+        if (state === 'speaking' || state === 'whisper' || state === 'speaking-soft' || state === 'speaking-loud') {
+            remoteBlob.classList.add(state);
+        } else if (state === 'muted') {
+            remoteBlob.classList.add('muted');
+        } else if (state === 'idle') {
+            remoteBlob.classList.add('idle');
+        }
+    }
+}
+
+// New proportional morphing functions for continuous blob animation
+function setLocalBlobMorphing(volumeData) {
+    const localBlob = document.querySelector('.local-blob');
+    const localContainer = localBlob?.closest('.blob-container');
+    
+    if (localBlob && localContainer) {
+        applyProportionalMorphing(localBlob, localContainer, volumeData);
+    }
+}
+
+function setRemoteBlobMorphing(volumeData) {
+    const remoteBlob = document.querySelector('.remote-blob');
+    const remoteContainer = remoteBlob?.closest('.blob-container');
+    
+    if (remoteBlob && remoteContainer) {
+        applyProportionalMorphing(remoteBlob, remoteContainer, volumeData);
+    }
+}
+
+// Apply proportional morphing based on volume levels
+function applyProportionalMorphing(blob, container, volumeData) {
+    if (!blob || !container || !volumeData) {
+        console.log('ApplyProportionalMorphing: Missing parameters', { blob: !!blob, container: !!container, volumeData: !!volumeData });
+        return;
+    }
+    
+    const { volume, midFreq } = volumeData;
+    
+    // Debug logging every 30 frames to avoid spam
+    if (Math.random() < 0.03) {
+        console.log('Blob morphing data:', { volume, midFreq, blobClass: blob.className });
+    }
+    
+    // Check if the blob is muted and skip morphing
+    if (blob.classList.contains('muted')) {
+        console.log('Blob is muted, skipping morphing');
+        return;
+    }
+      // Always use continuous morphing with speed proportional to volume
+    // Clear discrete animation classes but keep idle for morphing
+    blob.classList.remove('speaking', 'whisper', 'speaking-soft', 'speaking-loud');
+    
+    // Ensure idle class is present for CSS morphing animation
+    if (!blob.classList.contains('idle')) {
+        blob.classList.add('idle');
+    }
+      // Calculate animation speed based on volume (using playback rate to avoid restarting animation)
+    const basePlaybackRate = 1; // Normal speed for idle (4s total)
+    const maxPlaybackRate = 5; // 5x faster for high volume (0.8s effective duration)
+    const volumeNormalized = Math.min(volume / 30, 1); // Normalize volume to 0-1
+    const currentPlaybackRate = basePlaybackRate + (maxPlaybackRate - basePlaybackRate) * volumeNormalized;
+    
+    // Apply dynamic playback rate to speed up/slow down without restarting animation
+    const animations = blob.getAnimations();
+    animations.forEach(animation => {
+        if (animation.animationName === 'premiumIdleBreathe') {
+            animation.playbackRate = currentPlaybackRate;
+        }
+    });
+    
+    // Calculate proportional scale based on volume  
+    // Base scale: 1.0, max scale: 1.3 for very loud sounds
+    const baseScale = 1.0;
+    const maxScale = 1.3;
+    const volumeScale = Math.min(volume / 50, 1); // Normalize to 0-1 range
+    const currentScale = baseScale + (maxScale - baseScale) * volumeScale;
+    
+    // Calculate proportional translation (floating effect)
+    const maxTranslateY = -8; // pixels
+    const currentTranslateY = maxTranslateY * volumeScale;
+      // Add time-based morphing for continuous animation even at idle
+    const time = Date.now() * 0.001; // Convert to seconds
+    
+    // Calculate proportional border-radius morphing with time-based animation
+    // This will work alongside the CSS animation for enhanced morphing
+    const baseBorderRadius = [58, 42, 35, 65, 55, 45, 65, 35];
+    const morphIntensity = Math.min(volumeScale * 0.3, 0.2); // Subtle additional morphing
+    const morphedBorderRadius = baseBorderRadius.map((value, index) => {
+        const timeVariation = Math.sin(time * (1 + index * 0.1)) * morphIntensity * 8;
+        return Math.max(30, Math.min(70, value + timeVariation));
+    });
+    
+    // Only apply border-radius if there's significant volume to enhance the CSS animation
+    if (volumeScale > 0.1) {
+        blob.style.borderRadius = `${morphedBorderRadius[0]}% ${morphedBorderRadius[1]}% ${morphedBorderRadius[2]}% ${morphedBorderRadius[3]}% / ${morphedBorderRadius[4]}% ${morphedBorderRadius[5]}% ${morphedBorderRadius[6]}% ${morphedBorderRadius[7]}%`;
+    } else {
+        // Let CSS animation handle border-radius for idle state
+        blob.style.borderRadius = '';
+    }    // Apply the transforms smoothly with variable speed
+    blob.style.transition = `transform 0.2s ease-out`;
+    blob.style.transform = `scale(${currentScale}) translateY(${currentTranslateY}px)`;
+    
+    // Update container shadow proportionally
+    updateProportionalShadow(container, volumeScale);
+}
+
+// Update shadow proportionally
+function updateProportionalShadow(container, volumeScale) {
+    if (!container) return;
+    
+    // Calculate shadow dimensions and opacity based on volume
+    const baseShadowWidth = 70;
+    const baseShadowHeight = 20;
+    const maxShadowWidth = 95;
+    const maxShadowHeight = 30;
+    
+    const currentShadowWidth = baseShadowWidth + (maxShadowWidth - baseShadowWidth) * volumeScale;
+    const currentShadowHeight = baseShadowHeight + (maxShadowHeight - baseShadowHeight) * volumeScale;
+    const baseShadowOpacity = 0.15; // Minimum shadow opacity for idle
+    const shadowOpacity = baseShadowOpacity + (volumeScale * 0.65); // 0.15 to 0.8
+    
+    // Apply shadow styling
+    container.style.setProperty('--shadow-width', `${currentShadowWidth}px`);
+    container.style.setProperty('--shadow-height', `${currentShadowHeight}px`);
+    container.style.setProperty('--shadow-opacity', shadowOpacity);
+}
+
+// Export functions for use by other modules
+window.setLocalBlobState = setLocalBlobState;
+window.setRemoteBlobState = setRemoteBlobState;
+window.setLocalBlobMorphing = setLocalBlobMorphing;
+window.setRemoteBlobMorphing = setRemoteBlobMorphing;
 
 /****** Page JS ******/
 
@@ -322,8 +765,7 @@ settingsBtn.addEventListener('click', function() {
                 document.removeEventListener('click', closeSettings);
             }
         });
-    }, 0);
-    
-    console.log('Settings button clicked');
+    }, 0);      console.log('Settings button clicked');
 });
+
 });

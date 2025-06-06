@@ -128,11 +128,13 @@
 
 #audio-visualizer {
     display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    gap: 40px;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
     margin: 30px 0;
-    background-color: #ffffff; /* Plain white background */
+    background-color: #ffffff;
+    position: relative;
+    min-height: 300px;
 }
 
 .audio-wrapper {
@@ -540,5 +542,581 @@ audio {
         width: 100% !important;
         right: 0 !important;
         left: 0 !important;
+    }
+}
+
+/* Voice Blob Styles */
+.blob-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 160px;
+    width: 140px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.blob-container::before {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--shadow-width, 70px);
+    height: var(--shadow-height, 20px);
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, var(--shadow-opacity, 0.35)) 0%, rgba(0, 0, 0, calc(var(--shadow-opacity, 0.35) * 0.6)) 40%, rgba(0, 0, 0, calc(var(--shadow-opacity, 0.35) * 0.15)) 70%, transparent 85%);
+    border-radius: 50%;
+    transition: all 0.1s ease-out;
+    z-index: 0;
+    filter: blur(2px);
+}
+
+/* Dynamic shadow for speaking blob */
+.blob-container.speaking::before {
+    width: 85px;
+    height: 25px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.25) 40%, rgba(0, 0, 0, 0.08) 70%, transparent 85%);
+    animation: shadowDance 1.8s ease-in-out infinite;
+    filter: blur(2px);
+}
+
+/* Dynamic shadow for idle breathing */
+.blob-container.breathing::before {
+    animation: shadowBreathe 4s ease-in-out infinite;
+    filter: blur(2px);
+}
+
+/* Shadow animation that follows blob movement */
+@keyframes shadowDance {
+    0% { 
+        width: 85px;
+        height: 25px;
+        opacity: 1.0;
+    }
+    15% { 
+        width: 88px;
+        height: 26px;
+        opacity: 1.05;
+    }
+    30% { 
+        width: 83px;
+        height: 24px;
+        opacity: 0.97;
+    }
+    45% { 
+        width: 90px;
+        height: 27px;
+        opacity: 1.08;
+    }
+    60% { 
+        width: 82px;
+        height: 23px;
+        opacity: 0.95;
+    }
+    75% { 
+        width: 89px;
+        height: 26px;
+        opacity: 1.06;
+    }
+    90% { 
+        width: 84px;
+        height: 24px;
+        opacity: 1.0;
+    }
+    100% { 
+        width: 85px;
+        height: 25px;
+        opacity: 1.0;
+    }
+}
+
+/* Shadow animation for idle breathing */
+@keyframes shadowBreathe {
+    0% { 
+        width: 70px;
+        height: 20px;
+        opacity: 0.8;
+    }
+    33% { 
+        width: 73px;
+        height: 21px;
+        opacity: 0.85;
+    }
+    66% { 
+        width: 68px;
+        height: 19px;
+        opacity: 0.78;
+    }
+    100% { 
+        width: 70px;
+        height: 20px;
+        opacity: 0.8;
+    }
+}
+
+.voice-blob {
+    width: 90px;
+    height: 90px;
+    background: var(--primary);
+    border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 2;
+}
+
+.voice-blob::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse 60% 80% at 75% 25%, 
+            rgba(255, 255, 255, 0.4) 0%, 
+            rgba(255, 255, 255, 0.25) 40%, 
+            rgba(255, 255, 255, 0.1) 70%, 
+            transparent 100%);
+    pointer-events: none;
+    border-radius: inherit;
+    mix-blend-mode: overlay;
+}
+
+.voice-blob::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.3) 0%, 
+            rgba(255, 255, 255, 0.15) 30%, 
+            transparent 60%);
+    pointer-events: none;
+    border-radius: inherit;
+    mix-blend-mode: soft-light;
+}
+
+/* Local blob - speaking animation */
+.voice-blob.local-blob.speaking {
+    animation: 
+        premiumSpeakingPulse 1.8s ease-in-out infinite,
+        premiumSpeakingGlow 1.5s ease-in-out infinite alternate;
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* Permanent right-side shine - no sliding animation needed */
+
+/* Remote blob - muted/disconnected state */
+.voice-blob.remote-blob.muted {
+    background: #64748b;
+    animation: premiumIdleBreathe 4s ease-in-out infinite;
+}
+
+/* Local blob - muted state */
+.voice-blob.local-blob.muted {
+    background: #64748b;
+    animation: none;
+    opacity: 0.6;
+}
+
+/* Idle state for both blobs */
+.voice-blob.idle {
+    animation: premiumIdleBreathe 4s ease-in-out infinite;
+}
+
+/* Premium speaking animations - spherical pulsing with subtle morphing */
+@keyframes premiumSpeakingPulse {
+    0% { 
+        transform: scale(1.05) translateY(-2px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+    15% { 
+        transform: scale(1.15) translateY(-4px);
+        border-radius: 45% 55% 40% 60% / 50% 55% 45% 50%;
+    }
+    30% { 
+        transform: scale(0.95) translateY(-1px);
+        border-radius: 65% 35% 50% 50% / 40% 60% 55% 45%;
+    }
+    45% { 
+        transform: scale(1.20) translateY(-5px);
+        border-radius: 40% 60% 65% 35% / 60% 40% 50% 60%;
+    }
+    60% { 
+        transform: scale(0.90) translateY(0px);
+        border-radius: 55% 45% 30% 70% / 45% 55% 70% 30%;
+    }
+    75% { 
+        transform: scale(1.18) translateY(-4px);
+        border-radius: 50% 50% 45% 55% / 55% 45% 60% 40%;
+    }
+    90% { 
+        transform: scale(0.98) translateY(-2px);
+        border-radius: 60% 40% 55% 45% / 50% 50% 45% 55%;
+    }
+    100% { 
+        transform: scale(1.05) translateY(-2px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+}
+
+@keyframes premiumSpeakingGlow {
+    0% { 
+        transform: translateY(-2px) scale(1.05);
+    }
+    100% { 
+        transform: translateY(-4px) scale(1.08);
+    }
+}
+
+/* Premium idle breathing animation - gentle blob breathing */
+@keyframes premiumIdleBreathe {
+    0% { 
+        transform: scale(1);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+    33% { 
+        transform: scale(1.06);
+        border-radius: 45% 55% 50% 50% / 50% 50% 55% 45%;
+    }
+    66% { 
+        transform: scale(0.96);
+        border-radius: 65% 35% 45% 55% / 60% 40% 50% 60%;
+    }
+    100% { 
+        transform: scale(1);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+}
+
+/* Enhanced responsive adjustments */
+@media (max-width: 768px) {
+    .blob-container {
+        height: 140px;
+        width: 120px;
+    }
+    
+    .voice-blob {
+        width: 75px;
+        height: 75px;
+    }
+    
+    .voice-blob::after {
+        height: 35%;
+    }
+}
+
+@media (max-width: 480px) {
+    .blob-container {
+        height: 120px;
+        width: 100px;
+    }
+    
+    .voice-blob {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .voice-blob::after {
+        height: 35%;
+    }
+}
+
+/* Enhanced Audio States for More Sensitive Blob Response */
+
+/* Whisper state - very subtle animation */
+.voice-blob.whisper {
+    animation: premiumWhisperPulse 3s ease-in-out infinite;
+    transform: scale(1.02) translateY(-1px);
+    opacity: 0.85;
+}
+
+/* Speaking soft state - gentle animation */
+.voice-blob.speaking-soft {
+    animation: 
+        premiumSpeakingSoftPulse 2.2s ease-in-out infinite,
+        premiumSpeakingSoftGlow 2s ease-in-out infinite alternate;
+    transform: scale(1.03) translateY(-1.5px);
+    opacity: 0.95;
+}
+
+/* Speaking loud state - more intense animation */
+.voice-blob.speaking-loud {
+    animation: 
+        premiumSpeakingLoudPulse 1.2s ease-in-out infinite,
+        premiumSpeakingLoudGlow 1s ease-in-out infinite alternate;
+    transform: scale(1.08) translateY(-3px);
+    opacity: 1;
+    filter: brightness(1.1);
+}
+
+/* Whisper animation - very subtle pulsing */
+@keyframes premiumWhisperPulse {
+    0% { 
+        transform: scale(1.02) translateY(-1px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+    50% { 
+        transform: scale(1.03) translateY(-1.5px);
+        border-radius: 55% 45% 40% 60% / 50% 50% 60% 40%;
+    }
+    100% { 
+        transform: scale(1.02) translateY(-1px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+}
+
+/* Speaking soft animations */
+@keyframes premiumSpeakingSoftPulse {
+    0% { 
+        transform: scale(1.03) translateY(-1.5px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+    25% { 
+        transform: scale(1.05) translateY(-2px);
+        border-radius: 45% 55% 50% 50% / 50% 50% 55% 45%;
+    }
+    50% { 
+        transform: scale(1.04) translateY(-2.5px);
+        border-radius: 50% 50% 45% 55% / 55% 45% 50% 50%;
+    }
+    75% { 
+        transform: scale(1.06) translateY(-2px);
+        border-radius: 55% 45% 40% 60% / 50% 50% 60% 40%;
+    }
+    100% { 
+        transform: scale(1.03) translateY(-1.5px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+}
+
+@keyframes premiumSpeakingSoftGlow {
+    0% { 
+        transform: scale(1.03) translateY(-1.5px);
+        box-shadow: 0 4px 20px rgba(255, 79, 122, 0.3);
+    }
+    100% { 
+        transform: scale(1.05) translateY(-2.5px);
+        box-shadow: 0 6px 25px rgba(255, 79, 122, 0.4);
+    }
+}
+
+/* Speaking loud animations - intense */
+@keyframes premiumSpeakingLoudPulse {
+    0% { 
+        transform: scale(1.08) translateY(-3px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+    25% { 
+        transform: scale(1.12) translateY(-4px);
+        border-radius: 40% 60% 55% 45% / 45% 55% 60% 40%;
+    }
+    50% { 
+        transform: scale(1.06) translateY(-3.5px);
+        border-radius: 65% 35% 40% 60% / 60% 40% 45% 55%;
+    }
+    75% { 
+        transform: scale(1.15) translateY(-4.5px);
+        border-radius: 35% 65% 50% 50% / 50% 50% 65% 35%;
+    }
+    100% { 
+        transform: scale(1.08) translateY(-3px);
+        border-radius: 58% 42% 35% 65% / 55% 45% 65% 35%;
+    }
+}
+
+@keyframes premiumSpeakingLoudGlow {
+    0% { 
+        transform: scale(1.08) translateY(-3px);
+        box-shadow: 0 8px 35px rgba(255, 79, 122, 0.6);
+    }
+    100% { 
+        transform: scale(1.12) translateY(-5px);
+        box-shadow: 0 12px 45px rgba(255, 79, 122, 0.8);
+    }
+}
+
+/* Enhanced blob container shadow states for new audio levels */
+.blob-container.whisper::before {
+    width: 75px;
+    height: 22px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.15) 40%, rgba(0, 0, 0, 0.05) 70%, transparent 85%);
+    animation: shadowWhisper 3s ease-in-out infinite;
+    filter: blur(1.5px);
+}
+
+.blob-container.speaking-soft::before {
+    width: 80px;
+    height: 24px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.2) 40%, rgba(0, 0, 0, 0.06) 70%, transparent 85%);
+    animation: shadowSpeakingSoft 2.2s ease-in-out infinite;
+    filter: blur(2px);
+}
+
+.blob-container.speaking-loud::before {
+    width: 90px;
+    height: 28px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 40%, rgba(0, 0, 0, 0.1) 70%, transparent 85%);
+    animation: shadowSpeakingLoud 1.2s ease-in-out infinite;
+    filter: blur(3px);
+}
+
+/* Shadow animations for new states */
+@keyframes shadowWhisper {
+    0% { 
+        width: 75px;
+        height: 22px;
+        opacity: 0.6;
+    }
+    50% { 
+        width: 76px;
+        height: 22px;
+        opacity: 0.63;
+    }
+    100% { 
+        width: 75px;
+        height: 22px;
+        opacity: 0.6;
+    }
+}
+
+@keyframes shadowSpeakingSoft {
+    0% { 
+        width: 80px;
+        height: 24px;
+        opacity: 0.7;
+    }
+    50% { 
+        width: 82px;
+        height: 25px;
+        opacity: 0.75;
+    }
+    100% { 
+        width: 80px;
+        height: 24px;
+        opacity: 0.7;
+    }
+}
+
+@keyframes shadowSpeakingLoud {
+    0% { 
+        width: 90px;
+        height: 28px;
+        opacity: 0.8;
+    }
+    50% { 
+        width: 93px;
+        height: 29px;
+        opacity: 0.85;
+    }
+    100% { 
+        width: 90px;
+        height: 28px;
+        opacity: 0.8;
+    }
+}
+
+/* Smooth transitions between all states */
+.voice-blob {
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.blob-container::before {
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Main conversation area - prominent remote blob */
+.main-conversation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+}
+
+.remote-wrapper {
+    text-align: center;
+}
+
+.main-blob {
+    height: 180px;
+    width: 160px;
+    margin: 0 auto;
+}
+
+.main-blob .voice-blob {
+    width: 110px;
+    height: 110px;
+}
+
+/* Secondary local area - less prominent */
+.local-area {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.local-wrapper {
+    text-align: center;
+}
+
+.mini-blob {
+    height: 100px;
+    width: 90px;
+    margin: 0 auto;
+}
+
+.mini-blob .voice-blob {
+    width: 60px;
+    height: 60px;
+}
+
+/* Participant labels */
+.participant-label {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-align: center;
+}
+
+.local-area .participant-label {
+    font-size: 12px;
+    color: #888;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .local-area {
+        position: static;
+        margin-top: 15px;
+    }
+    
+    #audio-visualizer {
+        gap: 15px;
+    }
+    
+    .main-blob {
+        height: 160px;
+        width: 140px;
+    }
+    
+    .main-blob .voice-blob {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .mini-blob {
+        height: 80px;
+        width: 70px;
+    }
+    
+    .mini-blob .voice-blob {
+        width: 50px;
+        height: 50px;
     }
 }
