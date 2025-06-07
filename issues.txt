@@ -7,3 +7,7 @@ Need to consolidate css into reusable classes
 Verify the matchmaking system is still fully functional and reliable
 
 There were 90+ topics stuck in vector db verify cleanup
+
+Check dark mode and verify styles look good, there is an issue with the report button in styles
+
+Integrate a new alternative for gifs and stickers
