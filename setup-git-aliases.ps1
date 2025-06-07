@@ -8,9 +8,9 @@ git config --local alias.deploy-main "!git checkout main && git merge developmen
 git config --local alias.deploy-prod "!git checkout production && git merge development && git push origin production && git checkout development"
 
 # Branch creation aliases
-git config --local alias.new-feature "!f() { git checkout development && git pull origin development && git checkout -b feature/`$1; }; f"
-git config --local alias.new-bugfix "!f() { git checkout development && git pull origin development && git checkout -b bugfix/`$1; }; f"
-git config --local alias.new-hotfix "!f() { git checkout development && git pull origin development && git checkout -b hotfix/`$1; }; f"
+git config --local alias.new-feature "!f() { git checkout development && git pull origin development && git checkout -b feature/\`$1; }; f"
+git config --local alias.new-bugfix "!f() { git checkout development && git pull origin development && git checkout -b bugfix/\`$1; }; f"
+git config --local alias.new-hotfix "!f() { git checkout development && git pull origin development && git checkout -b hotfix/\`$1; }; f"
 
 # Utility aliases
 git config --local alias.st "status -sb"
