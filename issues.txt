@@ -7,8 +7,3 @@ Need to consolidate css into reusable classes
 Verify the matchmaking system is still fully functional and reliable
 
 There were 90+ topics stuck in vector db verify cleanup
-
-Vibe checks are not being inserted into the database
-
-videoChatWidget.js:98 Uncaught (in promise) TypeError: peer.getSenders is not a function
-    at #handleConnectionReady (videoChatWidget.js:98:34)

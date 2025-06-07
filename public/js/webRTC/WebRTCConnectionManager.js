@@ -563,7 +563,7 @@ class WebRTCConnectionManager
                 const data = await response.json();
 
                 // strip the local IP if included
-                /*
+                
                 var splitIp = data.ip.split(',');
                 var fixedIP = data.ip;
                 
@@ -587,11 +587,11 @@ class WebRTCConnectionManager
                 {
                     fixedIP = null;
                 }
-                */
+                
 
                 // for local testing
-                var splitIp = data.ip.split(',');
-                var fixedIP = splitIp[0].trim();
+                //var splitIp = data.ip.split(',');
+                //var fixedIP = splitIp[0].trim();
 
                 this.myIP = this.#hashIP(fixedIP);
             }

@@ -86,7 +86,7 @@ class VideoChatWidget
             return false;
         }
     }
-    
+      
     async #handleConnectionReady()
     {
         await this.MediaInitialization;
@@ -95,7 +95,7 @@ class VideoChatWidget
         {
             let peer = this.webRTCConnectionManager.GetPeer();
 
-            const senders = peer.getSenders();
+            const senders = peer._pc.getSenders();
             
             for (const sender of senders)
             {
