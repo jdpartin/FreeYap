@@ -45,6 +45,12 @@ This project is called FreeYap, a Node.js-based anonymous chat platform. Users c
 - Always run `npm run build` after making changes to TypeScript files
 - If port 3000 is in use, check for existing running instances
 
+### Git Branch Management:
+- **IMPORTANT**: Before running any git commands for branch creation or management, reference the existing documentation in `documentation/feature_branch_workflow.md` and `documentation/git_alias_setup.md`
+- Always create feature branches for new work instead of working directly on main
+- Use descriptive branch names that clearly indicate the purpose (e.g., `feature/ezoic-ad-integration`)
+- Follow the established branching workflow documented in the project
+
 ## Guidelines:
 
 ### General:

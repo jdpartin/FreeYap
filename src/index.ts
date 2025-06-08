@@ -100,6 +100,10 @@ app.get('/play-game', (req: Request, res: Response) => {
   res.render('playGame', { title: 'Play Game - FreeYap' });
 });
 
+// Ads.txt redirect to Ezoic Ads.txt Manager
+app.get('/ads.txt', (req: Request, res: Response) => {
+  res.redirect(301, 'https://srv.adstxtmanager.com/19390/freeyap.com');
+});
 
 // Get my IP endpoint
 app.post('/my-ip', (req, res) => {
