@@ -24,3 +24,5 @@ CRITICAL: Need to fix vibe check constraints, currently if someone is vibe check
 that happens silently on the server side, the user will be matched with people
 who have indicated they will show nudity or gore correctly but they will be able
 to report them and they will face real consequences despite doing nothing wrong
+
+Need to set up test scripts for critical functions
