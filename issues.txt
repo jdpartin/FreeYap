@@ -11,3 +11,7 @@ There were 90+ topics stuck in vector db verify cleanup
 Check dark mode and verify styles look good, there is an issue with the report button in styles
 
 Integrate a new alternative for gifs and stickers
+
+For better ad integration we should pre-load topics onto the page
+before the page is served which would allow the ad platform to pick 
+up the key words and display tailored ads
