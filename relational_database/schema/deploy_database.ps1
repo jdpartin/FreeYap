@@ -163,6 +163,9 @@ $procedures = @(
     @{File = "relational_database\stored_procedures\add_back_to_queue.sql"; Desc = "add_back_to_queue procedure"},
     @{File = "relational_database\stored_procedures\add_to_queue.sql"; Desc = "add_to_queue procedure"},
     @{File = "relational_database\stored_procedures\bulk_insert_topic_history.sql"; Desc = "bulk_insert_topic_history procedure"},
+    @{File = "relational_database\stored_procedures\clear_matchmaking_queue.sql"; Desc = "clear_matchmaking_queue procedure"},
+    @{File = "relational_database\stored_procedures\insert_matchmaking_blocking_entry.sql"; Desc = "insert_matchmaking_blocking_entry procedure"},
+    @{File = "relational_database\stored_procedures\insert_vibe_check.sql"; Desc = "insert_vibe_check procedure"},
     @{File = "relational_database\stored_procedures\remove_from_queue.sql"; Desc = "remove_from_queue procedure"},
     @{File = "relational_database\stored_procedures\save_topic_embedding.sql"; Desc = "save_topic_embedding procedure"}
 )

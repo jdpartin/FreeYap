@@ -10,4 +10,5 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
   ],
+  maxWorkers: 1, // Run tests sequentially to avoid queue interference
 };

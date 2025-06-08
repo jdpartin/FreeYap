@@ -130,12 +130,16 @@ class MatchmakingAPIClient
 
             const data = await response.json();
             console.log('Vibe check submitted:', data);
-            return data;
-        }
+            return data;        }
         catch (error)
         {
             console.error('Error submitting vibe check:', error);
             throw error;
         }
     }
+}
+
+// Export for Node.js/Jest testing while keeping browser compatibility
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = MatchmakingAPIClient;
 }

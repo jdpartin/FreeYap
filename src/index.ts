@@ -13,6 +13,7 @@ import giphyApi from './api/giphy';
 import gamesApi from './api/games';
 import contactApi from './api/contact';
 import reportApi from './api/report';
+import testApi from './api/test';
 import MatchmakingManager from './managers/matchmakingManager';
 
 const app = express();
@@ -47,6 +48,7 @@ app.use('/api/giphy', giphyApi);
 app.use('/api/games', gamesApi);
 app.use('/api/contact', contactApi);
 app.use('/api/report', reportApi);
+app.use('/api/test', testApi);
 
 // Initialize WebRTC signaling
 setupWebRTCSignaling(io);
