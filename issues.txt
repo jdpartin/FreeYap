@@ -15,3 +15,12 @@ Integrate a new alternative for gifs and stickers
 For better ad integration we should pre-load topics onto the page
 before the page is served which would allow the ad platform to pick 
 up the key words and display tailored ads
+
+CRITICAL: Need an alternate method of identifying users for vibe checks and blocking
+there is a critical issue with our current IP based system that could result in 
+entire TURN servers or VPNs being blocked or vibe checked
+
+CRITICAL: Need to fix vibe check constraints, currently if someone is vibe checked
+that happens silently on the server side, the user will be matched with people
+who have indicated they will show nudity or gore correctly but they will be able
+to report them and they will face real consequences despite doing nothing wrong
