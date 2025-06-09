@@ -17,11 +17,10 @@ router.post('/join-queue', async (req: Request, res: Response) =>
         
         await MatchmakingManager.JoinQueue(socketId, topics, mode, gore, nudity, ipHash);
         res.status(200).json({ message: 'User added to queue' });
-    }
-    catch (error)
+    }    catch (error)
     {
         console.error('Error in /join-queue:', error);
-        res.status(500).send('Failed to add user to queue');
+        res.status(500).json({ error: 'Failed to add user to queue' });
     }
 });
 
@@ -35,15 +34,13 @@ router.post('/leave-queue', async (req: Request, res: Response) =>
         {
             res.status(400).json({ error: 'socketId is required' });
             return;
-        }
-
-        await MatchmakingManager.LeaveQueue(socketId);
-        res.status(200).send('User removed from queue');
+        }        await MatchmakingManager.LeaveQueue(socketId);
+        res.status(200).json({ message: 'User removed from queue' });
     }
     catch (error)
     {
         console.error('Error in /leave-queue:', error);
-        res.status(500).send('Failed to remove user from queue');
+        res.status(500).json({ error: 'Failed to remove user from queue' });
     }
 });
 
@@ -110,6 +107,31 @@ router.post('/block-user', async (req: Request, res: Response) =>
     }
 });
 
+router.post('/unblock-user', async (req: Request, res: Response) =>
+{
+    try
+    {
+        const { sourceIp, blockedIp } = req.body;
+
+        if (!sourceIp || !blockedIp)
+        {
+            res.status(400).json({ error: 'sourceIp and blockedIp are required' });
+            return;
+        }
+
+        await MatchmakingManager.UnblockUser(sourceIp, blockedIp);
+        res.status(200).json({ message: 'User unblocked successfully' });
+    }
+    catch (error)
+    {
+        console.error('Error in /unblock-user:', error);
+        res.status(500).json({ 
+            error: 'Failed to unblock user',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 router.post('/vibe-check', async (req: Request, res: Response) =>
 {
     try
@@ -138,6 +160,31 @@ router.post('/vibe-check', async (req: Request, res: Response) =>
         console.error('Error in /vibe-check:', error);
         res.status(500).json({ 
             error: 'Failed to save vibe check',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+router.post('/remove-vibe-check', async (req: Request, res: Response) =>
+{
+    try
+    {
+        const { hashedIp } = req.body;
+
+        if (!hashedIp)
+        {
+            res.status(400).json({ error: 'hashedIp is required' });
+            return;
+        }
+
+        await MatchmakingManager.RemoveVibeCheck(hashedIp);
+        res.status(200).json({ message: 'Vibe check removed successfully' });
+    }
+    catch (error)
+    {
+        console.error('Error in /remove-vibe-check:', error);
+        res.status(500).json({ 
+            error: 'Failed to remove vibe check',
             message: error instanceof Error ? error.message : 'Unknown error'
         });
     }

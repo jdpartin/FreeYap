@@ -108,6 +108,22 @@ class MatchmakingManager
         await db.executeStoredProcedure('insert_matchmaking_blocking_entry', { source_ip, blocked_ip });
     }
 
+    static async UnblockUser(source_ip: string, blocked_ip: string): Promise<void>
+    {
+        if (!source_ip || !blocked_ip)
+        {
+            throw new Error('Both source and blocked IPs are required to unblock a user.');
+        }
+
+        if (source_ip == blocked_ip)
+        {
+            throw new Error('Cannot unblock yourself.');
+        }
+        
+        // the ips are hashed already
+        await db.executeStoredProcedure('remove_matchmaking_blocking_entry', { sourceIp: source_ip, blockedIp: blocked_ip });
+    }
+
     static async InsertVibeCheck(
         reportedIp: Text, 
         sourceIp: Text,
@@ -132,6 +148,16 @@ class MatchmakingManager
             nudityPreference: nudity,
             verifiedStatus: verified
         });
+    }
+
+    static async RemoveVibeCheck(hashedIp: string): Promise<void>
+    {
+        if (!hashedIp)
+        {
+            throw new Error('Hashed IP is required to remove vibe check.');
+        }
+        
+        return db.executeStoredProcedure('remove_vibe_check', { hashedIp });
     }
 
 
@@ -290,8 +316,7 @@ class MatchmakingManager
     {
         db.executeStoredProcedure('bulk_insert_topic_history', { topicArray: topics as unknown as 'TEXT[]' });
     }    
-    
-    static async #getMatchingTopics(
+      static async #getMatchingTopics(
         topics: string[], 
         mode: string,
         gore: boolean | null = false,
@@ -300,7 +325,7 @@ class MatchmakingManager
     {
         if (topics && topics.length > 0)
         {
-            const threshold = 0.8;
+            const threshold = 0.9;
 
             const results = await db.searchVectorBatch(topics, mode, nudity, gore, 1000);
 

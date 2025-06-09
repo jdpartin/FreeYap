@@ -24,13 +24,7 @@ BEGIN
         gorePreference,
         nudityPreference,
         verifiedStatus
-    )
-    ON CONFLICT (hashed_ip) 
-    DO UPDATE SET
-        source_ip = EXCLUDED.source_ip,
-        gore = EXCLUDED.gore,
-        nudity = EXCLUDED.nudity,
-        verified = EXCLUDED.verified;
+    );
 
 END;
 $$ LANGUAGE plpgsql;

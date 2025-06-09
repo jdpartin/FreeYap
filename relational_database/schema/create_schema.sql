@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS matchmaking_blocking (
 
 -- Vibe checks table
 -- Stores user preference flags based on reported content
+-- Multiple reports can exist for the same hashed_ip from different sources
 CREATE TABLE IF NOT EXISTS vibe_checks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hashed_ip TEXT NOT NULL,
@@ -139,15 +140,16 @@ CREATE TABLE IF NOT EXISTS vibe_checks (
     verified BOOLEAN NOT NULL DEFAULT FALSE,
     inserted_at TIMESTAMP NOT NULL DEFAULT NOW(),
     
-    -- Create unique constraint on hashed_ip for ON CONFLICT support
-    CONSTRAINT uq_vibe_checks_hashed_ip UNIQUE (hashed_ip),
-    
     -- Ensure IP strings are not empty
     CONSTRAINT chk_hashed_ip_not_empty 
         CHECK (LENGTH(TRIM(hashed_ip)) > 0),
         
     CONSTRAINT chk_source_ip_vibe_not_empty 
-        CHECK (LENGTH(TRIM(source_ip)) > 0)
+        CHECK (LENGTH(TRIM(source_ip)) > 0),
+    
+    -- Prevent duplicate reports from the same source for the same target
+    CONSTRAINT uq_vibe_checks_source_target 
+        UNIQUE (hashed_ip, source_ip)
 );
 
 -- ==================================================

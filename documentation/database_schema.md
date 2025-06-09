@@ -37,12 +37,18 @@ Foreign Key on session_id being in matchmaking_queue cascade on update or delete
 
 ### `vibe_checks`
 - `id` (UUID): Primary key auto generated
-- `hashed_ip` (TEXT): Hashed IP address of the user
+- `hashed_ip` (TEXT): Hashed IP address of the user being reported
 - `source_ip` (TEXT, not null): Hashed IP address of the user who submitted the vibe check
-- `gore` (BOOLEAN, default false): User's gore content preference
-- `nudity` (BOOLEAN, default false): User's nudity preference
-- `inserted_at` (TIMESTAMP, default NOW()): Timestamp when the vibe check was created
-- `verified` (BOOLEAN, default false): Whether the vibe check has been verified
+- `gore` (BOOLEAN, default false): Whether gore content was reported
+- `nudity` (BOOLEAN, default false): Whether nudity content was reported  
+- `verified` (BOOLEAN, default false): Whether the vibe check has been verified by moderation
+- `inserted_at` (TIMESTAMP, default NOW()): Timestamp when the vibe check was created/updated
+
+**Key Changes:**
+- Multiple reports can exist for the same `hashed_ip` from different `source_ip` addresses
+- Each `source_ip` can only have one active report per `hashed_ip` (enforced by unique constraint)
+- The `is_user_vibe_checked` function aggregates all reports to determine enforcement thresholds
+- Enforcement logic: Content restrictions apply if verified within 7 days OR 2+ different source IPs reported it
 
 ## Naming Conventions
 

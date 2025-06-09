@@ -142,7 +142,9 @@ class DatabaseManager
                                 value: mode
                             }
                         });
-                    }                    // Add nudity filtering - null can match either, but true and false cannot match each other
+                    }                    
+                    
+                    // Add nudity filtering - null can match either, but true and false cannot match each other
                     if (nudity !== undefined) {
                         if (nudity === null) {
                             // null: can match with anything (no filter needed for null)

@@ -111,6 +111,34 @@ class MatchmakingAPIClient
         }
     }
 
+    async unblockUser(sourceIp, blockedIp)
+    {
+        try
+        {
+            const response = await fetch(`${this.baseUrl}/unblock-user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sourceIp, blockedIp })
+            });
+
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('User unblocked:', data);
+            return data;
+        }
+        catch (error)
+        {
+            console.error('Error unblocking user:', error);
+            throw error;
+        }
+    }
+
     async vibeCheck(reportedIp, sourceIP, gore, nudity, verified)
     {
         try
@@ -134,6 +162,34 @@ class MatchmakingAPIClient
         catch (error)
         {
             console.error('Error submitting vibe check:', error);
+            throw error;
+        }
+    }
+
+    async removeVibeCheck(hashedIp)
+    {
+        try
+        {
+            const response = await fetch(`${this.baseUrl}/remove-vibe-check`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ hashedIp })
+            });
+
+            if (!response.ok)
+            {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Vibe check removed:', data);
+            return data;
+        }
+        catch (error)
+        {
+            console.error('Error removing vibe check:', error);
             throw error;
         }
     }
