@@ -24,13 +24,25 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- CUSTOM TYPES
 -- ==================================================
 
--- Create composite type for user queue information
--- Used by database functions for returning queue data
-CREATE TYPE UserQueueInfo AS (
-    session_id UUID,
-    topics TEXT[],
-    inserted_at TIMESTAMP
-);
+-- Create composite type for user queue information.
+-- PostgreSQL does not support CREATE TYPE IF NOT EXISTS for composite types,
+-- so use a guarded block to keep this script rerunnable.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE t.typname = 'userqueueinfo'
+          AND n.nspname = 'public'
+    ) THEN
+        CREATE TYPE UserQueueInfo AS (
+            socket_id TEXT,
+            topics TEXT[],
+            inserted_at TIMESTAMP
+        );
+    END IF;
+END $$;
 
 -- ==================================================
 -- TABLES
@@ -39,7 +51,7 @@ CREATE TYPE UserQueueInfo AS (
 -- Session sockets table (referenced by foreign keys)
 -- Note: This table is implied by the foreign key constraints in documentation
 CREATE TABLE IF NOT EXISTS session_sockets (
-    socket_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    socket_id TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT NOW(),
     last_active TIMESTAMP DEFAULT NOW(),
     is_active BOOLEAN DEFAULT TRUE
@@ -48,27 +60,20 @@ CREATE TABLE IF NOT EXISTS session_sockets (
 -- Matchmaking queue table
 -- Stores users currently waiting for matches
 CREATE TABLE IF NOT EXISTS matchmaking_queue (
-    socket_id UUID PRIMARY KEY,
+    socket_id TEXT PRIMARY KEY,
     inserted_at TIMESTAMP NOT NULL DEFAULT NOW(),
     has_topics BOOLEAN NOT NULL DEFAULT FALSE,
     chat_mode TEXT NOT NULL CHECK (chat_mode IN ('video', 'voice', 'text')),
     nudity BOOLEAN,
     gore BOOLEAN,
-    ip_hash TEXT,
-    
-    -- Foreign key constraint to session_sockets with cascade
-    CONSTRAINT fk_matchmaking_queue_socket_id 
-        FOREIGN KEY (socket_id) 
-        REFERENCES session_sockets(socket_id) 
-        ON UPDATE CASCADE 
-        ON DELETE CASCADE
+    ip_hash TEXT
 );
 
 -- Queue topics table
 -- Stores individual topics associated with users in the queue
 CREATE TABLE IF NOT EXISTS queue_topics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    socket_id UUID NOT NULL,
+    socket_id TEXT NOT NULL,
     topic TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     
@@ -98,13 +103,13 @@ CREATE TABLE IF NOT EXISTS topic_embeddings (
 CREATE TABLE IF NOT EXISTS topic_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     topic TEXT NOT NULL,
-    used_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    used_at TIMESTAMP NOT NULL DEFAULT NOW()
     
     -- Index for efficient time-based queries
     -- (Will be created separately in performance_indexes.sql)
     
     -- Optional: Add user tracking (if needed for analytics)
-    -- socket_id UUID REFERENCES session_sockets(socket_id) ON DELETE SET NULL
+    -- socket_id TEXT REFERENCES session_sockets(socket_id) ON DELETE SET NULL
 );
 
 -- Matchmaking blocking table
@@ -179,21 +184,39 @@ CREATE INDEX IF NOT EXISTS idx_vibe_checks_inserted_at ON vibe_checks(inserted_a
 
 -- Additional constraints for data integrity
 
--- Ensure topic names are not empty or just whitespace
-ALTER TABLE queue_topics 
-ADD CONSTRAINT chk_topic_not_empty 
-CHECK (LENGTH(TRIM(topic)) > 0);
+-- Ensure topic names are not empty or just whitespace.
+-- Guard ALTER TABLE statements so setup can be rerun safely.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_topic_not_empty'
+    ) THEN
+        ALTER TABLE queue_topics
+        ADD CONSTRAINT chk_topic_not_empty
+        CHECK (LENGTH(TRIM(topic)) > 0);
+    END IF;
 
-ALTER TABLE topic_embeddings 
-ADD CONSTRAINT chk_topic_embedding_not_empty 
-CHECK (LENGTH(TRIM(topic)) > 0);
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_topic_embedding_not_empty'
+    ) THEN
+        ALTER TABLE topic_embeddings
+        ADD CONSTRAINT chk_topic_embedding_not_empty
+        CHECK (LENGTH(TRIM(topic)) > 0);
+    END IF;
 
-ALTER TABLE topic_history 
-ADD CONSTRAINT chk_topic_history_not_empty 
-CHECK (LENGTH(TRIM(topic)) > 0);
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_topic_history_not_empty'
+    ) THEN
+        ALTER TABLE topic_history
+        ADD CONSTRAINT chk_topic_history_not_empty
+        CHECK (LENGTH(TRIM(topic)) > 0);
+    END IF;
+END $$;
 
--- Ensure socket_id is a valid UUID format
--- (This is automatically enforced by the UUID type, but documenting for clarity)
+-- Socket.IO socket IDs are text strings, not UUIDs.
 
 -- ==================================================
 -- TRIGGERS (Optional - for automatic timestamp updates)
@@ -209,6 +232,7 @@ END;
 $$ language 'plpgsql';
 
 -- Trigger for topic_embeddings updated_at
+DROP TRIGGER IF EXISTS update_topic_embeddings_updated_at ON topic_embeddings;
 CREATE TRIGGER update_topic_embeddings_updated_at 
     BEFORE UPDATE ON topic_embeddings 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -222,6 +246,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_session_sockets_last_active ON session_sockets;
 CREATE TRIGGER update_session_sockets_last_active 
     BEFORE UPDATE ON session_sockets 
     FOR EACH ROW EXECUTE FUNCTION update_last_active();
